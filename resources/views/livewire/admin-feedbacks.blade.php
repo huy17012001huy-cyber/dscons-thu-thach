@@ -1,0 +1,84 @@
+<div>
+    <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">📬 Góp ý & Khiếu nại</h1>
+
+    {{-- Filters --}}
+    <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+        <select wire:model.live="filterStatus" class="input" style="width:auto; font-size:0.8rem; padding:0.35rem 0.625rem;">
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending">Chờ xử lý</option>
+            <option value="reviewed">Đã xem</option>
+            <option value="resolved">Đã giải quyết</option>
+        </select>
+        <select wire:model.live="filterType" class="input" style="width:auto; font-size:0.8rem; padding:0.35rem 0.625rem;">
+            <option value="">Tất cả loại</option>
+            <option value="gop_y">Góp ý</option>
+            <option value="khieu_nai">Khiếu nại</option>
+        </select>
+    </div>
+
+    {{-- List --}}
+    @forelse($feedbacks as $fb)
+    <div class="card mb-3" x-data="{ showNotes: false }">
+        <div style="display:flex; align-items:start; gap:0.75rem;">
+            <img src="{{ $fb->user->avatar_url }}" class="avatar" style="width:32px; height:32px; flex-shrink:0;" alt="">
+            <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                    <strong style="font-size:0.8rem; color:var(--color-text-primary);">{{ $fb->user->name }}</strong>
+                    <span style="font-size:0.65rem; padding:0.15rem 0.4rem; border-radius:9999px; font-weight:600;
+                        {{ $fb->type === 'khieu_nai' ? 'background:#FEE2E2; color:#991B1B;' : 'background:#DBEAFE; color:#1E40AF;' }}">
+                        {{ $fb->type === 'khieu_nai' ? 'Khiếu nại' : 'Góp ý' }}
+                    </span>
+                    <span style="font-size:0.65rem; padding:0.15rem 0.4rem; border-radius:9999px; font-weight:600;
+                        {{ $fb->status === 'pending' ? 'background:#FEF3C7; color:#92400E;' : ($fb->status === 'reviewed' ? 'background:#DBEAFE; color:#1E40AF;' : 'background:#D1FAE5; color:#065F46;') }}">
+                        {{ $fb->status === 'pending' ? 'Chờ xử lý' : ($fb->status === 'reviewed' ? 'Đã xem' : 'Đã giải quyết') }}
+                    </span>
+                </div>
+                <p style="font-size:0.85rem; font-weight:600; color:var(--color-text-primary); margin:0.35rem 0 0.2rem;">{{ $fb->subject }}</p>
+                <p style="font-size:0.8rem; color:var(--color-text-secondary); line-height:1.5; white-space:pre-line;">{{ $fb->content }}</p>
+                <p style="font-size:0.65rem; color:var(--color-text-muted); margin-top:0.35rem;">{{ $fb->created_at->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</p>
+
+                @if($fb->admin_notes)
+                <div style="margin-top:0.5rem; padding:0.5rem; background:#F7F5F3; border-radius:0.375rem; border:1px solid var(--color-border);">
+                    <p style="font-size:0.7rem; font-weight:600; color:var(--color-text-muted); margin-bottom:0.2rem;">Ghi chú admin:</p>
+                    <p style="font-size:0.75rem; color:var(--color-text-secondary); white-space:pre-line;">{{ $fb->admin_notes }}</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.5rem; margin-top:0.75rem; flex-wrap:wrap;">
+            <button @click="showNotes = !showNotes" class="btn btn-ghost" style="font-size:0.75rem; padding:0.3rem 0.625rem;">
+                Ghi chú
+            </button>
+            @if($fb->status === 'pending')
+            <button wire:click="markReviewed({{ $fb->id }})" class="btn btn-secondary" style="font-size:0.75rem; padding:0.3rem 0.625rem;">Đã xem</button>
+            @endif
+            @if($fb->status !== 'resolved')
+            <button wire:click="markResolved({{ $fb->id }})" class="btn btn-primary" style="font-size:0.75rem; padding:0.3rem 0.625rem;">Đã giải quyết</button>
+            @endif
+            <button wire:click="deleteFeedback({{ $fb->id }})" wire:confirm="Xóa feedback này?" class="btn btn-danger" style="font-size:0.75rem; padding:0.3rem 0.625rem;">Xóa</button>
+        </div>
+
+        {{-- Admin Notes Input --}}
+        <div x-show="showNotes" x-transition style="margin-top:0.75rem;" x-data="{ notes: @js($fb->admin_notes ?? '') }">
+            <textarea x-model="notes" class="input" placeholder="Ghi chú nội bộ..."
+                      style="width:100%; font-size:0.8rem; min-height:60px; overflow:hidden; resize:none;"
+                      x-init="$el.style.height = $el.scrollHeight + 'px'"
+                      @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"></textarea>
+            <button @click="$wire.saveNotes({{ $fb->id }}, notes); showNotes = false"
+                    class="btn btn-primary" style="font-size:0.75rem; padding:0.3rem 0.625rem; margin-top:0.35rem;">
+                Lưu ghi chú
+            </button>
+        </div>
+    </div>
+    @empty
+    <div class="card text-center py-8">
+        <p style="color:var(--color-text-muted);">Không có feedback nào.</p>
+    </div>
+    @endforelse
+
+    {{-- Pagination --}}
+    <div style="margin-top:1rem;">
+        {{ $feedbacks->links() }}
+    </div>
+</div>
