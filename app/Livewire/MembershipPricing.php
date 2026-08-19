@@ -35,6 +35,6 @@ class MembershipPricing extends Component
         return view('livewire.membership-pricing', [
             'plans' => self::PLANS,
             'membership' => $membership,
-        ])->layout('layouts.app', ['title' => 'Gói thành viên — DSCons AI-BIM Lab']);
+        ])->layout('layouts.app', ['title' => 'Gói thành viên — DSCons']);
     }
 }

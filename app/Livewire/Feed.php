@@ -122,6 +122,6 @@ class Feed extends Component
             'pinnedPosts'   => $pinned,
             'burningPillar' => $burningPillar,
             'activeRune'    => $activeRune,
-        ])->layout('layouts.app', ['title' => 'Bảng tin — DSCons AI-BIM Lab']);
+        ])->layout('layouts.app', ['title' => 'Bảng tin — DSCons']);
     }
 }

@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<title>Tính năng — ai-bim.dscons.vn</title>
-<meta name="description" content="Cộng đồng thực chiến DSCons AI-BIM Lab: chuyển hóa kỹ sư MEP thành AI-BIM Engineer và BIM Developer.">
+<title>Tính năng — DSCons</title>
+<meta name="description" content="Cộng đồng thực chiến DSCons dành cho kỹ sư MEP: học tập, thử thách và phát triển năng lực nghề nghiệp.">
 <link rel="icon" type="image/webp" href="{{ asset('favicon.webp') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -235,8 +235,8 @@ footer a:hover { text-decoration: underline; }
 
 <header class="hero">
     <div class="tag">All-features overview</div>
-    <h1>Toàn bộ tính năng của ai-bim.dscons.vn</h1>
-    <p>DSCons AI-BIM Lab — cộng đồng thực chiến dành cho kỹ sư Cơ Điện muốn làm chủ AI, BIM và Vibe Coding. Học, làm, nộp sản phẩm, nhận phản hồi và xây dựng năng lực nghề nghiệp trong một nơi.</p>
+    <h1>Toàn bộ tính năng của DSCons</h1>
+    <p>DSCons — cộng đồng thực chiến dành cho kỹ sư Cơ Điện muốn phát triển năng lực nghề nghiệp qua học tập, thử thách và phản hồi thực tế. AI, BIM và Vibe Coding là những hướng nội dung trong hệ sinh thái này.</p>
     <div class="meta">Cập nhật {{ date('d/m/Y') }} · Internal use</div>
 </header>
 
@@ -558,7 +558,7 @@ footer a:hover { text-decoration: underline; }
 
 <footer>
     <p class="quote">"Một mình đi nhanh. Có cộng đồng đi xa. Có hệ thống — đi đúng."</p>
-    <p class="sig">ai-bim.dscons.vn · DSCons AI-BIM Lab · Internal feature recap · {{ date('Y') }}</p>
+    <p class="sig">dscons.vn · DSCons · Internal feature recap · {{ date('Y') }}</p>
     <p class="sig" style="margin-top: 8px;"><a href="/login">Đăng nhập</a> · <a href="/feed">Vào nền tảng</a></p>
 </footer>
 

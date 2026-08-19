@@ -10,7 +10,7 @@ class BadgeSeeder extends Seeder
     public function run(): void
     {
         $badges = [
-            ['name' => 'Tân binh', 'description' => 'Chào mừng đến DSCons AI-BIM Lab', 'icon' => '🌱', 'rarity' => 'common', 'condition_type' => 'level_gte', 'condition_value' => '1'],
+            ['name' => 'Tân binh', 'description' => 'Chào mừng đến cộng đồng DSCons', 'icon' => '🌱', 'rarity' => 'common', 'condition_type' => 'level_gte', 'condition_value' => '1'],
             ['name' => 'Cây bút', 'description' => 'Đăng bài viết đầu tiên', 'icon' => '✍️', 'rarity' => 'common', 'condition_type' => 'post_count_gte', 'condition_value' => '1'],
             ['name' => 'Nhà văn', 'description' => 'Đăng 10 bài viết', 'icon' => '📝', 'rarity' => 'rare', 'condition_type' => 'post_count_gte', 'condition_value' => '10'],
             ['name' => 'Bình luận gia', 'description' => 'Viết 10 bình luận', 'icon' => '💬', 'rarity' => 'common', 'condition_type' => 'comment_count_gte', 'condition_value' => '10'],

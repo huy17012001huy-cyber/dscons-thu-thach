@@ -82,6 +82,6 @@ class ClassSelection extends Component
     public function render()
     {
         return view('livewire.auth.class-selection')
-            ->layout('layouts.guest', ['title' => 'Chọn Class — DSCons AI-BIM Lab']);
+            ->layout('layouts.guest', ['title' => 'Chọn Class — DSCons']);
     }
 }

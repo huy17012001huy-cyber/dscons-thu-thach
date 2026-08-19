@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Membership hết hạn — DSCons AI-BIM Lab</title>
+    <title>Membership hết hạn — DSCons</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css'])
@@ -12,7 +12,7 @@
         <p style="font-size:3rem; margin-bottom:1rem;">!</p>
         <h1 style="font-size:1.5rem; font-weight:800; color:#1A1A1A; margin-bottom:0.5rem;">Membership đã hết hạn</h1>
         <p style="color:#5C5C66; font-size:0.875rem; margin-bottom:2rem; line-height:1.6;">
-            Cộng đồng DSCons AI-BIM Lab tiếp tục phát triển mỗi ngày.<br>Gia hạn ngay để không bỏ lỡ bất kỳ cơ hội nào.
+            Cộng đồng DSCons tiếp tục phát triển mỗi ngày.<br>Gia hạn ngay để không bỏ lỡ bất kỳ cơ hội nào.
         </p>
         <a href="{{ route('membership.pricing') }}" class="btn btn-primary" style="width:100%; justify-content:center; padding:0.875rem; font-size:1rem;">
             Xem gói & Gia hạn

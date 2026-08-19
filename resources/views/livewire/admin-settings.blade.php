@@ -11,12 +11,12 @@
             <div class="flex gap-3">
                 <div style="flex:1;">
                     <label style="font-size:0.75rem; color:#5C5C66; display:block; margin-bottom:0.3rem;">Tên người gửi</label>
-                    <input wire:model="mailFromName" type="text" class="input" placeholder="DSCons AI-BIM Lab">
+                    <input wire:model="mailFromName" type="text" class="input" placeholder="DSCons">
                     @error('mailFromName') <p style="color:#991B1B; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
                 </div>
                 <div style="flex:1;">
                     <label style="font-size:0.75rem; color:#5C5C66; display:block; margin-bottom:0.3rem;">Địa chỉ người gửi <span style="color:#991B1B;">*</span></label>
-                    <input wire:model="mailFromAddress" type="email" class="input" placeholder="no-reply@ai-bim.dscons.vn">
+                    <input wire:model="mailFromAddress" type="email" class="input" placeholder="no-reply@dscons.vn">
                     @error('mailFromAddress') <p style="color:#991B1B; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
                 </div>
             </div>

@@ -27,6 +27,6 @@ class CotPage extends Component {
         );
         else $query->latest('cot_at');
         return view('livewire.cot-page', ['posts' => $query->paginate(10)])
-            ->layout('layouts.app', ['title' => 'CỐT — DSCons AI-BIM Lab']);
+            ->layout('layouts.app', ['title' => 'Kiến thức cốt lõi — DSCons']);
     }
 }

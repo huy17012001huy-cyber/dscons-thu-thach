@@ -20,7 +20,7 @@
             <p style="font-size:0.875rem; color:#5C5C66; line-height:1.3;">
                 <span style="font-weight:600; color:#1A1A1A;">{{ auth()->user()->name }}</span>
                 &nbsp;đang đăng trong&nbsp;
-                <span style="font-weight:700; color:#1A1A1A;">DSCons AI-BIM Lab</span>
+                <span style="font-weight:700; color:#1A1A1A;">DSCons</span>
             </p>
         </div>
 

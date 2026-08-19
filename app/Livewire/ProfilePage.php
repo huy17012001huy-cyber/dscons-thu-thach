@@ -172,6 +172,6 @@ class ProfilePage extends Component
             'badges' => $badges,
             'contributions' => $contributions,
             'contributionStart' => $since,
-        ])->layout('layouts.app', ['title' => $this->profileUser->name.' — DSCons AI-BIM Lab']);
+        ])->layout('layouts.app', ['title' => $this->profileUser->name.' — DSCons']);
     }
 }

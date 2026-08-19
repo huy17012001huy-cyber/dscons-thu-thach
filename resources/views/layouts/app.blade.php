@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="{{ $brand->theme_primary ?? '#0F3D5E' }}">
+<meta name="theme-color" content="{{ $brand->theme_primary ?? '#1F77BE' }}">
 <title>{{ $title ?? brand()->name }}</title>
-<link rel="icon" type="image/svg+xml" href="{{ asset('dscons-ai-bim-lab.svg') }}">
+<link rel="icon" type="image/png" href="{{ asset('dscons-logo.png') }}">
 <meta name="description" content="{{ brand()->name }} — {{ brand()->tagline }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,12 +15,12 @@
 @livewireStyles
 <style>
 /* ════════════════════════════════════════════════
-   DSCons AI-BIM Lab Platform Shell
+   DSCons Platform Shell
    ════════════════════════════════════════════════ */
 
 /* Shell viewport — overflow only on body to avoid double-constraint flicker */
 /* html bg matches body to prevent white→beige flash on first paint (esp. Retina) */
-html { height: 100%; background: {{ $brand->theme_bg ?? '#F4F7F9' }}; }
+html { height: 100%; background: {{ $brand->theme_bg ?? '#F7FAFC' }}; }
 body { height: 100%; overflow: hidden; font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 /* Hide Alpine-controlled elements until hydration to prevent FOUC flash */
@@ -38,9 +38,9 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     --fs-md:   16px;   /* nav items, titles, headings */
 
     /* Colors */
-    --green:        {{ $brand->theme_primary ?? '#0F3D5E' }};
-    --green-pale:   {{ $brand->theme_accent ?? '#DCECF7' }};
-    --bg-app:       {{ $brand->theme_bg ?? '#F4F7F9' }};
+    --green:        {{ $brand->theme_primary ?? '#1F77BE' }};
+    --green-pale:   {{ $brand->theme_accent ?? '#E1F4F7' }};
+    --bg-app:       {{ $brand->theme_bg ?? '#F7FAFC' }};
     --bg-sb:        #FFFFFF;
     --bg-content:   #F4F7F9;
     --bg-card:      #ffffff;
@@ -613,9 +613,9 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     @if(isset($brand) && $brand->logo_path)
     <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="" style="width:20px; height:20px; border-radius:5px; object-fit:cover;">
     @else
-    <img src="{{ asset('dscons-ai-bim-lab.svg') }}" alt="" style="width:20px; height:20px;">
+    <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:20px;height:20px;object-fit:contain;">
     @endif
-    <span>{{ $brand->name ?? 'DSCons AI-BIM Lab' }}</span>
+    <span>{{ $brand->name ?? 'DSCons' }}</span>
 </div>
 
 <div id="app">
@@ -638,7 +638,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
                 @if($m->brand->logo_path)
                     <img src="{{ asset('storage/' . $m->brand->logo_path) }}" alt="{{ $m->brand->slug }}">
                 @else
-                    <img src="{{ asset('dscons-ai-bim-lab.svg') }}" alt="{{ $m->brand->slug }}" style="width:34px;height:34px;">
+                    <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:34px;height:34px;object-fit:contain;">
                 @endif
             </a>
         </div>
@@ -658,11 +658,11 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
                 @if(isset($brand) && $brand->logo_path)
                 <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="">
                 @else
-                <img src="{{ asset('dscons-ai-bim-lab.svg') }}" alt="" style="width:34px;height:34px;">
+                <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:58px;height:58px;object-fit:contain;">
                 @endif
                 <div class="banner-copy">
-                    <span>{{ $brand->name ?? 'DSCons AI-BIM Lab' }}</span>
-                    <small>AI · BIM · Vibe Coding</small>
+                    <span>{{ $brand->name ?? 'DSCons' }}</span>
+                    <small>Học tập · Thử thách · Cộng đồng</small>
                 </div>
             </div>
         @endif
@@ -676,7 +676,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     <div id="channel-list">
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Cộng đồng AI-BIM
+            Cộng đồng DSCons
         </div>
         <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -821,7 +821,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
             {{ $slot }}
         </div>
 
-        {{-- 4. RIGHT PANEL — DSCons AI-BIM Lab gamification ──── --}}
+        {{-- 4. RIGHT PANEL — DSCons gamification ──── --}}
         <div id="right-panel">
             <div id="right-panel-scroll">
                 @auth
@@ -873,7 +873,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
         {{ $brand->name }}
     </div>
     <div id="channel-list" style="flex:1;overflow-y:auto;padding:6px;">
-        <div class="ch-category">Cộng đồng AI-BIM</div>
+        <div class="ch-category">Cộng đồng DSCons</div>
         <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             <span class="ch-name">Bảng tin</span>

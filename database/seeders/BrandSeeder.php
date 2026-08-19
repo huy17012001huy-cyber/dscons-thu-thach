@@ -10,13 +10,13 @@ class BrandSeeder extends Seeder
     public function run(): void
     {
         Brand::query()->updateOrCreate(['id' => 1], [
-            'name' => config('app.name', 'DSCons AI-BIM Lab'),
-            'slug' => 'dscons-ai-bim-lab',
+            'name' => config('app.name', 'DSCons'),
+            'slug' => 'dscons',
             'domain' => env('BRAND_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost'),
-            'tagline' => 'Chuyển hóa kỹ sư MEP thành AI-BIM Engineer & BIM Developer',
-            'theme_primary' => env('BRAND_PRIMARY', '#0F3D5E'),
-            'theme_accent' => env('BRAND_ACCENT', '#DCECF7'),
-            'theme_bg' => env('BRAND_BACKGROUND', '#F4F7F9'),
+            'tagline' => 'Nền tảng học tập, thử thách và cộng đồng dành cho kỹ sư MEP',
+            'theme_primary' => env('BRAND_PRIMARY', '#1F77BE'),
+            'theme_accent' => env('BRAND_ACCENT', '#E1F4F7'),
+            'theme_bg' => env('BRAND_BACKGROUND', '#F7FAFC'),
             'has_expeditions' => true,
             'has_academy' => true,
             'has_marketplace' => true,

@@ -26,6 +26,6 @@ class AffiliatePage extends Component
             'earnings' => $earnings,
             'totalEarned' => $totalEarned,
             'totalPending' => $totalPending,
-        ])->layout('layouts.app', ['title' => 'Affiliate — DSCons AI-BIM Lab']);
+        ])->layout('layouts.app', ['title' => 'Affiliate — DSCons']);
     }
 }

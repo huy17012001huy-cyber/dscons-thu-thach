@@ -14,6 +14,6 @@ class ChallengePage extends Component {
             ->paginate(12);
 
         return view('livewire.challenge-page', ['challenges' => $challenges])
-            ->layout('layouts.app', ['title' => 'Challenge — DSCons AI-BIM Lab']);
+            ->layout('layouts.app', ['title' => 'Challenge — DSCons']);
     }
 }
