@@ -55,7 +55,7 @@ html.font-serif-mode .badge {
 
     body {
         background-color: #F7FAFC;
-        color: #1A1A1A;
+        color: #123B59;
         font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
         font-weight: 400;
@@ -130,7 +130,7 @@ html.font-serif-mode .badge {
         border: 1px solid #D4E1E8;
         border-radius: 0.5rem;
         padding: 0.5rem 0.75rem;
-        color: #1A1A1A;
+        color: #123B59;
         font-size: 0.875rem;
         width: 100%;
         transition: border-color 0.15s, box-shadow 0.15s;
@@ -141,7 +141,7 @@ html.font-serif-mode .badge {
         border-color: #1F77BE;
         box-shadow: 0 0 0 3px rgba(31,119,190,0.16);
     }
-    .input::placeholder { color: #5C5C66; }
+    .input::placeholder { color: #61798A; }
     textarea.input { resize: vertical; min-height: 80px; }
 
     /* ─── XP bar ────────────────────────────────────────────── */
@@ -303,7 +303,7 @@ html.font-serif-mode .badge {
         margin-bottom: -1px;
         transition: all 0.15s;
     }
-    .tab-item:hover { color: #2E2E2E; }
+    .tab-item:hover { color: #174E73; }
     .tab-item.active { color: #1F77BE; border-bottom-color: #F39402; font-weight: 600; }
 
     /* ─── Difficulty badges ─────────────────────────────────── */
@@ -355,7 +355,13 @@ html.font-serif-mode .badge {
     .prose-task h1 { font-size: 1.1em; }
     .prose-task h2 { font-size: 1em; }
     .prose-task h3 { font-size: 0.95em; }
-    .prose-task a { color: #0F3D5E; text-decoration: underline; }
+    .prose-task a { color: #1F77BE; text-decoration: underline; }
+
+    /* DSCons text palette for legacy inline styles across Livewire views. */
+    [style*="color:#1A1A1A"], [style*="color:#1a1a1a"] { color: #123B59 !important; }
+    [style*="color:#2E2E2E"], [style*="color:#2e2e2e"] { color: #174E73 !important; }
+    [style*="color:#5C5C66"], [style*="color:#5c5c66"], [style*="color:#6B6B6B"], [style*="color:#6b7280"], [style*="color:#8A8A94"] { color: #61798A !important; }
+    [style*="color:#d17856"], [style*="color:#D17856"], [style*="color:#b35f3d"], [style*="color:#B35F3D"] { color: #F39402 !important; }
     .prose-task blockquote { border-left: 3px solid #ccc; padding-left: 0.75em; color: #666; margin: 0.5em 0; }
 
     /* ─── Heatmap tooltip ───────────────────────────────────── */

@@ -42,15 +42,15 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     --green-pale:   {{ $brand->theme_accent ?? '#E1F4F7' }};
     --bg-app:       {{ $brand->theme_bg ?? '#F7FAFC' }};
     --bg-sb:        #FFFFFF;
-    --bg-content:   #F4F7F9;
+    --bg-content:   #F7FAFC;
     --bg-card:      #ffffff;
     --bg-hover:     #E7F0F5;
     --bg-active:    #DCECF7;
     --bg-input:     #FFFFFF;
-    --text:         #102A3B;
+    --text:         #123B59;
     --text-muted:   #61798A;
-    --text-ch:      #29485B;
-    --text-cat:     #6C8797;
+    --text-ch:      #174E73;
+    --text-cat:     #1F77BE;
     --border:       #D4E1E8;
 
     /* Layout dimensions */
@@ -558,7 +558,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 
 <body @if(session('impersonator_id')) class="is-impersonating" @endif>
 {{-- Skip link cho keyboard / screen reader --}}
-<a href="#content-area" style="position:absolute; left:-9999px; top:0; padding:0.5rem 1rem; background:#fff; color:#1A1A1A; font-size:0.85rem; font-weight:600; z-index:10000; border:2px solid #d17856; border-radius:0.375rem;" onfocus="this.style.left='0.5rem'; this.style.top='0.5rem';" onblur="this.style.left='-9999px';">Bỏ qua điều hướng</a>
+<a href="#content-area" style="position:absolute; left:-9999px; top:0; padding:0.5rem 1rem; background:#fff; color:#123B59; font-size:0.85rem; font-weight:600; z-index:10000; border:2px solid #F39402; border-radius:0.375rem;" onfocus="this.style.left='0.5rem'; this.style.top='0.5rem';" onblur="this.style.left='-9999px';">Bỏ qua điều hướng</a>
 
 {{-- Impersonation banner — visible whenever an admin is "playing" another user --}}
 @if(session('impersonator_id'))
