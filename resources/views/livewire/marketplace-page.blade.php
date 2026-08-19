@@ -103,7 +103,7 @@
             @endif
         </div>
         @empty
-        <div class="card text-center py-12" style="grid-column:1/-1;">
+        <div class="card empty-state" style="grid-column:1/-1;">
             <p style="font-size:2rem; margin-bottom:0.5rem;">▤</p>
             <p style="color:#5C5C66;">Chưa có sản phẩm nào{{ $pillar ? ' cho trụ cột này' : '' }}</p>
         </div>

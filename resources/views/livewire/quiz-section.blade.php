@@ -17,7 +17,7 @@
             --ink-soft:    #4a4038;
             --ink-mute:    #8a7f75;
             --shadow:      0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
-            font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
             margin: 16px 0 8px;
         }
         .quiz-skin .quiz-intro {
@@ -31,7 +31,7 @@
             margin: 0 0 8px;
             color: var(--gold);
             display: flex; align-items: center; gap: 10px;
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-size: 18px; font-weight: 600;
         }
         .quiz-skin .quiz-intro h3::before { content: "🎯"; font-size: 22px; }
@@ -47,7 +47,7 @@
             border: 1px solid var(--rule);
         }
         .quiz-skin .quiz-progress-text {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-size: 12px; color: var(--ink-soft); letter-spacing: 0.05em;
         }
         .quiz-skin .quiz-progress-bar {
@@ -71,13 +71,13 @@
             box-shadow: 0 0 0 1px var(--sage), var(--shadow);
         }
         .quiz-skin .quiz-num {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-size: 11px; letter-spacing: 0.15em;
             color: var(--accent); text-transform: uppercase;
             font-weight: 600; margin-bottom: 10px;
         }
         .quiz-skin .quiz-question {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-size: 17px; font-weight: 500;
             color: var(--ink); line-height: 1.45;
             margin-bottom: 16px;
@@ -99,7 +99,7 @@
             border: none;
             padding: 7px 12px;
             border-radius: 6px;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-size: 10.5px; letter-spacing: 0.05em;
             cursor: pointer;
             transition: background 0.2s;
@@ -132,7 +132,7 @@
         }
         .quiz-skin .quiz-option.locked { cursor: default; }
         .quiz-skin .quiz-option .option-letter {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-weight: 600; color: var(--accent);
             margin-right: 10px;
         }
@@ -148,7 +148,7 @@
             border: none;
             padding: 9px 20px;
             border-radius: 8px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 13.5px; font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -181,7 +181,7 @@
         }
         .quiz-skin .quiz-feedback strong {
             display: block; margin-bottom: 6px;
-            font-family: 'Fraunces', serif; font-size: 15px;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; font-size: 15px;
         }
         .quiz-skin .quiz-feedback.correct strong { color: var(--sage); }
         .quiz-skin .quiz-feedback.wrong strong { color: #b54a2c; }
@@ -196,7 +196,7 @@
             text-align: center;
         }
         .quiz-skin .quiz-success-title {
-            font-family: 'Fraunces', serif;
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
             font-size: 18px; font-weight: 600;
             color: var(--sage); margin-bottom: 8px;
             display: flex; align-items: center; justify-content: center; gap: 8px;

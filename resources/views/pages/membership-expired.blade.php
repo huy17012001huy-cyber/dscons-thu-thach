@@ -4,10 +4,10 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Membership hết hạn — DSCons</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css'])
 </head>
-<body style="background:#F7F5F3; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; font-family:'Geist',sans-serif;">
+<body style="background:#F7FAFC; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; font-family:'Inter',sans-serif;">
     <div class="card text-center" style="max-width:480px; width:100%; padding:3rem 2rem;">
         <p style="font-size:3rem; margin-bottom:1rem;">!</p>
         <h1 style="font-size:1.5rem; font-weight:800; color:#1A1A1A; margin-bottom:0.5rem;">Membership đã hết hạn</h1>

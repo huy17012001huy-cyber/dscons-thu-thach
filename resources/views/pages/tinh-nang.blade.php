@@ -9,7 +9,7 @@
 <link rel="icon" type="image/webp" href="{{ asset('favicon.webp') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -34,7 +34,7 @@ html { scroll-behavior: smooth; background: var(--paper); }
 body {
     background: var(--paper);
     color: var(--ink);
-    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
@@ -55,7 +55,7 @@ main {
 }
 .hero .tag {
     display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px;
     letter-spacing: 0.18em;
     color: var(--accent);
@@ -64,7 +64,7 @@ main {
     margin-bottom: 14px;
 }
 .hero h1 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(36px, 6vw, 56px);
     font-weight: 700;
     line-height: 1.05;
@@ -81,7 +81,7 @@ main {
 }
 .hero .meta {
     margin-top: 22px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px;
     color: var(--ink-mute);
     letter-spacing: 0.05em;
@@ -91,7 +91,7 @@ section {
     margin-bottom: 56px;
 }
 section h2 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 28px;
     font-weight: 600;
     color: var(--ink);
@@ -101,7 +101,7 @@ section h2 {
     gap: 14px;
 }
 section h2 .num {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 13px;
     color: var(--accent);
     font-weight: 600;
@@ -128,7 +128,7 @@ section .lead {
     box-shadow: var(--shadow);
 }
 .feature .label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 10.5px;
     letter-spacing: 0.12em;
     color: var(--accent);
@@ -138,7 +138,7 @@ section .lead {
     display: inline-block;
 }
 .feature h3 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 17px;
     font-weight: 600;
     color: var(--ink);
@@ -194,7 +194,7 @@ section .lead {
     margin-bottom: 56px;
 }
 .tldr-label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px;
     letter-spacing: 0.15em;
     color: var(--accent);
@@ -213,7 +213,7 @@ footer {
     color: var(--ink-mute);
 }
 footer .quote {
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-style: italic;
     font-size: 17px;
     color: var(--ink-soft);
@@ -221,7 +221,7 @@ footer .quote {
     line-height: 1.5;
 }
 footer .sig {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px;
     letter-spacing: 0.1em;
 }

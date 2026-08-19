@@ -28,7 +28,7 @@
         @forelse($posts as $post)
         <livewire:post-card :post="$post" :key="'cot-'.$post->id" />
         @empty
-        <div class="card text-center py-12">
+        <div class="card empty-state">
             <p style="font-size:2rem; margin-bottom:0.5rem;">★</p>
             <p style="color:#5C5C66;">Chưa có bài CỐT nào{{ $search ? ' khớp với tìm kiếm' : '' }}{{ $pillar ? ' trong trụ cột này' : '' }}</p>
         </div>

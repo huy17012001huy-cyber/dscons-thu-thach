@@ -9,7 +9,7 @@
 <link rel="icon" type="image/webp" href="{{ asset('favicon.webp') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -31,7 +31,7 @@
 html { background: var(--paper); }
 body {
     background: var(--paper); color: var(--ink);
-    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
@@ -41,14 +41,14 @@ main { max-width: 880px; margin: 0 auto; padding: 60px 32px 80px; }
 .hero { text-align: center; margin-bottom: 56px; padding-bottom: 32px; border-bottom: 1px solid var(--rule); }
 .hero .tag {
     display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px; letter-spacing: 0.18em;
     color: var(--accent);
     text-transform: uppercase; font-weight: 600;
     margin-bottom: 14px;
 }
 .hero h1 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(34px, 5.5vw, 48px);
     font-weight: 700; line-height: 1.05;
     color: var(--ink); letter-spacing: -0.02em;
@@ -61,13 +61,13 @@ main { max-width: 880px; margin: 0 auto; padding: 60px 32px 80px; }
     background: var(--paper-warm);
     border: 1px solid var(--rule);
     padding: 6px 14px; border-radius: 999px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px; letter-spacing: 0.04em;
     color: var(--ink-mute);
 }
 
 .section-label {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px; letter-spacing: 0.15em;
     color: var(--accent);
     text-transform: uppercase; font-weight: 600;
@@ -95,7 +95,7 @@ main { max-width: 880px; margin: 0 auto; padding: 60px 32px 80px; }
     display: flex; align-items: center; gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 10px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 10.5px; letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ink-mute);
@@ -116,7 +116,7 @@ main { max-width: 880px; margin: 0 auto; padding: 60px 32px 80px; }
     color: var(--sage);
 }
 .post h2 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 22px;
     font-weight: 600;
     color: var(--ink);
@@ -130,7 +130,7 @@ main { max-width: 880px; margin: 0 auto; padding: 60px 32px 80px; }
     margin-bottom: 12px;
 }
 .post .open {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px; letter-spacing: 0.1em;
     color: var(--accent);
     font-weight: 600;
@@ -150,7 +150,7 @@ footer {
     padding-top: 32px;
     border-top: 1px solid var(--rule);
     color: var(--ink-mute);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-size: 11px; letter-spacing: 0.1em;
 }
 footer a { color: var(--accent); text-decoration: none; font-weight: 600; }

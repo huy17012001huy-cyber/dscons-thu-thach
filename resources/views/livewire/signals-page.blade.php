@@ -19,7 +19,7 @@
         @forelse($posts as $post)
         <livewire:post-card :post="$post" :key="'sig-'.$post->id" />
         @empty
-        <div class="card text-center py-12">
+        <div class="card empty-state">
             <p style="font-size:2rem; margin-bottom:0.5rem;">⚡</p>
             <p style="color:#5C5C66;">Chưa có tín hiệu nào{{ $pillar ? ' trong trụ cột này' : '' }}</p>
         </div>
