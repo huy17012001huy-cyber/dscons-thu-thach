@@ -664,7 +664,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     {{-- Home / Messages icon (like Discord DM button) --}}
     @auth
     <div class="guild-item">
-        <a href="{{ route('messages') }}" class="guild-icon" title="Tin nhắn" style="background:var(--bg-card);">
+        <a href="{{ route('messages') }}" class="guild-icon" title="Tin nhắn" aria-label="Mở tin nhắn" style="background:var(--bg-card);">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--text-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
         </a>
     </div>
@@ -785,7 +785,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
         </div>
         <form method="POST" action="{{ route('logout') }}" style="display:flex;">
             @csrf
-            <button type="submit" class="panel-btn" title="Đăng xuất">
+            <button type="submit" class="panel-btn" title="Đăng xuất" aria-label="Đăng xuất">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
@@ -818,7 +818,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
         <div class="topbar-right">
             @auth
             <livewire:notification-bell />
-            <a href="{{ route('messages') }}" class="topbar-btn" title="Tin nhắn">
+            <a href="{{ route('messages') }}" class="topbar-btn" title="Tin nhắn" aria-label="Mở tin nhắn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
             </a>
             @endauth
