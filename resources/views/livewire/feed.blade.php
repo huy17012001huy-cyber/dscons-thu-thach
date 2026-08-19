@@ -31,7 +31,7 @@
     @endauth
 
     {{-- Tab bar + Pillar dropdown --}}
-    <div class="flex items-center gap-1 mt-4 mb-3 flex-wrap">
+    <div class="feed-toolbar flex items-center gap-1 mt-4 mb-3 flex-wrap">
         <div class="tab-nav" style="margin-bottom:0; border:0; flex:1; min-width:0;">
             <button wire:click="setTab('latest')" class="tab-item {{ $tab === 'latest' ? 'active' : '' }}" style="white-space:nowrap;">Mới nhất</button>
             <button wire:click="setTab('cot')" class="tab-item {{ $tab === 'cot' ? 'active' : '' }}" style="white-space:nowrap;">★ CỐT</button>
@@ -84,7 +84,7 @@
         @forelse($posts as $post)
             <livewire:post-card :post="$post" :key="'p-'.$post->id" />
         @empty
-            <div class="card text-center py-12">
+            <div class="card empty-state">
                 <p style="font-size:2rem; margin-bottom:0.5rem;">📭</p>
                 <p style="color:#5C5C66;">Chưa có bài viết nào</p>
                 @if(auth()->check())

@@ -1,5 +1,5 @@
 <div>
-    <div class="flex items-center justify-between mb-4">
+    <div class="page-heading">
         <div>
             <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">★ Challenge</h1>
             <p style="font-size:0.8rem; color:#5C5C66;">Thử thách thực chiến · Nâng cấp kỹ năng mỗi ngày</p>
@@ -8,7 +8,7 @@
 
     <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
         @forelse($challenges as $ch)
-        <a href="{{ route('challenge.show', $ch->slug ?? $ch->id) }}" class="card block" style="text-decoration:none; transition:border-color 0.15s;">
+        <a href="{{ route('challenge.show', $ch->slug ?? $ch->id) }}" class="card challenge-card block" style="text-decoration:none;">
             <div class="flex items-start justify-between mb-2">
                 <h3 style="font-size:0.9rem; font-weight:700; color:#1A1A1A; flex:1; padding-right:0.5rem;">{{ $ch->title }}</h3>
                 <span class="badge difficulty-{{ $ch->difficulty }}" style="font-size:0.65rem; white-space:nowrap;">{{ $ch->difficulty_label }}</span>
@@ -39,13 +39,13 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="card-footer flex items-center gap-2">
                 <img src="{{ $ch->leader->avatar_url }}" class="avatar w-6 h-6" alt="">
                 <span style="font-size:0.75rem; color:#5C5C66;">Leader: <strong style="color:#1A1A1A;">{{ $ch->leader->name }}</strong></span>
             </div>
         </a>
         @empty
-        <div class="card text-center py-12" style="grid-column:1/-1;">
+        <div class="card empty-state" style="grid-column:1/-1;">
             <p style="font-size:2rem; margin-bottom:0.5rem;">★</p>
             <p style="color:#5C5C66;">Không có challenge nào</p>
         </div>

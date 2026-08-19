@@ -1,4 +1,4 @@
-<div class="card mb-4">
+<div class="card compose-card mb-4">
 
     {{-- COLLAPSED --}}
     @if(!$expanded)

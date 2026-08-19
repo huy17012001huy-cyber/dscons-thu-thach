@@ -1,5 +1,5 @@
 <div>
-    <div class="flex items-center justify-between mb-4">
+    <div class="page-heading">
         <div>
             <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">▦ Khóa học</h1>
             <p style="font-size:0.8rem; color:#5C5C66;">Khóa học chuyên sâu theo từng trụ cột</p>
@@ -7,7 +7,7 @@
     </div>
 
     {{-- Filters --}}
-    <div class="flex flex-wrap gap-3 items-center mb-4">
+    <div class="filter-bar filter-bar-scroll">
         <div class="flex gap-1">
             @foreach(['offer'=>'🔥 Offer','traffic'=>'✨ Traffic','conversion'=>'🎯 Conversion','delivery'=>'⚙️ Delivery','continuity'=>'🔗 Continuity'] as $key => $label)
             <button wire:click="setPillar('{{ $key }}')" class="badge {{ $pillar === $key ? 'badge-pillar-'.$key : '' }}" style="cursor:pointer; padding:0.25rem 0.625rem; font-size:0.75rem; {{ $pillar === $key ? '' : 'background:#EEECE9; color:#5C5C66;' }}">{{ $label }}</button>
@@ -23,13 +23,13 @@
     {{-- Course grid --}}
     <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
         @forelse($courses as $course)
-        <div class="card">
+        <div class="card course-card">
             @if($course->thumbnail)
-            <div style="height:140px; background:#EEECE9; border-radius:0.5rem; margin-bottom:0.75rem; overflow:hidden;">
+            <div class="course-thumb" style="background:#EEECE9; border-radius:0.5rem; margin-bottom:0.75rem; overflow:hidden;">
                 <img src="{{ asset('storage/' . $course->thumbnail) }}" alt="" style="width:100%; height:100%; object-fit:cover;">
             </div>
             @else
-            <div style="height:140px; background:#F0EDE8; border-radius:0.5rem; margin-bottom:0.75rem; display:flex; align-items:center; justify-content:center;">
+            <div class="course-thumb" style="background:#F0EDE8; border-radius:0.5rem; margin-bottom:0.75rem; display:flex; align-items:center; justify-content:center;">
                 <span style="font-size:2.5rem;">▦</span>
             </div>
             @endif
@@ -63,7 +63,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-between">
+            <div class="card-footer flex items-center justify-between">
                 @if($course->price > 0)
                 <p style="font-size:0.9rem; font-weight:700; color:#d17856;">{{ number_format($course->price, 0, ',', '.') }}đ</p>
                 @else
@@ -73,7 +73,7 @@
             </div>
         </div>
         @empty
-        <div class="card text-center py-12" style="grid-column:1/-1;">
+        <div class="card empty-state" style="grid-column:1/-1;">
             <p style="font-size:2rem; margin-bottom:0.5rem;">▦</p>
             <p style="color:#5C5C66;">Chưa có khóa học nào{{ $pillar ? ' cho trụ cột này' : '' }}</p>
         </div>
