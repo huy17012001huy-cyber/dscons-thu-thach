@@ -16,6 +16,6 @@ class AdminDashboard extends Component
             'totalPosts' => Post::count(),
             'pendingReports' => Report::where('status', 'pending')->count(),
             'pendingCot' => Post::whereNotNull('cot_by')->where('is_cot', false)->count(),
-        ])->layout('layouts.app', ['title' => 'Admin — The All In Plan™']);
+        ])->layout('layouts.app', ['title' => 'Admin — Website Thử Thách']);
     }
 }

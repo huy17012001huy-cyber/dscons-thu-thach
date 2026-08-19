@@ -52,6 +52,6 @@ class SearchResults extends Component
             'posts' => $posts,
             'users' => $users,
             'questions' => $questions,
-        ])->layout('layouts.app', ['title' => 'Tìm kiếm: '.$this->q.' — The All In Plan™']);
+        ])->layout('layouts.app', ['title' => 'Tìm kiếm: '.$this->q.' — Website Thử Thách']);
     }
 }

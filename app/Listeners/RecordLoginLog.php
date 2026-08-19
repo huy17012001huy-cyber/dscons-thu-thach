@@ -26,7 +26,7 @@ class RecordLoginLog
                 }
             }
 
-            $cookie = request()->cookie('taip_device_id');
+            $cookie = request()->cookie('challenge_device_id');
 
             // DEBUG: log những gì listener thấy được khi event Login fire
             \Log::info('RecordLoginLog firing', [

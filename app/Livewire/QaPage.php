@@ -211,6 +211,6 @@ class QaPage extends Component
         };
 
         return view('livewire.qa-page', ['questions' => $query->latest()->paginate(10)])
-            ->layout('layouts.app', ['title' => 'Hỏi đáp — The All In Plan™']);
+            ->layout('layouts.app', ['title' => 'Hỏi đáp — Website Thử Thách']);
     }
 }

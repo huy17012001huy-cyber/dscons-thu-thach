@@ -41,7 +41,7 @@
         <div style="margin-top: 40px;border-top: 1px solid #eeeeee;padding-top: 20px;font-size: 14px;color: #666666">
             Nếu cần hỗ trợ thêm, bạn có thể liên hệ admin fanpage hoặc tại theallinplan.com.<br><br>
             Hẹn gặp bạn bên trong!<br>
-            <strong style="color: #000">Team TAIP &amp; {{ $brandName }}.</strong>
+            <strong style="color: #000">Team Website Thử Thách &amp; {{ $brandName }}.</strong>
         </div>
     </div>
 </body>

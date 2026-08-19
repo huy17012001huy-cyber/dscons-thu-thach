@@ -9,24 +9,24 @@
 @theme {
     --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
 
-    /* All In Plan — Warm campfire theme */
+    /* Website Thử Thách — Warm campfire theme */
     --color-bg-base:       #FFFFFF;
-    --color-bg-subtle:     #FAF8F5;
-    --color-bg-muted:      #F0EDE8;
-    --color-border:        #E8E4DE;
-    --color-border-strong: #C8C3BA;
+    --color-bg-subtle:     #F8FAFC;
+    --color-bg-muted:      #EAF2FF;
+    --color-border:        #DCE5F3;
+    --color-border-strong: #B9C7DB;
     --color-text-primary:  #1A1A1A;
     --color-text-secondary:#2E2E2E;
     --color-text-muted:    #6B6B6B;
     --color-text-inverse:  #FFFFFF;
 
-    --color-accent:        #d17856;
-    --color-accent-light:  #fbece4;
-    --color-accent-dark:   #b35f3d;
-    --color-green:         #d17856;
-    --color-green-light:   #fbece4;
-    --color-salmon:        #C4956A;
-    --color-salmon-light:  #F5E6D3;
+    --color-accent:        #2563EB;
+    --color-accent-light:  #DBEAFE;
+    --color-accent-dark:   #1D4ED8;
+    --color-green:         #2563EB;
+    --color-green-light:   #DBEAFE;
+    --color-salmon:        #F97316;
+    --color-salmon-light:  #FFEDD5;
 
     /* Pillar accent colors */
     --color-pillar-offer:      #D97706;
@@ -54,7 +54,7 @@ html.font-serif-mode .badge {
     }
 
     body {
-        background-color: #f0ede8;
+        background-color: #F8FAFC;
         color: #1A1A1A;
         font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;

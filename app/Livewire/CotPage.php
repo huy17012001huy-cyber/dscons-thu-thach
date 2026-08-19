@@ -27,6 +27,6 @@ class CotPage extends Component {
         );
         else $query->latest('cot_at');
         return view('livewire.cot-page', ['posts' => $query->paginate(10)])
-            ->layout('layouts.app', ['title' => 'CỐT — The All In Plan™']);
+            ->layout('layouts.app', ['title' => 'CỐT — Website Thử Thách']);
     }
 }

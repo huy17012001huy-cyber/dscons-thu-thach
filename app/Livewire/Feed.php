@@ -122,6 +122,6 @@ class Feed extends Component
             'pinnedPosts'   => $pinned,
             'burningPillar' => $burningPillar,
             'activeRune'    => $activeRune,
-        ])->layout('layouts.app', ['title' => 'Bảng tin — The All In Plan™']);
+        ])->layout('layouts.app', ['title' => 'Bảng tin — Website Thử Thách']);
     }
 }

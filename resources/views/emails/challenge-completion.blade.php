@@ -59,7 +59,7 @@
 
         <div style="margin-top: 36px;border-top: 1px solid #eeeeee;padding-top: 20px;font-size: 14px;color: #666666">
             Cảm ơn bạn đã kiên trì cùng cộng đồng. Hành trình tiếp theo đang chờ!<br><br>
-            <strong style="color: #000">Team TAIP &amp; {{ $brandName }}.</strong>
+            <strong style="color: #000">Team Website Thử Thách &amp; {{ $brandName }}.</strong>
         </div>
     </div>
 </body>

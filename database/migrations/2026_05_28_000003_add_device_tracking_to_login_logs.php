@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('login_logs', function (Blueprint $table) {
-            // UUID dài cố định set bởi middleware vào cookie taip_device_id (5 năm).
+            // UUID dài cố định set bởi middleware vào cookie challenge_device_id (5 năm).
             // Cùng máy/browser → cùng cookie kể cả qua nhiều account → catch nick ảo
             // mạnh hơn IP (IP có thể đổi do dynamic ISP).
             $table->string('device_cookie_id', 36)->nullable()->index()->after('via_admin');

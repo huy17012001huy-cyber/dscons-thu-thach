@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<title>Tính năng — taip.io</title>
-<meta name="description" content="Toàn bộ tính năng của nền tảng The All In Plan — thử thách nhiều ngày, XP, quiz tương tác, cộng đồng, vote, quản trị.">
+<title>Tính năng — website-thu-thach.local</title>
+<meta name="description" content="Toàn bộ tính năng của nền tảng Website Thử Thách — thử thách nhiều ngày, XP, quiz tương tác, cộng đồng, vote, quản trị.">
 <link rel="icon" type="image/webp" href="{{ asset('favicon.webp') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -235,8 +235,8 @@ footer a:hover { text-decoration: underline; }
 
 <header class="hero">
     <div class="tag">All-features overview</div>
-    <h1>Toàn bộ tính năng của taip.io</h1>
-    <p>The All In Plan™ — nền tảng thử thách nhiều ngày dành cho marketer / entrepreneur Việt. Học, làm, nộp bài, vote, kiếm XP, leo Level — tất cả trong 1 nơi.</p>
+    <h1>Toàn bộ tính năng của website-thu-thach.local</h1>
+    <p>Website Thử Thách — nền tảng thử thách nhiều ngày dành cho marketer / entrepreneur Việt. Học, làm, nộp bài, vote, kiếm XP, leo Level — tất cả trong 1 nơi.</p>
     <div class="meta">Cập nhật {{ date('d/m/Y') }} · Internal use</div>
 </header>
 
@@ -558,7 +558,7 @@ footer a:hover { text-decoration: underline; }
 
 <footer>
     <p class="quote">"Một mình đi nhanh. Có cộng đồng đi xa. Có hệ thống — đi đúng."</p>
-    <p class="sig">taip.io · The All In Plan™ · Internal feature recap · {{ date('Y') }}</p>
+    <p class="sig">website-thu-thach.local · Website Thử Thách · Internal feature recap · {{ date('Y') }}</p>
     <p class="sig" style="margin-top: 8px;"><a href="/login">Đăng nhập</a> · <a href="/feed">Vào nền tảng</a></p>
 </footer>
 

@@ -1,6 +1,8 @@
 *.log
 .DS_Store
 .env
+.env.docker
+.env.staging
 .env.backup
 .env.production
 .phpactor.json
@@ -24,3 +26,4 @@ Homestead.yaml
 Thumbs.db
 /claudekit-engineer-main 2
 /.claude/settings.local.json
+/.agents/

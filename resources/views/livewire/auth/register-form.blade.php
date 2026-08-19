@@ -23,7 +23,7 @@
                     ctx.textBaseline = 'top';
                     ctx.font = '14px Arial';
                     ctx.fillStyle = '#f60'; ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = '#069'; ctx.fillText('taip-fp 🔐', 2, 15);
+                    ctx.fillStyle = '#069'; ctx.fillText('challenge-fp 🔐', 2, 15);
                     parts.push(c.toDataURL());
                 } catch (e) {}
                 try {
@@ -73,7 +73,7 @@
         </form>
 
         <p style="text-align:center; margin-top:1.25rem; font-size:0.75rem; color:#5C5C66;">
-            Khi đăng ký, bạn đồng ý với Điều khoản sử dụng của The All In Plan™
+            Khi đăng ký, bạn đồng ý với Điều khoản sử dụng của Website Thử Thách
         </p>
 
         <p style="text-align:center; margin-top:0.75rem; font-size:0.875rem; color:#5C5C66;">

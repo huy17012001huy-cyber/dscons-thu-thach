@@ -1,4 +1,4 @@
-# The All In Plan™ — Project Context
+# Website Thử Thách — Project Context
 
 ## Stack
 - **Laravel 12** + **Livewire 3** (full-stack, no separate API)

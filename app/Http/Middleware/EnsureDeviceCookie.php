@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 class EnsureDeviceCookie
 {
     /**
-     * Đảm bảo browser có cookie `taip_device_id` (UUID, 5 năm).
+     * Đảm bảo browser có cookie `challenge_device_id` (UUID, 5 năm).
      *
      * Cookie persist qua logout/login → mọi account đăng nhập từ cùng browser
      * đều mang cùng cookie_id, dùng để phát hiện nick ảo trong AdminLoginLogs.
@@ -19,14 +19,14 @@ class EnsureDeviceCookie
      */
     public function handle(Request $request, Closure $next)
     {
-        $existing = $request->cookie('taip_device_id');
+        $existing = $request->cookie('challenge_device_id');
         $generated = false;
 
         if (!$existing) {
             $existing = (string) Str::uuid();
             $generated = true;
             // Inject ngay vào request hiện tại để listener (RecordLoginLog) đọc được
-            $request->cookies->set('taip_device_id', $existing);
+            $request->cookies->set('challenge_device_id', $existing);
         }
 
         // DEBUG: log mọi request POST tới /livewire/update để xác minh middleware có chạy
@@ -34,7 +34,7 @@ class EnsureDeviceCookie
             Log::info('EnsureDeviceCookie ran on livewire/update', [
                 'existing'     => $existing,
                 'generated'    => $generated,
-                'after_inject' => $request->cookie('taip_device_id'),
+                'after_inject' => $request->cookie('challenge_device_id'),
                 'all_cookies'  => array_keys($request->cookies->all()),
             ]);
         }
@@ -47,7 +47,7 @@ class EnsureDeviceCookie
         // headers->setCookie tồn tại trên MỌI subclass của Symfony Response.
         $response->headers->setCookie(
             Cookie::create(
-                'taip_device_id',
+                'challenge_device_id',
                 $existing,
                 time() + 60 * 60 * 24 * 365 * 5,  // 5 năm (unix timestamp)
                 '/',

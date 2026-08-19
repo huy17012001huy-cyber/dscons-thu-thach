@@ -74,6 +74,6 @@ class MarketplacePage extends Component
             'products' => $products,
             'purchasedIds' => $purchasedIds,
             'pendingIds' => $pendingIds,
-        ])->layout('layouts.app', ['title' => 'Marketplace — The All In Plan™']);
+        ])->layout('layouts.app', ['title' => 'Marketplace — Website Thử Thách']);
     }
 }

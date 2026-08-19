@@ -1,4 +1,4 @@
-<x-layouts.app :title="$page . ' — The All In Plan™'">
+<x-layouts.app :title="$page . ' — Website Thử Thách'">
     <div class="card text-center py-16">
         <p style="font-size:3rem; margin-bottom:1rem;">🚧</p>
         <h1 style="font-size:1.25rem; font-weight:700; color:#1A1A1A; margin-bottom:0.5rem;">{{ $page }}</h1>

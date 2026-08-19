@@ -82,6 +82,6 @@ class ClassSelection extends Component
     public function render()
     {
         return view('livewire.auth.class-selection')
-            ->layout('layouts.guest', ['title' => 'Chọn Class — The All In Plan™']);
+            ->layout('layouts.guest', ['title' => 'Chọn Class — Website Thử Thách']);
     }
 }

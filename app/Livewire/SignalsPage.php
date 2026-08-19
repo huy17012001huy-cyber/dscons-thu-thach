@@ -19,6 +19,6 @@ class SignalsPage extends Component {
         $query->latest();
         $todayCount = Post::where('is_signal', true)->whereDate('created_at', today())->count();
         return view('livewire.signals-page', ['posts' => $query->paginate(15), 'todayCount' => $todayCount])
-            ->layout('layouts.app', ['title' => 'Tín hiệu — The All In Plan™']);
+            ->layout('layouts.app', ['title' => 'Tín hiệu — Website Thử Thách']);
     }
 }

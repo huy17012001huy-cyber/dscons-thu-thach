@@ -37,7 +37,7 @@
                     ctx.textBaseline = 'top';
                     ctx.font = '14px Arial';
                     ctx.fillStyle = '#f60'; ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = '#069'; ctx.fillText('taip-fp 🔐', 2, 15);
+                    ctx.fillStyle = '#069'; ctx.fillText('challenge-fp 🔐', 2, 15);
                     parts.push(c.toDataURL());
                 } catch (e) {}
                 try {

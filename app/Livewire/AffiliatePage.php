@@ -26,6 +26,6 @@ class AffiliatePage extends Component
             'earnings' => $earnings,
             'totalEarned' => $totalEarned,
             'totalPending' => $totalPending,
-        ])->layout('layouts.app', ['title' => 'Affiliate — The All In Plan™']);
+        ])->layout('layouts.app', ['title' => 'Affiliate — Website Thử Thách']);
     }
 }

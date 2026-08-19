@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="{{ $brand->theme_bg ?? '#f0ede8' }}">
+<meta name="theme-color" content="{{ $brand->theme_primary ?? '#2563EB' }}">
 <title>{{ $title ?? brand()->name }}</title>
-<link rel="icon" type="image/webp" href="{{ asset('favicon.webp') }}">
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 <meta name="description" content="{{ brand()->name }} — {{ brand()->tagline }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 @livewireStyles
 <style>
 /* ════════════════════════════════════════════════
-   TAIP Platform Shell
+   Website Thử Thách Platform Shell
    ════════════════════════════════════════════════ */
 
 /* Shell viewport — overflow only on body to avoid double-constraint flicker */
@@ -611,7 +611,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     @if(isset($brand) && $brand->logo_path)
     <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="" style="width:20px; height:20px; border-radius:5px; object-fit:cover;">
     @endif
-    <span>{{ $brand->name ?? 'The All In Plan' }}</span>
+    <span>{{ $brand->name ?? 'Website Thử Thách' }}</span>
 </div>
 
 <div id="app">
@@ -654,7 +654,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
                 @if(isset($brand) && $brand->logo_path)
                 <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="">
                 @endif
-                <span>{{ $brand->name ?? 'TAIP' }}</span>
+                <span>{{ $brand->name ?? 'Website Thử Thách' }}</span>
             </div>
         @endif
     </div>
@@ -812,7 +812,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
             {{ $slot }}
         </div>
 
-        {{-- 4. RIGHT PANEL — TAIP gamification ──── --}}
+        {{-- 4. RIGHT PANEL — Website Thử Thách gamification ──── --}}
         <div id="right-panel">
             <div id="right-panel-scroll">
                 @auth
