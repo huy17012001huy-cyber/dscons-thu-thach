@@ -203,6 +203,10 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     border-radius: 12px;
     object-fit: cover;
 }
+#community-banner .banner-fallback > span {
+    color: #1F77BE;
+    font-weight: 700;
+}
 
 #sidebar-header {
     height: 52px;
