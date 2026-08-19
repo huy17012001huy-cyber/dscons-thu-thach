@@ -10,7 +10,7 @@
 <meta name="description" content="{{ brand()->name }} — {{ brand()->tagline }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=optional" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @livewireStyles
 <style>
@@ -21,20 +21,20 @@
 /* Shell viewport — overflow only on body to avoid double-constraint flicker */
 /* html bg matches body to prevent white→beige flash on first paint (esp. Retina) */
 html { height: 100%; background: {{ $brand->theme_bg ?? '#F7FAFC' }}; }
-body { height: 100%; overflow: hidden; font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+body { height: 100%; overflow: hidden; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 /* Hide Alpine-controlled elements until hydration to prevent FOUC flash */
 [x-cloak] { display: none !important; }
 
 /* Impersonation banner adjustments — measured at runtime via min-height,
    but the layout subtractions are deterministic */
-body.is-impersonating #app { height: calc(100% - 28px - 36px); }
+body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 
 :root {
     /* Type scale — 4 steps only */
-    --fs-xs:   11px;   /* uppercase labels, badge counts */
-    --fs-sm:   13px;   /* captions, meta, secondary */
-    --fs-base: 15px;   /* body, names, panel text */
+    --fs-xs:   12px;   /* uppercase labels, badge counts */
+    --fs-sm:   14px;   /* captions, meta, secondary */
+    --fs-base: 16px;   /* body, names, panel text */
     --fs-md:   16px;   /* nav items, titles, headings */
 
     /* Colors */
@@ -52,6 +52,12 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     --text-ch:      #1A1A1A;
     --text-cat:     #1A1A1A;
     --border:       #D4E1E8;
+    --shadow-sm:    0 1px 2px rgba(18,59,89,.06), 0 4px 14px rgba(18,59,89,.04);
+    --shadow-md:    0 8px 24px rgba(18,59,89,.08);
+    --radius-sm:    8px;
+    --radius-md:    12px;
+    --motion-fast:  150ms;
+    --motion-base: 220ms;
 
     /* Layout dimensions */
     --guild-w:      72px;
@@ -64,7 +70,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 
 /* ── Community title bar ── */
 #community-bar {
-    height: 28px;
+    height: 32px;
     background: var(--bg-app);
     display: flex;
     align-items: center;
@@ -80,7 +86,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 #app {
     display: flex;
     width: 100%;
-    height: calc(100% - 28px);
+    height: calc(100% - 32px);
     overflow: hidden;
     background: var(--bg-app);
 }
@@ -167,7 +173,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     display: flex;
     flex-direction: column;
     border-right: none;
-    border-radius: 12px 0 0 0;
+    border-radius: var(--radius-md) 0 0 0;
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -175,7 +181,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 /* Community banner at top of sidebar */
 #community-banner {
     width: 100%;
-    height: 120px;
+    height: 112px;
     background: linear-gradient(135deg, var(--green-pale), var(--bg-hover));
     display: flex;
     align-items: center;
@@ -241,7 +247,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 #channel-list::-webkit-scrollbar { display: none; }
 
 .ch-category {
-    padding: 12px 8px 2px;
+    padding: 16px 8px 4px;
     font-size: var(--fs-xs);
     font-weight: 700;
     text-transform: uppercase;
@@ -258,9 +264,10 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 .ch-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: 6px;
+    gap: 10px;
+    min-height: 40px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
     color: var(--text-ch);
     font-size: var(--fs-md);
     font-weight: 500;
@@ -270,7 +277,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     text-decoration: none;
     transition: background .1s, color .1s;
 }
-.ch-item:hover   { background: var(--bg-hover); color: #1A1A1A; }
+.ch-item:hover   { background: var(--bg-hover); color: #1A1A1A; transform: translateX(2px); }
 .ch-item.active  { background: var(--bg-active); color: #1A1A1A; font-weight: 600; }
 .ch-item svg     { width: 18px; height: 18px; flex-shrink: 0; opacity: .5; }
 .ch-item.active svg, .ch-item:hover svg { opacity: 1; }
@@ -375,7 +382,8 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 4px 10px;
+    min-height: 36px;
+    padding: 6px 10px;
     font-size: var(--fs-sm);
     color: #1A1A1A;
     min-width: 120px;
@@ -383,7 +391,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 }
 .topbar-search svg { width: 12px; height: 12px; }
 .topbar-btn {
-    width: 30px; height: 30px;
+    width: 36px; height: 36px;
     border-radius: 6px; background: transparent; border: none;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     color: var(--text-muted); transition: background .1s;
@@ -403,7 +411,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     flex-shrink: 0;
 }
 .mob-menu-btn {
-    width: 32px; height: 32px;
+    width: 44px; height: 44px;
     border-radius: 8px; background: var(--bg-hover); border: none;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     color: var(--text-muted);
@@ -417,7 +425,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 1.5rem;
+    padding: 1.75rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(0,0,0,0.08) transparent;
     min-width: 0;
@@ -450,7 +458,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 #right-panel-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 2px; }
 
 /* Right panel cards */
-.rp-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.rp-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-sm); }
 .rp-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .rp-card-title { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .rp-see-all { font-size: var(--fs-xs); font-weight: 600; color: var(--green); text-decoration: none; }
@@ -503,7 +511,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 }
 .mob-nav-btn {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
-    cursor: pointer; padding: 6px 16px;
+    cursor: pointer; min-width: 64px; min-height: 44px; padding: 6px 12px;
     color: var(--text-muted); text-decoration: none;
     font-size: var(--fs-xs); font-weight: 500;
     border-radius: 8px; transition: color .1s;
@@ -523,7 +531,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 #mob-sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
-    width: 300px;
+    width: min(320px, 88vw);
     background: var(--bg-sb);
     z-index: 450;
     transform: translateX(-100%);
@@ -534,6 +542,20 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 }
 #mob-sidebar.open { transform: translateX(0); }
 #mob-sidebar #channel-list { display: flex; flex-direction: column; }
+.mobile-sidebar-header {
+    min-height: 56px;
+    padding: 8px 12px 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text);
+    font-size: var(--fs-md);
+    font-weight: 700;
+}
+.mobile-sidebar-header .panel-btn { width: 40px; height: 40px; }
+.mobile-sidebar-header .panel-btn svg { width: 18px; height: 18px; }
 
 /* ══ RESPONSIVE ════════════════════════════════ */
 @media (max-width: 1200px) {
@@ -552,10 +574,25 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     #mobile-topbar { display: flex; }
     #mobile-nav    { display: flex; }
 
-    #main-area { padding-bottom: var(--mob-nav-h); height: 100%; }
-    #content-area { padding: .5rem; }
+    #main-area { padding-bottom: var(--mob-nav-h); height: 100dvh; }
+    #content-area { padding: .75rem; }
 
     #impersonation-banner { font-size: 11px; }
+}
+
+/* Shared interaction and accessibility states. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid rgba(31,119,190,.35);
+    outline-offset: 2px;
+}
+button, a, input, select, textarea { touch-action: manipulation; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+    }
 }
 </style>
 </head>
@@ -785,7 +822,9 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
             </a>
             @endauth
-            <div class="topbar-search" x-data @click="window.location.href='{{ route('search') }}'">
+            <div class="topbar-search" x-data role="button" tabindex="0" aria-label="Mở tìm kiếm"
+                 @click="window.location.href='{{ route('search') }}'"
+                 @keydown.enter="window.location.href='{{ route('search') }}'">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 Tìm kiếm...
             </div>
@@ -868,8 +907,11 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 {{-- MOBILE: Overlay + sidebar ───────────────── --}}
 <div id="mob-overlay" onclick="closeSidebar()"></div>
 <div id="mob-sidebar">
-    <div style="padding:14px;border-bottom:1px solid var(--border);font-size:var(--fs-md);font-weight:600;color:var(--text)">
-        {{ $brand->name }}
+    <div class="mobile-sidebar-header">
+        <span>{{ $brand->name }}</span>
+        <button type="button" class="panel-btn" onclick="closeSidebar()" aria-label="Đóng menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
     </div>
     <div id="channel-list" style="flex:1;overflow-y:auto;padding:6px;">
         <div class="ch-category">Cộng đồng DSCons</div>
