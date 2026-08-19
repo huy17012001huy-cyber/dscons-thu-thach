@@ -1,17 +1,17 @@
 <div>
-    <div class="card mb-4" style="background:#F0EDE8; border-color:#d17856;">
+    <div class="card mb-4" style="background:#E7F0F5; border-color:#2B7BBB;">
         <div class="flex items-center gap-3">
             <span style="font-size:2.5rem;">★</span>
             <div>
-                <h1 style="font-size:1.25rem; font-weight:800; color:#1B5E20;">CỐT</h1>
-                <p style="font-size:0.8rem; color:#5C5C66;">Nội dung chọn lọc chất lượng cao · Thư viện vàng của cộng đồng</p>
+                <h1 style="font-size:1.25rem; font-weight:800; color:#0F3D5E;">Kiến thức cốt lõi</h1>
+                <p style="font-size:0.8rem; color:#61798A;">Thư viện thực chiến về MEP, BIM, AI và Vibe Coding do cộng đồng chọn lọc.</p>
             </div>
         </div>
     </div>
 
     <div class="card mb-4" style="padding:0.875rem;">
         <div class="flex flex-wrap gap-3 items-center">
-            <input wire:model.live.debounce.300="search" type="search" class="input" style="max-width:220px;" placeholder="Tìm trong CỐT...">
+            <input wire:model.live.debounce.300="search" type="search" class="input" style="max-width:220px;" placeholder="Tìm kiến thức cốt lõi...">
             <div class="flex gap-1">
                 @foreach(['offer'=>'🔥','traffic'=>'✨','conversion'=>'🎯','delivery'=>'⚙️','continuity'=>'🔗'] as $p => $e)
                 <button wire:click="setPillar('{{ $p }}')" class="badge badge-pillar-{{ $p }}" style="cursor:pointer; {{ $pillar === $p ? '' : 'opacity:0.45;' }} padding:0.25rem 0.5rem;">{{ $e }}</button>

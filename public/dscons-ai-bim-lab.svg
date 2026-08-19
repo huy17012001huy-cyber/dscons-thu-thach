@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="DSCons AI-BIM Lab">
+  <defs>
+    <linearGradient id="blueprint" x1="20" y1="12" x2="104" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2B7BBB"/>
+      <stop offset="1" stop-color="#0F3D5E"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 7 113 35v58l-49 28L15 93V35L64 7Z" fill="#F4F7F9" stroke="url(#blueprint)" stroke-width="8" stroke-linejoin="round"/>
+  <path d="m30 45 34-20 34 20M30 83l34 20 34-20M64 25v78M30 45v38M98 45v38" fill="none" stroke="#2B7BBB" stroke-width="4" opacity=".55"/>
+  <path d="M45 40h17c14 0 24 9 24 24s-10 24-24 24H45V40Zm16 14H59v20h2c7 0 11-3 11-10s-4-10-11-10Z" fill="#0F3D5E"/>
+  <circle cx="97" cy="31" r="8" fill="#F97316" stroke="#fff" stroke-width="3"/>
+</svg>

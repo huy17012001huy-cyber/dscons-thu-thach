@@ -118,6 +118,6 @@ class MessagesPage extends Component
             'conversations' => $conversations,
             'messages' => $messages,
             'otherUser' => $otherUser,
-        ])->layout('layouts.app', ['title' => 'Tin nhắn — Website Thử Thách']);
+        ])->layout('layouts.app', ['title' => 'Tin nhắn — DSCons AI-BIM Lab']);
     }
 }

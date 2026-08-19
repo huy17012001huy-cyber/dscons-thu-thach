@@ -36,6 +36,6 @@ class AcademyPage extends Component
             ->get();
 
         return view('livewire.academy-page', ['courses' => $courses])
-            ->layout('layouts.app', ['title' => 'Khóa học — Website Thử Thách']);
+            ->layout('layouts.app', ['title' => 'Khóa học — DSCons AI-BIM Lab']);
     }
 }

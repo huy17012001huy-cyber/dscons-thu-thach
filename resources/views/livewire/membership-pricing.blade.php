@@ -2,7 +2,7 @@
     <div style="max-width:720px; margin:0 auto;">
         <div class="text-center mb-6">
             <h1 style="font-size:1.5rem; font-weight:800; color:#1A1A1A;">Gói thành viên</h1>
-            <p style="font-size:0.875rem; color:#5C5C66; margin-top:0.375rem;">Tham gia cộng đồng Website Thử Thách để tiếp cận kiến thức, challenge và networking</p>
+            <p style="font-size:0.875rem; color:#5C5C66; margin-top:0.375rem;">Học AI, BIM và Vibe Coding theo lộ trình thực chiến dành cho kỹ sư MEP</p>
         </div>
 
         {{-- Current membership status --}}

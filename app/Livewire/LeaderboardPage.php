@@ -26,7 +26,7 @@ class LeaderboardPage extends Component {
             if ($myRank === false) $myRank = null;
         }
         return view('livewire.leaderboard-page', ['top' => $top, 'myRank' => $myRank])
-            ->layout('layouts.app', ['title' => 'Leaderboard — Website Thử Thách']);
+            ->layout('layouts.app', ['title' => 'Leaderboard — DSCons AI-BIM Lab']);
     }
 
     private function leaderboardByPeriod(\Carbon\Carbon $since) {

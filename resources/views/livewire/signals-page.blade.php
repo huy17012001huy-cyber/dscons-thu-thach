@@ -1,10 +1,10 @@
 <div>
-    <div class="card mb-4" style="background:#F0EDE8; border-color:#078A48;">
+    <div class="card mb-4" style="background:#E7F0F5; border-color:#2B7BBB;">
         <div class="flex items-center gap-3">
             <span style="font-size:2.5rem;">⚡</span>
             <div>
-                <h1 style="font-size:1.25rem; font-weight:800; color:#065F46;">Tín hiệu</h1>
-                <p style="font-size:0.8rem; color:#5C5C66;">Radar cơ hội kiếm tiền · <strong style="color:#078A48;">{{ $todayCount }} tín hiệu hôm nay</strong></p>
+                <h1 style="font-size:1.25rem; font-weight:800; color:#0F3D5E;">Tín hiệu công nghệ</h1>
+                <p style="font-size:0.8rem; color:#61798A;">Radar AI, BIM và tự động hóa cho kỹ sư MEP · <strong style="color:#2B7BBB;">{{ $todayCount }} tín hiệu hôm nay</strong></p>
             </div>
         </div>
     </div>

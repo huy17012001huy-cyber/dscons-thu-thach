@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="{{ $brand->theme_primary ?? '#2563EB' }}">
+<meta name="theme-color" content="{{ $brand->theme_primary ?? '#0F3D5E' }}">
 <title>{{ $title ?? brand()->name }}</title>
-<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+<link rel="icon" type="image/svg+xml" href="{{ asset('dscons-ai-bim-lab.svg') }}">
 <meta name="description" content="{{ brand()->name }} — {{ brand()->tagline }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,12 +15,12 @@
 @livewireStyles
 <style>
 /* ════════════════════════════════════════════════
-   Website Thử Thách Platform Shell
+   DSCons AI-BIM Lab Platform Shell
    ════════════════════════════════════════════════ */
 
 /* Shell viewport — overflow only on body to avoid double-constraint flicker */
 /* html bg matches body to prevent white→beige flash on first paint (esp. Retina) */
-html { height: 100%; background: {{ $brand->theme_bg ?? '#f0ede8' }}; }
+html { height: 100%; background: {{ $brand->theme_bg ?? '#F4F7F9' }}; }
 body { height: 100%; overflow: hidden; font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 /* Hide Alpine-controlled elements until hydration to prevent FOUC flash */
@@ -38,20 +38,20 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     --fs-md:   16px;   /* nav items, titles, headings */
 
     /* Colors */
-    --green:        {{ $brand->theme_primary ?? '#d17856' }};
-    --green-pale:   {{ $brand->theme_accent ?? '#fbece4' }};
-    --bg-app:       {{ $brand->theme_bg ?? '#f0ede8' }};
-    --bg-sb:        #faf9f7;
-    --bg-content:   #f5f4f2;
+    --green:        {{ $brand->theme_primary ?? '#0F3D5E' }};
+    --green-pale:   {{ $brand->theme_accent ?? '#DCECF7' }};
+    --bg-app:       {{ $brand->theme_bg ?? '#F4F7F9' }};
+    --bg-sb:        #FFFFFF;
+    --bg-content:   #F4F7F9;
     --bg-card:      #ffffff;
-    --bg-hover:     #f0ede8;
-    --bg-active:    #fbece4;
-    --bg-input:     #f0ede8;
-    --text:         #1a1a1a;
-    --text-muted:   #6b7280;
-    --text-ch:      #4b5563;
-    --text-cat:     #9ca3af;
-    --border:       rgba(0,0,0,0.08);
+    --bg-hover:     #E7F0F5;
+    --bg-active:    #DCECF7;
+    --bg-input:     #FFFFFF;
+    --text:         #102A3B;
+    --text-muted:   #61798A;
+    --text-ch:      #29485B;
+    --text-cat:     #6C8797;
+    --border:       #D4E1E8;
 
     /* Layout dimensions */
     --guild-w:      72px;
@@ -197,6 +197,8 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     font-weight: 700;
     color: var(--green);
 }
+#community-banner .banner-copy { display: flex; flex-direction: column; gap: 2px; }
+#community-banner .banner-copy small { color: #61798A; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 #community-banner .banner-fallback img {
     width: 48px;
     height: 48px;
@@ -610,8 +612,10 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
 <div id="community-bar">
     @if(isset($brand) && $brand->logo_path)
     <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="" style="width:20px; height:20px; border-radius:5px; object-fit:cover;">
+    @else
+    <img src="{{ asset('dscons-ai-bim-lab.svg') }}" alt="" style="width:20px; height:20px;">
     @endif
-    <span>{{ $brand->name ?? 'Website Thử Thách' }}</span>
+    <span>{{ $brand->name ?? 'DSCons AI-BIM Lab' }}</span>
 </div>
 
 <div id="app">
@@ -634,7 +638,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
                 @if($m->brand->logo_path)
                     <img src="{{ asset('storage/' . $m->brand->logo_path) }}" alt="{{ $m->brand->slug }}">
                 @else
-                    {{ strtoupper(substr($m->brand->slug, 0, 1)) }}
+                    <img src="{{ asset('dscons-ai-bim-lab.svg') }}" alt="{{ $m->brand->slug }}" style="width:34px;height:34px;">
                 @endif
             </a>
         </div>
@@ -653,8 +657,13 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
             <div class="banner-fallback">
                 @if(isset($brand) && $brand->logo_path)
                 <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="">
+                @else
+                <img src="{{ asset('dscons-ai-bim-lab.svg') }}" alt="" style="width:34px;height:34px;">
                 @endif
-                <span>{{ $brand->name ?? 'Website Thử Thách' }}</span>
+                <div class="banner-copy">
+                    <span>{{ $brand->name ?? 'DSCons AI-BIM Lab' }}</span>
+                    <small>AI · BIM · Vibe Coding</small>
+                </div>
             </div>
         @endif
     </div>
@@ -667,7 +676,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     <div id="channel-list">
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Cộng đồng
+            Cộng đồng AI-BIM
         </div>
         <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -675,15 +684,15 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
         </a>
         <a href="{{ route('cot') }}" class="ch-item {{ request()->routeIs('cot') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span class="ch-name">CỐT</span>
+            <span class="ch-name">Kiến thức cốt lõi</span>
         </a>
         <a href="{{ route('signals') }}" class="ch-item {{ request()->routeIs('signals') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span class="ch-name">Tín hiệu</span>
+            <span class="ch-name">Tín hiệu công nghệ</span>
         </a>
         <a href="{{ route('qa') }}" class="ch-item {{ request()->routeIs('qa') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="ch-name">Hỏi đáp</span>
+            <span class="ch-name">Hỏi đáp kỹ thuật</span>
         </a>
 
         <div class="ch-category">
@@ -812,7 +821,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
             {{ $slot }}
         </div>
 
-        {{-- 4. RIGHT PANEL — Website Thử Thách gamification ──── --}}
+        {{-- 4. RIGHT PANEL — DSCons AI-BIM Lab gamification ──── --}}
         <div id="right-panel">
             <div id="right-panel-scroll">
                 @auth
@@ -864,22 +873,22 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
         {{ $brand->name }}
     </div>
     <div id="channel-list" style="flex:1;overflow-y:auto;padding:6px;">
-        <div class="ch-category">Cộng đồng</div>
+        <div class="ch-category">Cộng đồng AI-BIM</div>
         <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             <span class="ch-name">Bảng tin</span>
         </a>
         <a href="{{ route('cot') }}" class="ch-item {{ request()->routeIs('cot')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span class="ch-name">CỐT</span>
+            <span class="ch-name">Kiến thức cốt lõi</span>
         </a>
         <a href="{{ route('signals') }}" class="ch-item {{ request()->routeIs('signals')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span class="ch-name">Tín hiệu</span>
+            <span class="ch-name">Tín hiệu công nghệ</span>
         </a>
         <a href="{{ route('qa') }}" class="ch-item {{ request()->routeIs('qa')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="ch-name">Hỏi đáp</span>
+            <span class="ch-name">Hỏi đáp kỹ thuật</span>
         </a>
         <div class="ch-category">Học tập</div>
         <a href="{{ route('academy') }}" class="ch-item {{ request()->routeIs('academy*')?'active':'' }}" onclick="closeSidebar()">

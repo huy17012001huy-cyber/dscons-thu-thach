@@ -74,6 +74,6 @@ class MarketplacePage extends Component
             'products' => $products,
             'purchasedIds' => $purchasedIds,
             'pendingIds' => $pendingIds,
-        ])->layout('layouts.app', ['title' => 'Marketplace — Website Thử Thách']);
+        ])->layout('layouts.app', ['title' => 'Marketplace — DSCons AI-BIM Lab']);
     }
 }

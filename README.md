@@ -1,4 +1,4 @@
-# Website Thử Thách
+# DSCons AI-BIM Lab
 
 Nền tảng cộng đồng tiếng Việt gồm thử thách, Academy, gamification, marketplace và affiliate. Codebase dùng Laravel 12, Livewire 3, Tailwind CSS 4, PHP 8.4 và PostgreSQL 17.
 

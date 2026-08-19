@@ -15,7 +15,7 @@ class ResolveBrand
         $host = $request->getHost();
         $brand = Brand::findByDomain($host);
 
-        // Fallback to Website Thử Thách (id=1) in local/testing environments
+        // Fallback to DSCons AI-BIM Lab (id=1) in local/testing environments
         if (!$brand && in_array(app()->environment(), ['local', 'testing'])) {
             $brand = Brand::find(1);
         }

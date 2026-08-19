@@ -1,6 +1,9 @@
 <div>
     <div class="flex items-center justify-between mb-4">
-        <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">Hỏi đáp Q&amp;A</h1>
+        <div>
+            <h1 style="font-size:1.25rem; font-weight:800; color:#0F3D5E;">Hỏi đáp kỹ thuật</h1>
+            <p style="font-size:0.8rem; color:#61798A; margin-top:0.15rem;">Cùng tháo gỡ bài toán MEP, BIM, AI và Vibe Coding.</p>
+        </div>
         @auth
         <button wire:click="$toggle('showAsk')" aria-pressed="{{ $showAsk ? 'true' : 'false' }}" class="btn btn-primary" style="font-size:0.875rem;">
             + Đặt câu hỏi

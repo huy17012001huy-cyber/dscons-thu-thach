@@ -172,6 +172,6 @@ class ProfilePage extends Component
             'badges' => $badges,
             'contributions' => $contributions,
             'contributionStart' => $since,
-        ])->layout('layouts.app', ['title' => $this->profileUser->name.' — Website Thử Thách']);
+        ])->layout('layouts.app', ['title' => $this->profileUser->name.' — DSCons AI-BIM Lab']);
     }
 }

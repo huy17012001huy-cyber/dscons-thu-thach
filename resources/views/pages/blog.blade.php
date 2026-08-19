@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
-<title>Blog · Tài liệu nội bộ — website-thu-thach.local</title>
+<title>Blog · Tài liệu nội bộ — ai-bim.dscons.vn</title>
 <link rel="icon" type="image/webp" href="{{ asset('favicon.webp') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -207,7 +207,7 @@ footer a:hover { text-decoration: underline; }
 @endforeach
 
 <footer>
-    <p>website-thu-thach.local · Blog nội bộ · Cập nhật {{ date('d/m/Y') }}</p>
+    <p>ai-bim.dscons.vn · Blog nội bộ · Cập nhật {{ date('d/m/Y') }}</p>
     <p style="margin-top: 8px;"><a href="/feed">← Về trang chính</a></p>
 </footer>
 

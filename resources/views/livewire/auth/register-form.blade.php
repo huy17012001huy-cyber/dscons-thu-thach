@@ -73,7 +73,7 @@
         </form>
 
         <p style="text-align:center; margin-top:1.25rem; font-size:0.75rem; color:#5C5C66;">
-            Khi đăng ký, bạn đồng ý với Điều khoản sử dụng của Website Thử Thách
+            Khi đăng ký, bạn đồng ý với Điều khoản sử dụng của DSCons AI-BIM Lab
         </p>
 
         <p style="text-align:center; margin-top:0.75rem; font-size:0.875rem; color:#5C5C66;">

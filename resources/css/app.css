@@ -9,22 +9,22 @@
 @theme {
     --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
 
-    /* Website Thử Thách — Warm campfire theme */
+    /* DSCons AI-BIM Lab — blueprint engineering theme */
     --color-bg-base:       #FFFFFF;
-    --color-bg-subtle:     #F8FAFC;
-    --color-bg-muted:      #EAF2FF;
-    --color-border:        #DCE5F3;
-    --color-border-strong: #B9C7DB;
-    --color-text-primary:  #1A1A1A;
-    --color-text-secondary:#2E2E2E;
-    --color-text-muted:    #6B6B6B;
+    --color-bg-subtle:     #F4F7F9;
+    --color-bg-muted:      #E7F0F5;
+    --color-border:        #D4E1E8;
+    --color-border-strong: #ADC5D1;
+    --color-text-primary:  #102A3B;
+    --color-text-secondary:#29485B;
+    --color-text-muted:    #61798A;
     --color-text-inverse:  #FFFFFF;
 
-    --color-accent:        #2563EB;
-    --color-accent-light:  #DBEAFE;
-    --color-accent-dark:   #1D4ED8;
-    --color-green:         #2563EB;
-    --color-green-light:   #DBEAFE;
+    --color-accent:        #0F3D5E;
+    --color-accent-light:  #DCECF7;
+    --color-accent-dark:   #082B43;
+    --color-green:         #2B7BBB;
+    --color-green-light:   #DCECF7;
     --color-salmon:        #F97316;
     --color-salmon-light:  #FFEDD5;
 
@@ -54,7 +54,7 @@ html.font-serif-mode .badge {
     }
 
     body {
-        background-color: #F8FAFC;
+        background-color: #F4F7F9;
         color: #1A1A1A;
         font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -64,16 +64,16 @@ html.font-serif-mode .badge {
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #FAF8F5; }
-    ::-webkit-scrollbar-thumb { background: #C8C8C8; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #7F7F88; }
+    ::-webkit-scrollbar-track { background: #F4F7F9; }
+    ::-webkit-scrollbar-thumb { background: #ADC5D1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #61798A; }
 }
 
 @layer components {
     /* ─── Cards ─────────────────────────────────────────────── */
     .card {
         background-color: #FFFFFF;
-        border: 1px solid #E8E4DE;
+        border: 1px solid #D4E1E8;
         border-radius: 0.75rem;
         padding: 1.25rem;
         overflow-wrap: break-word;
@@ -93,7 +93,7 @@ html.font-serif-mode .badge {
     .badge-class-conversion_ranger  { background: #D1FAE5; color: #065F46; }
     .badge-class-delivery_assassin  { background: #DBEAFE; color: #1E40AF; }
     .badge-class-continuity_captain { background: #FEE2E2; color: #991B1B; }
-    .badge-class-gray               { background: #FAF8F5; color: #5C5C66; border: 1px solid #E8E4DE; }
+    .badge-class-gray               { background: #F4F7F9; color: #61798A; border: 1px solid #D4E1E8; }
 
     /* ─── Pill badge base ───────────────────────────────────── */
     .badge {
@@ -111,14 +111,14 @@ html.font-serif-mode .badge {
     .btn {
         @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-150 cursor-pointer;
     }
-    .btn-primary { background: #1A1A1A; color: #FFFFFF; }
-    .btn-primary:hover { background: #2E2E2E; }
-    .btn-secondary { background: #FFFFFF; color: #1A1A1A; border: 1px solid #C8C8C8; }
-    .btn-secondary:hover { background: #FAF8F5; }
-    .btn-gold { background: #d17856; color: #FFFFFF; }
-    .btn-gold:hover { background: #b35f3d; }
-    .btn-ghost { color: #5C5C66; }
-    .btn-ghost:hover { background: #F0EDE8; color: #1A1A1A; }
+    .btn-primary { background: #0F3D5E; color: #FFFFFF; }
+    .btn-primary:hover { background: #082B43; }
+    .btn-secondary { background: #FFFFFF; color: #0F3D5E; border: 1px solid #ADC5D1; }
+    .btn-secondary:hover { background: #F4F7F9; }
+    .btn-gold { background: #F97316; color: #FFFFFF; }
+    .btn-gold:hover { background: #D85D09; }
+    .btn-ghost { color: #61798A; }
+    .btn-ghost:hover { background: #E7F0F5; color: #0F3D5E; }
     .btn-danger { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
     .btn-danger:hover { background: #FECACA; }
     .btn-success { background: #078A48; color: #FFFFFF; }
@@ -127,7 +127,7 @@ html.font-serif-mode .badge {
     /* ─── Inputs ────────────────────────────────────────────── */
     .input {
         background: #FFFFFF;
-        border: 1px solid #E8E4DE;
+        border: 1px solid #D4E1E8;
         border-radius: 0.5rem;
         padding: 0.5rem 0.75rem;
         color: #1A1A1A;
@@ -138,25 +138,25 @@ html.font-serif-mode .badge {
     }
     .input:focus {
         outline: none;
-        border-color: #d17856;
-        box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+        border-color: #2B7BBB;
+        box-shadow: 0 0 0 3px rgba(43,123,187,0.16);
     }
     .input::placeholder { color: #5C5C66; }
     textarea.input { resize: vertical; min-height: 80px; }
 
     /* ─── XP bar ────────────────────────────────────────────── */
-    .xp-bar { background: #F0EDE8; border-radius: 9999px; height: 4px; overflow: hidden; }
+    .xp-bar { background: #DCECF7; border-radius: 9999px; height: 4px; overflow: hidden; }
     .xp-bar-fill {
-        background: linear-gradient(90deg, #d17856, #e7a07f);
+        background: linear-gradient(90deg, #2B7BBB, #0F3D5E);
         height: 100%;
         border-radius: 9999px;
         transition: width 0.5s ease;
     }
 
     /* ─── Progress bar ──────────────────────────────────────── */
-    .progress-bar { background: #F0EDE8; border-radius: 9999px; height: 8px; overflow: hidden; }
-    .progress-fill { background: linear-gradient(90deg, #b35f3d, #e7a07f); height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
-    .progress-fill-gold { background: linear-gradient(90deg, #d17856, #e7a07f); }
+    .progress-bar { background: #DCECF7; border-radius: 9999px; height: 8px; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #0F3D5E, #2B7BBB); height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+    .progress-fill-gold { background: linear-gradient(90deg, #F97316, #FB923C); }
     .progress-fill-red  { background: linear-gradient(90deg, #DC2626, #F87171); }
 
     /* ─── Rune banner ───────────────────────────────────────── */
@@ -184,9 +184,9 @@ html.font-serif-mode .badge {
 
     /* ─── CỐT badge ─────────────────────────────────────────── */
     .cot-badge {
-        background: #fbece4;
-        border: 1px solid #d17856;
-        color: #b35f3d;
+        background: #DCECF7;
+        border: 1px solid #2B7BBB;
+        color: #0F3D5E;
         padding: 0.125rem 0.5rem;
         border-radius: 4px;
         font-size: 0.7rem;
@@ -229,13 +229,13 @@ html.font-serif-mode .badge {
         transition: all 0.15s;
         text-decoration: none;
     }
-    .nav-item:hover { background: #F0EDE8; color: #1A1A1A; }
-    .nav-item.active { background: #fbece4; color: #b35f3d; font-weight: 700; }
+    .nav-item:hover { background: #E7F0F5; color: #0F3D5E; }
+    .nav-item.active { background: #DCECF7; color: #0F3D5E; font-weight: 700; }
 
     /* ─── Post card ─────────────────────────────────────────── */
     .post-card {
         background: #FFFFFF;
-        border: 1px solid #E8E4DE;
+        border: 1px solid #D4E1E8;
         border-radius: 0.75rem;
         padding: 1.25rem;
         transition: border-color 0.15s, box-shadow 0.15s;
@@ -243,7 +243,7 @@ html.font-serif-mode .badge {
         word-break: break-word;
     }
     .post-card:hover { border-color: #C8C8C8; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .post-card.is-cot  { border-left: 3px solid #d17856; }
+    .post-card.is-cot  { border-left: 3px solid #2B7BBB; }
     .post-card.has-rune { border-left: 3px solid #F4B184; }
     .post-card.is-signal { border-left: 3px solid #078A48; }
 
@@ -273,9 +273,9 @@ html.font-serif-mode .badge {
 
     /* ─── Level badge ───────────────────────────────────────── */
     .level-badge {
-        background: #fbece4;
-        border: 1px solid #d17856;
-        color: #b35f3d;
+        background: #DCECF7;
+        border: 1px solid #2B7BBB;
+        color: #0F3D5E;
         font-size: 0.65rem;
         font-weight: 700;
         padding: 0.1rem 0.4rem;
@@ -287,12 +287,12 @@ html.font-serif-mode .badge {
         display: inline-flex;
         align-items: center;
         gap: 0.2rem;
-        color: #d17856;
+        color: #F97316;
         font-size: 0.75rem;
     }
 
     /* ─── Tab nav ───────────────────────────────────────────── */
-    .tab-nav { display: flex; gap: 0.25rem; border-bottom: 1px solid #E8E4DE; margin-bottom: 1rem; }
+    .tab-nav { display: flex; gap: 0.25rem; border-bottom: 1px solid #D4E1E8; margin-bottom: 1rem; }
     .tab-item {
         padding: 0.5rem 0.875rem;
         font-size: 0.8rem;
@@ -304,7 +304,7 @@ html.font-serif-mode .badge {
         transition: all 0.15s;
     }
     .tab-item:hover { color: #2E2E2E; }
-    .tab-item.active { color: #1A1A1A; border-bottom-color: #d17856; font-weight: 600; }
+    .tab-item.active { color: #0F3D5E; border-bottom-color: #F97316; font-weight: 600; }
 
     /* ─── Difficulty badges ─────────────────────────────────── */
     .difficulty-normal { background: #D1FAE5; color: #065F46; }
@@ -313,8 +313,8 @@ html.font-serif-mode .badge {
 
     /* ─── Sidebar widget card ───────────────────────────────── */
     .widget-card {
-        background: #FAF8F5;
-        border: 1px solid #E8E4DE;
+        background: #F4F7F9;
+        border: 1px solid #D4E1E8;
         border-radius: 0.625rem;
         padding: 0.875rem;
     }
@@ -355,7 +355,7 @@ html.font-serif-mode .badge {
     .prose-task h1 { font-size: 1.1em; }
     .prose-task h2 { font-size: 1em; }
     .prose-task h3 { font-size: 0.95em; }
-    .prose-task a { color: #d17856; text-decoration: underline; }
+    .prose-task a { color: #0F3D5E; text-decoration: underline; }
     .prose-task blockquote { border-left: 3px solid #ccc; padding-left: 0.75em; color: #666; margin: 0.5em 0; }
 
     /* ─── Heatmap tooltip ───────────────────────────────────── */
