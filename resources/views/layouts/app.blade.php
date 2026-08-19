@@ -197,8 +197,6 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
     font-weight: 700;
     color: var(--green);
 }
-#community-banner .banner-copy { display: flex; flex-direction: column; gap: 2px; }
-#community-banner .banner-copy small { color: #61798A; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 #community-banner .banner-fallback img {
     width: 48px;
     height: 48px;
@@ -660,10 +658,7 @@ body.is-impersonating #app { height: calc(100% - 28px - 36px); }
                 @else
                 <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:58px;height:58px;object-fit:contain;">
                 @endif
-                <div class="banner-copy">
-                    <span>{{ $brand->name ?? 'DSCons' }}</span>
-                    <small>Học tập · Thử thách · Cộng đồng</small>
-                </div>
+                <span>DSCons Việt Nam</span>
             </div>
         @endif
     </div>
