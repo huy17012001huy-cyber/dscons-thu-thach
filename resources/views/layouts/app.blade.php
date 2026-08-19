@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="{{ $brand->theme_primary ?? '#1F77BE' }}">
 <title>{{ $title ?? brand()->name }}</title>
-<link rel="icon" type="image/png" href="{{ asset('dscons-logo.png') }}">
+<link rel="icon" type="image/png" href="{{ asset('1024x1024-da xoa nen.png') }}">
 <meta name="description" content="{{ brand()->name }} — {{ brand()->tagline }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
