@@ -59,8 +59,9 @@ Route::middleware([
     Route::get('/tao-cong-dong', CreateCommunity::class)->name('community.create');
 });
 
-// Public discovery and preview pages.
-Route::get('/cong-dong', CommunitiesPage::class)->name('communities');
+// Public discovery and preview pages. `/cong-dong` remains as a legacy URL.
+Route::get('/discovery', CommunitiesPage::class)->name('communities');
+Route::redirect('/cong-dong', '/discovery', 301);
 Route::get('/cong-dong/{community:slug}', CommunityPreview::class)->name('community.preview');
 
 // Contextual community routes. The legacy routes above remain the default
