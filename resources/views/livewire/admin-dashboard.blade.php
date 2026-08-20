@@ -23,6 +23,17 @@
 
     {{-- Navigation --}}
     <div class="grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+        <a href="{{ route('admin.communities') }}" class="card" style="text-decoration:none; transition:border-color 0.15s;">
+            <div class="flex items-center gap-3">
+                <span style="width:1.5rem;height:1.5rem;display:grid;place-items:center;color:#1F77BE;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:1.35rem;height:1.35rem;"><path d="M4 19h16M4 5h16M7 5v14M17 5v14M10 9h4M10 13h4"/></svg>
+                </span>
+                <div>
+                    <p style="font-size:0.9rem; font-weight:700; color:#1A1A1A;">Quản lý cộng đồng</p>
+                    <p style="font-size:0.75rem; color:#5C5C66;">Duyệt, cấu hình và quản lý các community</p>
+                </div>
+            </div>
+        </a>
         <a href="{{ route('admin.users') }}" class="card" style="text-decoration:none; transition:border-color 0.15s;">
             <div class="flex items-center gap-3">
                 <span style="font-size:1.5rem;">■</span>
