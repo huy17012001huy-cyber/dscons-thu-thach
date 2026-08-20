@@ -488,12 +488,12 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 .rp-see-all { font-size: var(--fs-xs); font-weight: 600; color: var(--green); text-decoration: none; }
 .rp-see-all:hover { text-decoration: underline; }
 .rp-empty { font-size: var(--fs-sm); color: var(--text-cat); text-align: center; padding: 6px 0; }
-.membership-cta { display: flex !important; align-items: center; justify-content: center; gap: 7px; border: 1px solid #1F77BE !important; background: #1F77BE !important; color: #fff !important; font-weight: 750 !important; box-shadow: 0 5px 12px rgba(31,119,190,.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+.membership-cta { display: flex !important; align-items: center; justify-content: center; gap: 7px; border: 1px solid #1F77BE !important; border-radius: 12px !important; background: #1F77BE !important; color: #fff !important; font-weight: 750 !important; box-shadow: 0 5px 12px rgba(31,119,190,.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
 .membership-cta.is-active { border-color: #0E527F !important; background: #0E527F !important; }
 .membership-cta:hover { background: #125A96 !important; color: #fff !important; box-shadow: 0 8px 16px rgba(18,90,150,.26); transform: translateY(-1px); }
 .membership-cta:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(18,90,150,.2); }
 .membership-cta svg { width: 15px; height: 15px; }
-.community-invite-button { border-color: #B8D8E4 !important; background: #EAF7FA !important; color: #125A96 !important; font-weight: 750 !important; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+.community-invite-button { border-color: #B8D8E4 !important; border-radius: 12px !important; background: #EAF7FA !important; color: #125A96 !important; font-weight: 750 !important; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
 .community-invite-button:hover { border-color: #1F77BE !important; background: #D9F0F5 !important; transform: translateY(-1px); }
 
 /* Profile card components */
