@@ -34,7 +34,7 @@ body { height: 100%; overflow: hidden; font-family: 'Inter', ui-sans-serif, syst
 
 /* Impersonation banner adjustments — measured at runtime via min-height,
    but the layout subtractions are deterministic */
-body.is-impersonating #app { height: calc(100% - 32px - 36px); }
+body.is-impersonating #app { height: calc(100% - 36px); }
 
 :root {
     /* Type scale — 4 steps only */
@@ -67,32 +67,21 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 
     /* Layout dimensions */
     --guild-w:      72px;
-    --sidebar-w:    260px;
+    --sidebar-w:    276px;
     --topbar-h:     48px;
     --user-h:       52px;
-    --rp-w:         268px;
+    --rp-w:         300px;
     --mob-nav-h:    60px;
 }
 
 /* ── Community title bar ── */
-#community-bar {
-    height: 32px;
-    background: var(--bg-app);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: var(--fs-xs);
-    font-weight: 600;
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
+#community-bar { display: none; }
 
 /* ── App shell: fills viewport exactly ── */
 #app {
     display: flex;
     width: 100%;
-    height: calc(100% - 32px);
+    height: 100%;
     overflow: hidden;
     background: var(--bg-app);
 }
@@ -108,7 +97,7 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
     width: var(--guild-w);
     min-width: var(--guild-w);
     background: var(--bg-app);
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     padding: 8px 0;
@@ -175,11 +164,11 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 #channel-sidebar {
     width: var(--sidebar-w);
     min-width: var(--sidebar-w);
-    background: var(--bg-sb);
+    background: #FBFCFD;
     display: flex;
     flex-direction: column;
-    border-right: none;
-    border-radius: var(--radius-md) 0 0 0;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -187,8 +176,8 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 /* Community banner at top of sidebar */
 #community-banner {
     width: 100%;
-    height: 112px;
-    background: linear-gradient(135deg, var(--green-pale), var(--bg-hover));
+    height: 78px;
+    background: linear-gradient(135deg, #E9F8FB, #DDF0F6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -204,35 +193,29 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 #community-banner .banner-fallback {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
     font-size: var(--fs-md);
     font-weight: 700;
     color: var(--green);
 }
 #community-banner .banner-fallback img {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
     object-fit: cover;
 }
 #community-banner .banner-fallback > span {
-    color: #1F77BE;
-    font-weight: 700;
+    display: none;
 }
 
 #sidebar-header {
-    height: 52px;
-    padding: 0 14px;
+    min-height: 56px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    cursor: pointer;
-    transition: background .15s;
     box-shadow: 0 1px 0 var(--border);
-}
-#sidebar-header:hover {
-    background: var(--bg-hover);
 }
 #sidebar-header h2 {
     font-size: var(--fs-md);
@@ -242,18 +225,39 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.community-switcher-button {
+    width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px;
+    background: transparent; color: var(--text); display: flex; align-items: center; gap: 9px;
+    text-align: left; cursor: pointer; font: inherit;
+}
+.community-switcher-button:hover, .community-switcher-button[aria-expanded="true"] { background: var(--bg-hover); }
+.community-switcher-menu {
+    position: absolute; z-index: 100; top: calc(100% - 5px); left: 8px; right: 8px;
+    max-height: min(430px, calc(100vh - 170px)); overflow-y: auto; padding: 8px;
+    border: 1px solid var(--border); border-radius: 14px; background: #fff;
+    box-shadow: 0 16px 34px rgba(18,59,89,.16);
+}
+.community-switcher-item {
+    min-height: 46px; padding: 8px; border-radius: 9px; display: flex; align-items: center;
+    gap: 9px; color: var(--text); text-decoration: none; font-size: 13px; font-weight: 650;
+}
+.community-switcher-item:hover, .community-switcher-item.active { background: var(--bg-active); }
+.community-switcher-logo { width: 30px; height: 30px; border-radius: 9px; object-fit: cover; flex: 0 0 auto; background: #E1F4F7; }
+.community-switcher-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border); }
+.community-switcher-footer a { min-height: 38px; display: grid; place-items: center; border-radius: 8px; background: #F4F8FA; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 700; }
+.community-switcher-footer a:hover { background: var(--bg-active); color: var(--green); }
 
 #channel-list {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 8px;
+    padding: 10px 9px 12px;
     scrollbar-width: none;
 }
 #channel-list::-webkit-scrollbar { display: none; }
 
 .ch-category {
-    padding: 16px 8px 4px;
+    padding: 15px 8px 5px;
     font-size: var(--fs-xs);
     font-weight: 700;
     text-transform: uppercase;
@@ -443,7 +447,7 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 #right-panel {
     width: var(--rp-w);
     min-width: var(--rp-w);
-    background: var(--bg-sb);
+    background: #F8FBFC;
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -453,7 +457,7 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 #right-panel-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -464,7 +468,7 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
 #right-panel-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 2px; }
 
 /* Right panel cards */
-.rp-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-sm); }
+.rp-card { background: var(--bg-card); border: 1px solid #D9E6EC; border-radius: 14px; padding: 15px; box-shadow: none; }
 .rp-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .rp-card-title { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .rp-see-all { font-size: var(--fs-xs); font-weight: 600; color: var(--green); text-decoration: none; }
@@ -713,16 +717,46 @@ button, a, input, select, textarea { touch-action: manipulation; }
         @endif
     </div>
 
-    <div id="sidebar-header" style="position:relative;">
-        <a href="{{ route('community.preview', $brand->slug) }}" style="display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none;min-width:0;">
-            <h2>{{ $brand->name }}</h2>
-            @if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:13px;">✓</span>@endif
-        </a>
-        <a href="{{ route('communities') }}" title="Đổi cộng đồng" aria-label="Đổi cộng đồng" style="display:grid;place-items:center;width:32px;height:32px;border-radius:8px;color:var(--text-muted);text-decoration:none;">⌄</a>
-    </div>
-    <div style="display:flex;gap:7px;padding:8px 12px 2px;">
-        <a href="{{ route('communities') }}" style="font-size:12px;color:var(--green);text-decoration:none;">Khám phá</a>
-        @auth · <a href="{{ route('community.create') }}" style="font-size:12px;color:var(--text-muted);text-decoration:none;">Tạo community</a>@endauth
+    @php
+        $__sidebarMemberships = auth()->check()
+            ? auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active', 'trial'])->get()->filter(fn ($membership) => $membership->brand)
+            : collect();
+    @endphp
+    <div id="sidebar-header" x-data="{ open: false }" style="position:relative;">
+        <button type="button" class="community-switcher-button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu">
+            @if($brand->logo_path)
+                <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" class="community-switcher-logo">
+            @else
+                <span class="community-switcher-logo" style="display:grid;place-items:center;font-weight:800;color:var(--green);">{{ strtoupper(substr($brand->name, 0, 1)) }}</span>
+            @endif
+            <span style="min-width:0;flex:1;">
+                <span style="display:flex;align-items:center;gap:5px;min-width:0;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:800;">{{ $brand->name }}</span>@if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:12px;">✓</span>@endif</span>
+                <span style="display:block;margin-top:2px;font-size:11px;color:var(--text-muted);">Cộng đồng đang xem</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:16px;height:16px;color:var(--text-muted);transition:transform .18s ease;" :style="open ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="community-switcher-menu" class="community-switcher-menu" x-cloak x-show="open" x-transition.origin.top @click.outside="open = false">
+            @auth
+                @forelse($__sidebarMemberships as $__membership)
+                    @php
+                        $__community = $__membership->brand;
+                    @endphp
+                    <a href="{{ route('community.feed', ['community' => $__community->slug]) }}" class="community-switcher-item {{ $__community->id === $brand->id ? 'active' : '' }}">
+                        @if($__community->logo_path)<img src="{{ asset('storage/'.$__community->logo_path) }}" alt="" class="community-switcher-logo">@else<span class="community-switcher-logo" style="display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--green);">{{ strtoupper(substr($__community->name,0,1)) }}</span>@endif
+                        <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $__community->name }}</span>
+                        @if($__community->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif
+                    </a>
+                @empty
+                    <a href="{{ route('community.preview', $brand->slug) }}" class="community-switcher-item active">{{ $brand->name }}</a>
+                @endforelse
+            @else
+                <a href="{{ route('community.preview', $brand->slug) }}" class="community-switcher-item active">{{ $brand->name }}</a>
+            @endauth
+            <div class="community-switcher-footer">
+                <a href="{{ route('communities') }}">Khám phá</a>
+                @auth<a href="{{ route('community.create') }}">Tạo community</a>@else<a href="{{ route('login') }}">Đăng nhập</a>@endauth
+            </div>
+        </div>
     </div>
 
     <div id="channel-list">
@@ -895,69 +929,38 @@ button, a, input, select, textarea { touch-action: manipulation; }
                     $__communityActiveCount = $brand->users()->where('last_active_at', '>=', now()->subMinutes(30))->count();
                     $__communityAdminCount = $brand->users()->wherePivotIn('role', ['owner','admin'])->count();
                 @endphp
-                {{-- My Profile Card --}}
-                <div class="rp-card">
-                    <div class="profile-user-row">
-                        <div class="profile-avatar">
-                            <img src="{{ auth()->user()->avatar_url }}" alt="">
-                        </div>
-                        <div>
-                            <div class="profile-name">{{ auth()->user()->name }}</div>
-                            <div class="profile-title">{{ auth()->user()->class_emoji }} {{ auth()->user()->class_label }}</div>
-                        </div>
-                    </div>
-                    <div class="profile-level-row">
-                        <span class="profile-level">Lv.{{ auth()->user()->level }} · {{ auth()->user()->job_stage }}</span>
-                        <span class="profile-exp">{{ number_format(auth()->user()->xp) }} XP</span>
-                    </div>
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" style="color:var(--green)">{{ auth()->user()->aip ?? 0 }}</div>
-                            <div class="stat-label">AIP</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" style="color:#6366f1">{{ auth()->user()->da_count }}</div>
-                            <div class="stat-label">💎 Đá</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" style="color:#ef4444">{{ auth()->user()->streak ?? 0 }}</div>
-                            <div class="stat-label">Streak</div>
-                        </div>
-                    </div>
-                </div>
-
                 {{-- Membership upgrade card --}}
                 <div class="rp-card" style="padding:0;overflow:hidden;">
-                    <div style="height:88px;background:linear-gradient(135deg,#0e527f,#1F77BE);position:relative;overflow:hidden;">
+                    <div style="height:112px;background:linear-gradient(135deg,#0E527F,#1F77BE);position:relative;overflow:hidden;">
                         @if($__featuredUpgrade?->thumbnail)
                             <img src="{{ asset('storage/'.$__featuredUpgrade->thumbnail) }}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.42;">
                         @endif
                         <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,39,62,.62),transparent);"></div>
-                        <span style="position:absolute;left:13px;bottom:11px;font-size:11px;color:#fff;font-weight:800;letter-spacing:.1em;text-transform:uppercase;">DSCons membership</span>
+                        <span style="position:absolute;left:14px;bottom:12px;font-size:10px;color:#fff;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">DSCons membership</span>
                     </div>
-                    <div style="padding:13px 14px 14px;">
-                        <div style="font-size:16px;font-weight:800;color:var(--text);">Nâng hạng thành viên</div>
-                        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;margin:4px 0 11px;">Mở đầy đủ khóa học, challenge và sự kiện trong community.</p>
-                        <a href="{{ community_route('membership') }}" class="ds-btn ds-btn-primary" style="display:block;text-align:center;text-decoration:none;min-height:38px;padding:.5rem;">{{ $__currentMembership?->isPremium() ? 'Đang dùng Premium' : 'Xem gói Premium' }}</a>
+                    <div style="padding:14px;">
+                        <div style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--text);">Nâng hạng thành viên</div>
+                        <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:4px 0 12px;">Mở khóa toàn bộ khóa học, challenge và sự kiện.</p>
+                        <a href="{{ community_route('membership') }}" class="ds-btn ds-btn-primary" style="display:block;text-align:center;text-decoration:none;min-height:40px;padding:.55rem;">{{ $__currentMembership?->isPremium() ? 'Đang dùng Premium' : 'Nâng hạng Premium' }}</a>
                     </div>
                 </div>
 
                 {{-- Current community information --}}
-                <div class="rp-card" style="padding:14px;">
-                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
-                        <div style="width:36px;height:36px;border-radius:11px;overflow:hidden;background:#E1F4F7;display:grid;place-items:center;color:var(--green);font-weight:800;">
+                <div class="rp-card" style="padding:15px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <div style="width:40px;height:40px;border-radius:12px;overflow:hidden;background:#E1F4F7;display:grid;place-items:center;color:var(--green);font-weight:800;">
                             @if($brand->logo_path)<img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" style="width:100%;height:100%;object-fit:cover;">@else{{ strtoupper(substr($brand->name,0,1)) }}@endif
                         </div>
-                        <div style="min-width:0;flex:1;"><div style="display:flex;gap:5px;align-items:center;font-size:14px;font-weight:800;color:var(--text);">{{ $brand->name }} @if($brand->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif</div><div style="font-size:11px;color:var(--text-muted);">/c/{{ $brand->slug }}</div></div>
+                        <div style="min-width:0;flex:1;"><div style="display:flex;gap:5px;align-items:center;font-size:15px;font-weight:800;color:var(--text);">{{ $brand->name }} @if($brand->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif</div><div style="font-size:11px;color:var(--text-muted);">/c/{{ $brand->slug }}</div></div>
                     </div>
-                    <p style="font-size:12px;line-height:1.5;color:var(--text-muted);margin:0 0 10px;">{{ $brand->description ?: ($brand->tagline ?: 'Cộng đồng học tập DSCons.') }}</p>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:9px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;"><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityMemberCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">thành viên</span></div><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityActiveCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">đang hoạt động</span></div><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityAdminCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">quản trị</span></div></div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;"><div style="display:flex;">@foreach($__communityMembers->take(5) as $__member)<img src="{{ $__member->avatar_url }}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-5px;">@endforeach</div><span style="font-size:11px;padding:4px 7px;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ $__currentMembership?->isPremium() ? 'Premium' : 'Free member' }}</span></div>
+                    <p style="font-size:12px;line-height:1.5;color:var(--text-muted);margin:0 0 11px;">{{ $brand->description ?: ($brand->tagline ?: 'Cộng đồng học tập DSCons.') }}</p>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;"><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityMemberCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">thành viên</span></div><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityActiveCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">đang hoạt động</span></div><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityAdminCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">quản trị</span></div></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;"><div style="display:flex;padding-left:4px;">@foreach($__communityMembers->take(5) as $__member)<img src="{{ $__member->avatar_url }}" alt="" style="width:25px;height:25px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-5px;">@endforeach</div><span style="font-size:11px;padding:4px 7px;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ $__currentMembership?->isPremium() ? 'Premium' : 'Free' }}</span></div>
+                    <button type="button" onclick="copyCommunityLink('{{ route('community.preview', $brand->slug) }}')" class="ds-btn" style="width:100%;margin-top:12px;min-height:39px;padding:.5rem;">Mời bạn bè</button>
                 </div>
 
-                {{-- Sidebar widgets --}}
+                {{-- Community leaderboard --}}
                 <livewire:sidebar-leaderboard />
-                <livewire:sidebar-challenge />
                 @endauth
             </div>
         </div>
@@ -1091,6 +1094,12 @@ window.addEventListener('DOMContentLoaded', () => {
 @livewireScripts
 
 <script>
+function copyCommunityLink(url) {
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url);
+    }
+    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Đã sao chép liên kết cộng đồng.', type: 'success' } }));
+}
 function openSidebar()  {
     document.getElementById('mob-sidebar').classList.add('open');
     document.getElementById('mob-overlay').classList.add('open');
