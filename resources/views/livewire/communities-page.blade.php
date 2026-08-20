@@ -1,104 +1,108 @@
 <style>
-    .discovery-page { max-width: 1180px; margin: 0 auto; padding: 26px 30px 64px; color: var(--text); }
-    .discovery-hero { position: relative; min-height: 188px; display: flex; align-items: stretch; overflow: hidden; border: 1px solid #CFE1EA; border-radius: 20px; background: #F1F8FA; box-shadow: 0 8px 24px rgba(18,59,89,.06); }
-    .discovery-hero-copy { position: relative; z-index: 1; width: 62%; padding: 30px 34px; background: rgba(255,255,255,.86); }
-    .discovery-eyebrow { display: flex; align-items: center; gap: 7px; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .discovery-eyebrow svg { width: 16px; height: 16px; }
-    .discovery-hero h1 { margin: 11px 0 7px; color: var(--text); font-size: clamp(26px, 3vw, 38px); line-height: 1.08; letter-spacing: -.045em; }
-    .discovery-hero p { max-width: 550px; margin: 0; color: #557084; font-size: 14px; line-height: 1.65; }
-    .discovery-hero p a { color: var(--green); font-weight: 750; text-decoration: none; }
-    .discovery-hero p a:hover { text-decoration: underline; }
-    .discovery-hero-visual { position: absolute; inset: 0 0 0 auto; width: 42%; overflow: hidden; background: linear-gradient(135deg, #DDF3F6 0%, #A8DCE6 45%, #1F77BE 100%); }
-    .discovery-hero-visual::before { content: ''; position: absolute; inset: 0; opacity: .38; background-image: linear-gradient(rgba(255,255,255,.65) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.65) 1px, transparent 1px); background-size: 28px 28px; transform: skewX(-18deg) scale(1.2); }
-    .discovery-hero-visual::after { content: ''; position: absolute; width: 280px; height: 280px; right: -70px; top: -70px; border: 1px solid rgba(255,255,255,.5); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255,255,255,.12), 0 0 0 48px rgba(255,255,255,.08); }
-    .discovery-hero-mark { position: absolute; z-index: 1; right: 16%; top: 50%; width: 112px; height: 112px; object-fit: contain; transform: translateY(-50%); filter: drop-shadow(0 12px 18px rgba(7,50,79,.24)); }
-    .discovery-toolbar { display: flex; align-items: center; gap: 14px; margin: 22px 0 25px; }
+    .discovery-page { max-width: 1100px; margin: 0 auto; padding: 34px 30px 64px; color: var(--text); }
+    .discovery-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .discovery-kicker { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .discovery-kicker svg { width: 15px; height: 15px; }
+    .discovery-heading h1 { margin: 0; color: var(--text); font-size: clamp(28px, 3vw, 34px); font-weight: 800; letter-spacing: -.045em; line-height: 1.1; }
+    .discovery-heading p { max-width: 620px; margin: 9px 0 0; color: #627D90; font-size: 14px; line-height: 1.65; }
+    .discovery-create { min-height: 42px; padding: 10px 15px; white-space: nowrap; text-decoration: none; }
+    .discovery-search-row { display: flex; align-items: center; gap: 13px; margin: 22px 0 26px; }
     .discovery-search { position: relative; flex: 1; }
-    .discovery-search svg { position: absolute; left: 15px; top: 50%; width: 18px; height: 18px; color: var(--text-muted); transform: translateY(-50%); pointer-events: none; }
-    .discovery-search input { width: 100%; min-height: 48px; box-sizing: border-box; padding: 12px 16px 12px 44px; border: 1px solid var(--border); border-radius: 12px; background: #fff; color: var(--text); font: inherit; outline: none; box-shadow: 0 2px 8px rgba(18,59,89,.03); }
+    .discovery-search svg { position: absolute; top: 50%; left: 15px; width: 18px; height: 18px; color: var(--text-muted); transform: translateY(-50%); pointer-events: none; }
+    .discovery-search input { width: 100%; min-height: 48px; box-sizing: border-box; padding: 12px 16px 12px 44px; border: 1px solid var(--border); border-radius: 11px; background: #fff; color: var(--text); font: inherit; outline: none; }
     .discovery-search input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,119,190,.13); }
-    .discovery-create { min-height: 46px; padding: 11px 16px; border-radius: 10px; white-space: nowrap; text-decoration: none; }
-    .discovery-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
-    .discovery-section-head h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
-    .discovery-section-head span { color: var(--text-muted); font-size: 13px; }
+    .discovery-count { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+    .discovery-section { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    .discovery-section h2 { margin: 0; color: var(--text); font-size: 18px; letter-spacing: -.02em; }
+    .discovery-section span { color: var(--text-muted); font-size: 12px; }
     .discovery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-    .discovery-card { min-width: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #D5E3E9; border-radius: 16px; background: #fff; box-shadow: 0 4px 14px rgba(18,59,89,.045); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
-    .discovery-card:hover { border-color: #AFCFDA; box-shadow: 0 12px 26px rgba(18,59,89,.1); transform: translateY(-2px); }
-    .discovery-cover { position: relative; aspect-ratio: 16/8; overflow: hidden; background: linear-gradient(135deg, #E5F5F7, #B6DCE7); }
-    .discovery-cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(7,39,63,.22)); pointer-events: none; }
-    .discovery-cover img.discovery-cover-image { width: 100%; height: 100%; object-fit: cover; }
-    .discovery-cover-mark { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; }
-    .discovery-cover-mark img { width: 82px; height: 82px; object-fit: contain; filter: drop-shadow(0 8px 13px rgba(18,59,89,.2)); }
-    .discovery-badge { position: absolute; z-index: 2; top: 11px; right: 11px; padding: 5px 9px; border-radius: 999px; background: #fff; color: var(--green); font-size: 10px; font-weight: 800; box-shadow: 0 4px 10px rgba(18,59,89,.12); }
-    .discovery-card-body { display: flex; flex: 1; flex-direction: column; padding: 15px 16px 16px; }
+    .discovery-card { position: relative; display: flex; min-width: 0; flex-direction: column; overflow: hidden; border: 1px solid #D7E4EA; border-radius: 14px; background: #fff; box-shadow: 0 2px 8px rgba(18,59,89,.035); transition: transform .17s ease, border-color .17s ease, box-shadow .17s ease; }
+    .discovery-card:hover { border-color: #A9CAD7; box-shadow: 0 10px 24px rgba(18,59,89,.09); transform: translateY(-2px); }
+    .discovery-card-link { position: absolute; z-index: 1; inset: 0; border-radius: inherit; }
+    .discovery-card-cover { position: relative; aspect-ratio: 16 / 7; overflow: hidden; background: linear-gradient(135deg, #ECF8F9 0%, #C0E5E9 55%, #6EBCCD 100%); }
+    .discovery-card-cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.4), transparent 58%); }
+    .discovery-card-cover-image { width: 100%; height: 100%; object-fit: cover; }
+    .discovery-card-cover-mark { position: absolute; z-index: 1; inset: 0; display: grid; place-items: center; }
+    .discovery-card-cover-mark img { width: 70px; height: 70px; object-fit: contain; filter: drop-shadow(0 7px 12px rgba(18,59,89,.16)); }
+    .discovery-card-badge { position: absolute; z-index: 2; top: 10px; right: 10px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.94); color: var(--green); font-size: 10px; font-weight: 800; }
+    .discovery-card-info { position: relative; z-index: 2; display: flex; flex: 1; flex-direction: column; padding: 14px 15px 15px; pointer-events: none; }
     .discovery-card-heading { display: flex; align-items: center; gap: 9px; min-width: 0; }
-    .discovery-card-logo { width: 34px; height: 34px; flex: 0 0 auto; overflow: hidden; border: 1px solid #D5E8EE; border-radius: 10px; background: #E8F5F7; object-fit: contain; padding: 3px; }
-    .discovery-card-heading h3 { overflow: hidden; margin: 0; color: var(--text); font-size: 16px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-    .discovery-verified { color: var(--green); font-size: 12px; }
-    .discovery-slug { margin-top: 4px; color: var(--text-muted); font-size: 11px; }
-    .discovery-description { display: -webkit-box; min-height: 42px; margin: 11px 0 13px; overflow: hidden; color: #557084; font-size: 13px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-    .discovery-meta { display: flex; align-items: center; gap: 9px; margin-top: auto; padding-top: 11px; border-top: 1px solid #E5EEF2; color: var(--text-muted); font-size: 12px; }
-    .discovery-meta strong { color: var(--text); font-weight: 750; }
-    .discovery-actions { display: flex; gap: 8px; margin-top: 14px; }
-    .discovery-actions .ds-btn { min-height: 38px; padding: 8px 10px; font-size: 12px; }
-    .discovery-empty { padding: 48px 24px; border: 1px dashed #BFD5DE; border-radius: 16px; background: #fff; color: var(--text-muted); text-align: center; }
+    .discovery-card-logo { width: 33px; height: 33px; box-sizing: border-box; flex: 0 0 auto; overflow: hidden; border: 1px solid #D6E8ED; border-radius: 9px; background: #E9F6F8; object-fit: contain; padding: 3px; }
+    .discovery-card-heading h3 { overflow: hidden; margin: 0; color: var(--text); font-size: 16px; letter-spacing: -.015em; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+    .discovery-card-verified { color: var(--green); font-size: 12px; }
+    .discovery-card-slug { margin-top: 3px; color: var(--text-muted); font-size: 11px; }
+    .discovery-card-description { display: -webkit-box; min-height: 39px; margin: 10px 0 12px; overflow: hidden; color: #5E788A; font-size: 12px; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .discovery-card-meta { display: flex; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid #E7EEF1; color: var(--text-muted); font-size: 11px; }
+    .discovery-card-meta strong { color: var(--text); font-weight: 800; }
+    .discovery-card-cta { position: relative; z-index: 3; width: 100%; min-height: 37px; margin-top: 13px; padding: 8px 10px; font-size: 12px; pointer-events: auto; }
+    .discovery-create-card { display: flex; min-height: 270px; align-items: center; justify-content: center; padding: 24px; border: 1px dashed #AACCD7; border-radius: 14px; background: #F7FBFC; color: var(--green); text-align: center; text-decoration: none; transition: background .17s ease, border-color .17s ease; }
+    .discovery-create-card:hover { border-color: var(--green); background: #EDF8FA; }
+    .discovery-create-card svg { width: 28px; height: 28px; margin-bottom: 10px; }
+    .discovery-create-card strong { display: block; font-size: 15px; }
+    .discovery-create-card span { display: block; margin-top: 4px; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+    .discovery-empty { padding: 48px 24px; border: 1px dashed #BFD5DE; border-radius: 14px; background: #fff; color: var(--text-muted); text-align: center; }
     @media (max-width: 1050px) { .discovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .discovery-page { padding: 16px 14px 40px; } .discovery-hero { min-height: 244px; } .discovery-hero-copy { width: 100%; padding: 24px 22px; background: linear-gradient(90deg, rgba(255,255,255,.97) 0%, rgba(255,255,255,.89) 68%, rgba(255,255,255,.4) 100%); } .discovery-hero-visual { width: 58%; opacity: .8; } .discovery-hero-mark { right: 8%; top: 66%; width: 82px; height: 82px; } .discovery-toolbar { display: block; margin: 16px 0 22px; } .discovery-create { display: flex; justify-content: center; margin-top: 10px; } .discovery-grid { grid-template-columns: 1fr; gap: 13px; } }
+    @media (max-width: 700px) { .discovery-page { padding: 20px 14px 42px; } .discovery-heading { display: block; padding-bottom: 20px; } .discovery-create { display: flex; justify-content: center; margin-top: 16px; } .discovery-search-row { display: block; margin: 16px 0 22px; } .discovery-count { display: block; margin: 9px 0 0; } .discovery-grid { grid-template-columns: 1fr; gap: 13px; } }
 </style>
 
 <div class="discovery-page">
-    <section class="discovery-hero" aria-labelledby="discovery-title">
-        <div class="discovery-hero-copy">
-            <div class="discovery-eyebrow">
+    <header class="discovery-heading">
+        <div>
+            <div class="discovery-kicker">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
                 DSCons Network
             </div>
-            <h1 id="discovery-title">Khám phá cộng đồng</h1>
-            <p>Tìm không gian học tập phù hợp với mục tiêu nghề nghiệp, kết nối cùng những người đang xây dựng năng lực thực chiến. <a href="{{ route('community.create') }}">Tạo cộng đồng của bạn</a>.</p>
+            <h1>Khám phá cộng đồng</h1>
+            <p>Tìm cộng đồng phù hợp với mục tiêu học tập và nghề nghiệp của bạn.</p>
         </div>
-        <div class="discovery-hero-visual" aria-hidden="true">
-            <img class="discovery-hero-mark" src="{{ asset('1024x1024-da xoa nen.png') }}" alt="">
-        </div>
-    </section>
+        @auth
+            <a href="{{ route('community.create') }}" class="ds-btn ds-btn-primary discovery-create">Tạo cộng đồng</a>
+        @endauth
+    </header>
 
-    <div class="discovery-toolbar">
+    <div class="discovery-search-row">
         <label class="discovery-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
             <input wire:model.live.debounce.300ms="search" type="search" placeholder="Tìm cộng đồng theo tên hoặc mô tả…" aria-label="Tìm cộng đồng">
         </label>
-        @auth
-            <a href="{{ route('community.create') }}" class="ds-btn ds-btn-primary discovery-create">Tạo cộng đồng</a>
-        @endauth
+        <span class="discovery-count">{{ $communities->count() }} community đang hoạt động</span>
     </div>
 
-    <div class="discovery-section-head">
-        <h2>Cộng đồng</h2>
-        <span>{{ $communities->count() }} cộng đồng đang hoạt động</span>
+    <div class="discovery-section">
+        <h2>Danh sách cộng đồng</h2>
+        <span>Bấm vào community để truy cập</span>
     </div>
 
     @if($communities->isEmpty())
-        <div class="discovery-empty">Chưa có cộng đồng phù hợp. Hãy thử từ khóa khác hoặc tạo cộng đồng đầu tiên.</div>
+        <div class="discovery-empty">Chưa có community phù hợp. Hãy thử một từ khóa khác.</div>
     @else
         <div class="discovery-grid">
             @foreach($communities as $community)
+                @php
+                    $isJoined = $joinedIds->contains($community->id);
+                    $communityUrl = $isJoined
+                        ? route('community.feed', ['community' => $community->slug])
+                        : route('community.preview', $community->slug);
+                @endphp
                 <article class="discovery-card">
-                    <div class="discovery-cover">
+                    <a href="{{ $communityUrl }}" class="discovery-card-link" aria-label="{{ $isJoined ? 'Vào' : 'Xem' }} community {{ $community->name }}"></a>
+                    <div class="discovery-card-cover">
                         @if($community->banner_path)
-                            <img class="discovery-cover-image" src="{{ asset('storage/'.$community->banner_path) }}" alt="">
+                            <img class="discovery-card-cover-image" src="{{ asset('storage/'.$community->banner_path) }}" alt="">
                         @else
-                            <div class="discovery-cover-mark">
+                            <div class="discovery-card-cover-mark">
                                 @if(($community->slug ?? null) === 'dscons')
                                     <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="">
                                 @elseif($community->logo_path)
                                     <img src="{{ asset('storage/'.$community->logo_path) }}" alt="">
                                 @else
-                                    <span style="font-size:44px;font-weight:850;color:rgba(255,255,255,.9);">{{ strtoupper(substr($community->name, 0, 1)) }}</span>
+                                    <span style="font-size:38px;font-weight:850;color:rgba(255,255,255,.92);">{{ strtoupper(substr($community->name, 0, 1)) }}</span>
                                 @endif
                             </div>
                         @endif
-                        @if($community->isVerified())<span class="discovery-badge">Đã xác minh</span>@endif
+                        @if($community->isVerified())<span class="discovery-card-badge">Đã xác minh</span>@endif
                     </div>
-                    <div class="discovery-card-body">
+                    <div class="discovery-card-info">
                         <div class="discovery-card-heading">
                             @if(($community->slug ?? null) === 'dscons')
                                 <img class="discovery-card-logo" src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons">
@@ -108,27 +112,25 @@
                                 <span class="discovery-card-logo" style="display:grid;place-items:center;color:var(--green);font-weight:800;">{{ strtoupper(substr($community->name, 0, 1)) }}</span>
                             @endif
                             <div style="min-width:0;">
-                                <h3>{{ $community->name }} @if($community->isVerified())<span class="discovery-verified" title="Đã xác minh">✓</span>@endif</h3>
-                                <div class="discovery-slug">/c/{{ $community->slug }}</div>
+                                <h3>{{ $community->name }} @if($community->isVerified())<span class="discovery-card-verified" title="Đã xác minh">✓</span>@endif</h3>
+                                <div class="discovery-card-slug">/c/{{ $community->slug }}</div>
                             </div>
                         </div>
-                        <p class="discovery-description">{{ $community->description ?: ($community->tagline ?: 'Một cộng đồng học tập thực chiến trên DSCons.') }}</p>
-                        <div class="discovery-meta"><span><strong>{{ number_format($community->users_count) }}</strong> thành viên</span><span aria-hidden="true">·</span><span>{{ $community->isVerified() ? 'Đã xác minh' : 'Đang phát triển' }}</span></div>
-                        <div class="discovery-actions">
-                            <a href="{{ route('community.preview', $community->slug) }}" class="ds-btn" style="flex:1;text-align:center;text-decoration:none;">Xem community</a>
-                            @auth
-                                @if($joinedIds->contains($community->id))
-                                    <a href="{{ route('community.feed', $community->slug) }}" class="ds-btn ds-btn-primary" style="flex:1;text-align:center;text-decoration:none;">Mở bảng tin</a>
-                                @else
-                                    <button wire:click="join({{ $community->id }})" class="ds-btn ds-btn-primary" style="flex:1;">Tham gia Free</button>
-                                @endif
-                            @else
-                                <a href="{{ route('login') }}" class="ds-btn ds-btn-primary" style="flex:1;text-align:center;text-decoration:none;">Đăng nhập</a>
-                            @endauth
-                        </div>
+                        <p class="discovery-card-description">{{ $community->description ?: ($community->tagline ?: 'Một cộng đồng học tập thực chiến trên DSCons.') }}</p>
+                        <div class="discovery-card-meta"><span><strong>{{ number_format($community->users_count) }}</strong> thành viên</span><span aria-hidden="true">·</span><span>{{ $isJoined ? 'Đã tham gia' : 'Mở tham gia' }}</span></div>
+                        <a href="{{ $communityUrl }}" class="ds-btn {{ $isJoined ? 'ds-btn-primary' : '' }} discovery-card-cta" style="text-align:center;text-decoration:none;">{{ $isJoined ? 'Vào community' : 'Xem community' }}</a>
                     </div>
                 </article>
             @endforeach
+            @if($communities->count() < 3)
+                <a href="{{ route('community.create') }}" class="discovery-create-card">
+                    <div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                        <strong>Tạo community mới</strong>
+                        <span>Gửi đề xuất để DSCons duyệt và mở community của bạn.</span>
+                    </div>
+                </a>
+            @endif
         </div>
     @endif
 </div>

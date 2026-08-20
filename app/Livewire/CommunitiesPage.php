@@ -35,7 +35,26 @@ class CommunitiesPage extends Component
         }
 
         $communities = $query->orderByDesc('users_count')->orderBy('name')->get();
-        $joinedIds = Auth::check() ? Auth::user()->brandRoles()->pluck('brands.id') : collect();
+        $joinedIds = collect();
+
+        if (Auth::check()) {
+            $joinedIds = Auth::user()->memberships()
+                ->withoutGlobalScopes()
+                ->where(function ($membership) {
+                    $membership
+                        ->where(function ($active) {
+                            $active->where('status', 'active')
+                                ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+                        })
+                        ->orWhere(function ($trial) {
+                            $trial->where('status', 'trial')->where('trial_ends_at', '>', now());
+                        });
+                })
+                ->pluck('brand_id')
+                ->filter()
+                ->unique()
+                ->values();
+        }
 
         return view('livewire.communities-page', compact('communities', 'joinedIds'))
             ->layout('layouts.app', ['title' => 'Khám phá cộng đồng']);
