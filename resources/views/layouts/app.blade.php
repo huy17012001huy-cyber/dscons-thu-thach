@@ -209,14 +209,26 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 }
 
 #sidebar-header {
-    min-height: 56px;
-    padding: 0 12px;
+    min-height: 58px;
+    margin: 8px 8px 6px;
+    padding: 4px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    box-shadow: 0 1px 0 var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(18,59,89,.06);
 }
+.community-switcher-main { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.community-switcher-chevron, .community-switcher-bell {
+    width: 34px; height: 38px; flex: 0 0 auto; border: 0; border-radius: 9px;
+    display: grid; place-items: center; background: transparent; color: var(--text-muted);
+    cursor: pointer;
+}
+.community-switcher-chevron:hover, .community-switcher-bell:hover { background: var(--bg-hover); color: var(--text); }
+.community-switcher-bell svg { width: 18px; height: 18px; }
 #sidebar-header h2 {
     font-size: var(--fs-md);
     font-weight: 600;
@@ -226,13 +238,13 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     text-overflow: ellipsis;
 }
 .community-switcher-button {
-    width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 10px;
+    width: 100%; min-height: 42px; padding: 6px 7px; border: 0; border-radius: 10px;
     background: transparent; color: var(--text); display: flex; align-items: center; gap: 9px;
     text-align: left; cursor: pointer; font: inherit;
 }
 .community-switcher-button:hover, .community-switcher-button[aria-expanded="true"] { background: var(--bg-hover); }
 .community-switcher-menu {
-    position: absolute; z-index: 100; top: calc(100% - 5px); left: 8px; right: 8px;
+    position: absolute; z-index: 100; top: calc(100% + 7px); left: 0; right: 0;
     max-height: min(430px, calc(100vh - 170px)); overflow-y: auto; padding: 8px;
     border: 1px solid var(--border); border-radius: 14px; background: #fff;
     box-shadow: 0 16px 34px rgba(18,59,89,.16);
@@ -246,6 +258,14 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 .community-switcher-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border); }
 .community-switcher-footer a { min-height: 38px; display: grid; place-items: center; border-radius: 8px; background: #F4F8FA; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 700; }
 .community-switcher-footer a:hover { background: var(--bg-active); color: var(--green); }
+.admin-nav-group { margin-top: 2px; }
+.admin-nav-subitem {
+    display: flex; align-items: center; gap: 9px; min-height: 34px; margin: 0 8px 2px 38px;
+    padding: 6px 9px; border-left: 1px solid var(--border); border-radius: 0 7px 7px 0;
+    color: var(--text-muted); font-size: 12px; font-weight: 600; text-decoration: none;
+}
+.admin-nav-subitem:hover, .admin-nav-subitem.active { color: var(--green); background: var(--bg-active); }
+.admin-nav-subitem svg { width: 14px; height: 14px; flex: 0 0 auto; }
 
 #channel-list {
     flex: 1;
@@ -701,40 +721,29 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 {{-- 2. CHANNEL SIDEBAR ──────────────────────── --}}
 <div id="channel-sidebar">
-    {{-- Community banner --}}
-    <div id="community-banner">
-        @if(isset($brand) && $brand->banner_path)
-            <img src="{{ asset('storage/' . $brand->banner_path) }}" alt="">
-        @else
-            <div class="banner-fallback">
-                @if(isset($brand) && $brand->logo_path)
-                <img src="{{ asset('storage/' . $brand->logo_path) }}" alt="">
-                @else
-                <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:58px;height:58px;object-fit:contain;">
-                @endif
-                <span>DSCons Việt Nam</span>
-            </div>
-        @endif
-    </div>
-
     @php
         $__sidebarMemberships = auth()->check()
             ? auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active', 'trial'])->get()->filter(fn ($membership) => $membership->brand)
             : collect();
     @endphp
     <div id="sidebar-header" x-data="{ open: false }" style="position:relative;">
-        <button type="button" class="community-switcher-button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu">
-            @if($brand->logo_path)
-                <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" class="community-switcher-logo">
-            @else
-                <span class="community-switcher-logo" style="display:grid;place-items:center;font-weight:800;color:var(--green);">{{ strtoupper(substr($brand->name, 0, 1)) }}</span>
-            @endif
-            <span style="min-width:0;flex:1;">
-                <span style="display:flex;align-items:center;gap:5px;min-width:0;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:800;">{{ $brand->name }}</span>@if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:12px;">✓</span>@endif</span>
-                <span style="display:block;margin-top:2px;font-size:11px;color:var(--text-muted);">Cộng đồng đang xem</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:16px;height:16px;color:var(--text-muted);transition:transform .18s ease;" :style="open ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
+        <div class="community-switcher-main">
+            <button type="button" class="community-switcher-chevron" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu" aria-label="Đổi cộng đồng">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:17px;height:17px;transition:transform .18s ease;" :style="open ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <button type="button" class="community-switcher-button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu">
+                @if(($brand->slug ?? null) !== 'dscons' && $brand->logo_path)
+                    <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" class="community-switcher-logo">
+                @else
+                    <img src="{{ asset('dscons-logo.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">
+                @endif
+                <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:800;">{{ $brand->name }}</span>
+                @if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:12px;">✓</span>@endif
+            </button>
+            <button type="button" class="community-switcher-bell" aria-label="Thông báo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            </button>
+        </div>
         <div id="community-switcher-menu" class="community-switcher-menu" x-cloak x-show="open" x-transition.origin.top @click.outside="open = false">
             @auth
                 @forelse($__sidebarMemberships as $__membership)
@@ -742,7 +751,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                         $__community = $__membership->brand;
                     @endphp
                     <a href="{{ route('community.feed', ['community' => $__community->slug]) }}" class="community-switcher-item {{ $__community->id === $brand->id ? 'active' : '' }}">
-                        @if($__community->logo_path)<img src="{{ asset('storage/'.$__community->logo_path) }}" alt="" class="community-switcher-logo">@else<span class="community-switcher-logo" style="display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--green);">{{ strtoupper(substr($__community->name,0,1)) }}</span>@endif
+                        @if(($__community->slug ?? null) === 'dscons')<img src="{{ asset('dscons-logo.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">@elseif($__community->logo_path)<img src="{{ asset('storage/'.$__community->logo_path) }}" alt="" class="community-switcher-logo">@else<span class="community-switcher-logo" style="display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--green);">{{ strtoupper(substr($__community->name,0,1)) }}</span>@endif
                         <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $__community->name }}</span>
                         @if($__community->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif
                     </a>
@@ -762,7 +771,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     <div id="channel-list">
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Cộng đồng DSCons
+            Cộng đồng
         </div>
         <a href="{{ community_route('feed') }}" class="ch-item {{ request()->routeIs('feed') || request()->routeIs('community.feed') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -820,14 +829,16 @@ button, a, input, select, textarea { touch-action: manipulation; }
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             Admin
         </div>
+        <div class="admin-nav-group">
         <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             <span class="ch-name">Admin</span>
         </a>
-        <a href="{{ route('admin.communities') }}" class="ch-item {{ request()->routeIs('admin.communities') ? 'active' : '' }}">
+        <a href="{{ route('admin.communities') }}" class="admin-nav-subitem {{ request()->routeIs('admin.communities') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M4 5h16M7 5v14M17 5v14M10 9h4M10 13h4"/></svg>
-            <span class="ch-name">Cộng đồng</span>
+            <span>Quản lý cộng đồng</span>
         </a>
+        </div>
         @endcan
     </div>
 
