@@ -1,6 +1,7 @@
 <div>
     <div class="card">
         <h1 style="font-size:1.5rem; font-weight:700; color:#1A1A1A; margin-bottom:0.25rem;">Đăng nhập</h1>
+        <div style="font-size:.78rem;color:#1F77BE;font-weight:700;margin-bottom:.35rem;">{{ brand()->name }}</div>
         <p style="color:#5C5C66; font-size:0.875rem; margin-bottom:1.5rem;">Chào mừng trở lại 👋</p>
 
         @if(session('status'))

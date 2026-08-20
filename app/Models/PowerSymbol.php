@@ -1,10 +1,12 @@
 <?php
 namespace App\Models;
+use App\Models\Concerns\HasBrand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PowerSymbol extends Model {
-    protected $fillable = ['user_id','pillar','level','fragments'];
+    use HasBrand;
+    protected $fillable = ['user_id','pillar','level','fragments','brand_id'];
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function getEmoji(): string {
         return match($this->pillar) {

@@ -49,6 +49,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Membership::class)->latestOfMany();
     }
 
+    public function communityStats(): HasMany
+    {
+        return $this->hasMany(CommunityUserStat::class);
+    }
+
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
@@ -114,6 +119,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(AffiliateEarning::class, 'referrer_id');
     }
 
+    public function eventRegistrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
+
     public function userBadges(): HasMany
     {
         return $this->hasMany(UserBadge::class);
@@ -130,7 +140,18 @@ class User extends Authenticatable implements MustVerifyEmail
         if (!$brandId) return $this->is_admin;
         return $this->is_admin || $this->brandRoles()
             ->where('brand_id', $brandId)
-            ->where('role', 'admin')
+            ->whereIn('role', ['owner', 'admin'])
+            ->exists();
+    }
+
+    public function isCommunityOwner(?int $brandId = null): bool
+    {
+        $brandId ??= app()->bound('brand') ? brand()->id : null;
+        if (!$brandId) return false;
+
+        return $this->is_admin || $this->brandRoles()
+            ->where('brand_id', $brandId)
+            ->where('role', 'owner')
             ->exists();
     }
 
@@ -208,5 +229,19 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $m = $this->membership;
         return $m && in_array($m->status, ['trial', 'active']);
+    }
+
+    public function hasPremiumMembership(?int $brandId = null): bool
+    {
+        $brandId ??= app()->bound('brand') ? brand()->id : null;
+        if (!$brandId) return false;
+
+        return $this->memberships()->withoutGlobalScopes()
+            ->where('brand_id', $brandId)
+            ->where('tier', 'premium')
+            ->whereIn('status', ['active', 'trial'])
+            ->where(function ($query) {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })->exists();
     }
 }

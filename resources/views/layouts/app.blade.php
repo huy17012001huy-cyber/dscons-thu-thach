@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+@php
+    // A brand may have empty theme fields in an older local database; keep the DSCons palette usable.
+    $__brandPrimary = filled($brand->theme_primary ?? null) ? $brand->theme_primary : '#1F77BE';
+    $__brandAccent = filled($brand->theme_accent ?? null) ? $brand->theme_accent : '#E1F4F7';
+    $__brandBg = filled($brand->theme_bg ?? null) ? $brand->theme_bg : '#F7FAFC';
+@endphp
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="{{ $brand->theme_primary ?? '#1F77BE' }}">
+<meta name="theme-color" content="{{ $__brandPrimary }}">
 <title>{{ $title ?? brand()->name }}</title>
 <link rel="icon" type="image/png" href="{{ asset('1024x1024-da xoa nen.png') }}">
 <meta name="description" content="{{ brand()->name }} — {{ brand()->tagline }}">
@@ -20,7 +26,7 @@
 
 /* Shell viewport — overflow only on body to avoid double-constraint flicker */
 /* html bg matches body to prevent white→beige flash on first paint (esp. Retina) */
-html { height: 100%; background: {{ $brand->theme_bg ?? '#F7FAFC' }}; }
+html { height: 100%; background: {{ $__brandBg }}; }
 body { height: 100%; overflow: hidden; font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 /* Hide Alpine-controlled elements until hydration to prevent FOUC flash */
@@ -38,14 +44,14 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
     --fs-md:   16px;   /* nav items, titles, headings */
 
     /* Colors */
-    --green:        {{ $brand->theme_primary ?? '#1F77BE' }};
-    --green-pale:   {{ $brand->theme_accent ?? '#E1F4F7' }};
-    --bg-app:       {{ $brand->theme_bg ?? '#F7FAFC' }};
+    --green:        {{ $__brandPrimary }};
+    --green-pale:   {{ $__brandAccent }};
+    --bg-app:       {{ $__brandBg }};
     --bg-sb:        #FFFFFF;
     --bg-content:   #F7FAFC;
     --bg-card:      #ffffff;
     --bg-hover:     #E7F0F5;
-    --bg-active:    #DCECF7;
+    --bg-active:    #E1F4F7;
     --bg-input:     #FFFFFF;
     --text:         #123B59;
     --text-muted:   #61798A;
@@ -278,7 +284,7 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
     transition: background .1s, color .1s;
 }
 .ch-item:hover   { background: var(--bg-hover); color: #1A1A1A; transform: translateX(2px); }
-.ch-item.active  { background: var(--bg-active); color: #1A1A1A; font-weight: 600; }
+.ch-item.active  { background: var(--bg-active); color: var(--green); font-weight: 650; box-shadow: inset 3px 0 0 var(--green); }
 .ch-item svg     { width: 18px; height: 18px; flex-shrink: 0; opacity: .5; }
 .ch-item.active svg, .ch-item:hover svg { opacity: 1; }
 .ch-item.active svg { color: var(--green); }
@@ -517,7 +523,7 @@ body.is-impersonating #app { height: calc(100% - 32px - 36px); }
     border-radius: 8px; transition: color .1s;
 }
 .mob-nav-btn svg { width: 22px; height: 22px; }
-.mob-nav-btn.active { color: var(--green); }
+.mob-nav-btn.active { color: var(--green); background: var(--bg-active); }
 
 /* Mobile sidebar overlay */
 #mob-overlay {
@@ -671,9 +677,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
     <div class="guild-sep"></div>
     @endauth
     @auth
-    @foreach(auth()->user()->memberships()->with('brand')->whereIn('status', ['active','trial'])->get()->unique('brand_id') as $m)
+    @foreach(auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active','trial'])->get()->unique('brand_id') as $m)
         <div class="guild-item {{ $m->brand_id === $brand->id ? 'active' : '' }}">
-            <a href="https://{{ $m->brand->domain }}/feed" class="guild-icon" title="{{ $m->brand->name }}">
+            <a href="{{ route('community.feed', ['community' => $m->brand->slug]) }}" class="guild-icon" title="{{ $m->brand->name }}">
                 @if($m->brand->logo_path)
                     <img src="{{ asset('storage/' . $m->brand->logo_path) }}" alt="{{ $m->brand->slug }}">
                 @else
@@ -684,6 +690,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
     @endforeach
     @endauth
     <div class="guild-sep"></div>
+    <div class="guild-item">
+        <a href="{{ route('communities') }}" class="guild-icon" title="Khám phá cộng đồng" aria-label="Khám phá cộng đồng" style="background:#E1F4F7;color:#1F77BE;font-size:22px;">+</a>
+    </div>
 </div>
 
 {{-- 2. CHANNEL SIDEBAR ──────────────────────── --}}
@@ -704,9 +713,16 @@ button, a, input, select, textarea { touch-action: manipulation; }
         @endif
     </div>
 
-    <div id="sidebar-header">
-        <h2>{{ $brand->name }}</h2>
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; color:var(--text-muted);"><polyline points="6 9 12 15 18 9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div id="sidebar-header" style="position:relative;">
+        <a href="{{ route('community.preview', $brand->slug) }}" style="display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none;min-width:0;">
+            <h2>{{ $brand->name }}</h2>
+            @if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:13px;">✓</span>@endif
+        </a>
+        <a href="{{ route('communities') }}" title="Đổi cộng đồng" aria-label="Đổi cộng đồng" style="display:grid;place-items:center;width:32px;height:32px;border-radius:8px;color:var(--text-muted);text-decoration:none;">⌄</a>
+    </div>
+    <div style="display:flex;gap:7px;padding:8px 12px 2px;">
+        <a href="{{ route('communities') }}" style="font-size:12px;color:var(--green);text-decoration:none;">Khám phá</a>
+        @auth · <a href="{{ route('community.create') }}" style="font-size:12px;color:var(--text-muted);text-decoration:none;">Tạo community</a>@endauth
     </div>
 
     <div id="channel-list">
@@ -714,19 +730,19 @@ button, a, input, select, textarea { touch-action: manipulation; }
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             Cộng đồng DSCons
         </div>
-        <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed') ? 'active' : '' }}">
+        <a href="{{ community_route('feed') }}" class="ch-item {{ request()->routeIs('feed') || request()->routeIs('community.feed') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             <span class="ch-name">Bảng tin</span>
         </a>
-        <a href="{{ route('cot') }}" class="ch-item {{ request()->routeIs('cot') ? 'active' : '' }}">
+        <a href="{{ community_route('cot') }}" class="ch-item {{ request()->routeIs('cot') || request()->routeIs('community.cot') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             <span class="ch-name">Kiến thức cốt lõi</span>
         </a>
-        <a href="{{ route('signals') }}" class="ch-item {{ request()->routeIs('signals') ? 'active' : '' }}">
+        <a href="{{ community_route('signals') }}" class="ch-item {{ request()->routeIs('signals') || request()->routeIs('community.signals') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <span class="ch-name">Tín hiệu công nghệ</span>
         </a>
-        <a href="{{ route('qa') }}" class="ch-item {{ request()->routeIs('qa') ? 'active' : '' }}">
+        <a href="{{ community_route('qa') }}" class="ch-item {{ request()->routeIs('qa') || request()->routeIs('community.qa') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span class="ch-name">Hỏi đáp kỹ thuật</span>
         </a>
@@ -735,15 +751,19 @@ button, a, input, select, textarea { touch-action: manipulation; }
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             Học tập
         </div>
-        <a href="{{ route('academy') }}" class="ch-item {{ request()->routeIs('academy*') ? 'active' : '' }}">
+        <a href="{{ community_route('academy') }}" class="ch-item {{ request()->routeIs('academy*') || request()->routeIs('community.academy*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
             <span class="ch-name">Khóa học</span>
         </a>
-        <a href="{{ route('challenge') }}" class="ch-item {{ request()->routeIs('challenge*') ? 'active' : '' }}">
+        <a href="{{ community_route('challenge') }}" class="ch-item {{ request()->routeIs('challenge*') || request()->routeIs('community.challenge*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
             <span class="ch-name">Challenge</span>
         </a>
-        <a href="{{ route('leaderboard') }}" class="ch-item {{ request()->routeIs('leaderboard') ? 'active' : '' }}">
+        <a href="{{ community_route('events') }}" class="ch-item {{ request()->routeIs('events') || request()->routeIs('community.events') ? 'active' : '' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            <span class="ch-name">Sự kiện</span>
+        </a>
+        <a href="{{ community_route('leaderboard') }}" class="ch-item {{ request()->routeIs('leaderboard') || request()->routeIs('community.leaderboard') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
             <span class="ch-name">Bảng xếp hạng</span>
         </a>
@@ -752,11 +772,11 @@ button, a, input, select, textarea { touch-action: manipulation; }
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             Khác
         </div>
-        <a href="{{ route('marketplace') }}" class="ch-item {{ request()->routeIs('marketplace') ? 'active' : '' }}">
+        <a href="{{ community_route('marketplace') }}" class="ch-item {{ request()->routeIs('marketplace') || request()->routeIs('community.marketplace') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
             <span class="ch-name">Marketplace</span>
         </a>
-        <a href="{{ route('affiliate') }}" class="ch-item {{ request()->routeIs('affiliate') ? 'active' : '' }}">
+        <a href="{{ community_route('affiliate') }}" class="ch-item {{ request()->routeIs('affiliate') || request()->routeIs('community.affiliate') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <span class="ch-name">Affiliate</span>
         </a>
@@ -769,6 +789,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
         <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             <span class="ch-name">Admin</span>
+        </a>
+        <a href="{{ route('admin.communities') }}" class="ch-item {{ request()->routeIs('admin.communities') ? 'active' : '' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M4 5h16M7 5v14M17 5v14M10 9h4M10 13h4"/></svg>
+            <span class="ch-name">Cộng đồng</span>
         </a>
         @endcan
     </div>
@@ -863,6 +887,14 @@ button, a, input, select, textarea { touch-action: manipulation; }
         <div id="right-panel">
             <div id="right-panel-scroll">
                 @auth
+                @php
+                    $__currentMembership = auth()->user()->memberships()->where('brand_id', $brand->id)->latest()->first();
+                    $__featuredUpgrade = \App\Models\Course::query()->where('is_published', true)->latest()->first();
+                    $__communityMembers = $brand->users()->limit(6)->get(['users.id','users.name','users.avatar']);
+                    $__communityMemberCount = $brand->users()->count();
+                    $__communityActiveCount = $brand->users()->where('last_active_at', '>=', now()->subMinutes(30))->count();
+                    $__communityAdminCount = $brand->users()->wherePivotIn('role', ['owner','admin'])->count();
+                @endphp
                 {{-- My Profile Card --}}
                 <div class="rp-card">
                     <div class="profile-user-row">
@@ -894,9 +926,38 @@ button, a, input, select, textarea { touch-action: manipulation; }
                     </div>
                 </div>
 
+                {{-- Membership upgrade card --}}
+                <div class="rp-card" style="padding:0;overflow:hidden;">
+                    <div style="height:88px;background:linear-gradient(135deg,#0e527f,#1F77BE);position:relative;overflow:hidden;">
+                        @if($__featuredUpgrade?->thumbnail)
+                            <img src="{{ asset('storage/'.$__featuredUpgrade->thumbnail) }}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.42;">
+                        @endif
+                        <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,39,62,.62),transparent);"></div>
+                        <span style="position:absolute;left:13px;bottom:11px;font-size:11px;color:#fff;font-weight:800;letter-spacing:.1em;text-transform:uppercase;">DSCons membership</span>
+                    </div>
+                    <div style="padding:13px 14px 14px;">
+                        <div style="font-size:16px;font-weight:800;color:var(--text);">Nâng hạng thành viên</div>
+                        <p style="font-size:12px;color:var(--text-muted);line-height:1.45;margin:4px 0 11px;">Mở đầy đủ khóa học, challenge và sự kiện trong community.</p>
+                        <a href="{{ community_route('membership') }}" class="ds-btn ds-btn-primary" style="display:block;text-align:center;text-decoration:none;min-height:38px;padding:.5rem;">{{ $__currentMembership?->isPremium() ? 'Đang dùng Premium' : 'Xem gói Premium' }}</a>
+                    </div>
+                </div>
+
+                {{-- Current community information --}}
+                <div class="rp-card" style="padding:14px;">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
+                        <div style="width:36px;height:36px;border-radius:11px;overflow:hidden;background:#E1F4F7;display:grid;place-items:center;color:var(--green);font-weight:800;">
+                            @if($brand->logo_path)<img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" style="width:100%;height:100%;object-fit:cover;">@else{{ strtoupper(substr($brand->name,0,1)) }}@endif
+                        </div>
+                        <div style="min-width:0;flex:1;"><div style="display:flex;gap:5px;align-items:center;font-size:14px;font-weight:800;color:var(--text);">{{ $brand->name }} @if($brand->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif</div><div style="font-size:11px;color:var(--text-muted);">/c/{{ $brand->slug }}</div></div>
+                    </div>
+                    <p style="font-size:12px;line-height:1.5;color:var(--text-muted);margin:0 0 10px;">{{ $brand->description ?: ($brand->tagline ?: 'Cộng đồng học tập DSCons.') }}</p>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:9px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;"><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityMemberCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">thành viên</span></div><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityActiveCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">đang hoạt động</span></div><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityAdminCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">quản trị</span></div></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;"><div style="display:flex;">@foreach($__communityMembers->take(5) as $__member)<img src="{{ $__member->avatar_url }}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-5px;">@endforeach</div><span style="font-size:11px;padding:4px 7px;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ $__currentMembership?->isPremium() ? 'Premium' : 'Free member' }}</span></div>
+                </div>
+
                 {{-- Sidebar widgets --}}
-                <livewire:sidebar-challenge />
                 <livewire:sidebar-leaderboard />
+                <livewire:sidebar-challenge />
                 @endauth
             </div>
         </div>
@@ -908,11 +969,12 @@ button, a, input, select, textarea { touch-action: manipulation; }
 <div id="mob-overlay" onclick="closeSidebar()"></div>
 <div id="mob-sidebar">
     <div class="mobile-sidebar-header">
-        <span>{{ $brand->name }}</span>
+        <span style="display:flex;align-items:center;gap:7px;min-width:0;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $brand->name }}</span>@if($brand->isVerified())<span style="color:var(--green);">✓</span>@endif</span>
         <button type="button" class="panel-btn" onclick="closeSidebar()" aria-label="Đóng menu">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
     </div>
+    <div style="padding:10px 12px 4px;display:flex;gap:8px;border-bottom:1px solid var(--border);"><a href="{{ route('communities') }}" style="font-size:12px;color:var(--green);text-decoration:none;">Đổi cộng đồng</a>@auth<a href="{{ route('community.create') }}" style="font-size:12px;color:var(--text-muted);text-decoration:none;">Tạo mới</a>@endauth</div>
     <div id="channel-list" style="flex:1;overflow-y:auto;padding:6px;">
         <div class="ch-category">Cộng đồng DSCons</div>
         <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed')?'active':'' }}" onclick="closeSidebar()">
@@ -939,6 +1001,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
         <a href="{{ route('challenge') }}" class="ch-item {{ request()->routeIs('challenge*')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
             <span class="ch-name">Challenge</span>
+        </a>
+        <a href="{{ route('events') }}" class="ch-item {{ request()->routeIs('events')?'active':'' }}" onclick="closeSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            <span class="ch-name">Sự kiện</span>
         </a>
         <a href="{{ route('leaderboard') }}" class="ch-item {{ request()->routeIs('leaderboard')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
@@ -972,6 +1038,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
     <a href="{{ route('challenge') }}" class="mob-nav-btn {{ request()->routeIs('challenge*')?'active':'' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
         Challenge
+    </a>
+    <a href="{{ route('events') }}" class="mob-nav-btn {{ request()->routeIs('events')?'active':'' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+        Sự kiện
     </a>
     <a href="{{ route('profile', auth()->user()->username ?? auth()->id()) }}" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}">
         <img src="{{ auth()->user()->avatar_url }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" alt="">

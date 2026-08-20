@@ -63,3 +63,112 @@ function htmlToMd(node) {
     }
     return result;
 }
+
+/**
+ * Lightweight Markdown editor used by the post modal.
+ * It keeps the Livewire payload as plain Markdown while providing familiar
+ * formatting controls without introducing a third-party editor dependency.
+ */
+window.postEditor = function () {
+    return {
+        textarea: null,
+        history: [],
+        historyIndex: -1,
+        restoring: false,
+
+        init() {
+            this.textarea = this.$refs.editor;
+            this.remember(this.textarea?.value || '');
+            this.resize();
+        },
+
+        remember(value) {
+            if (this.restoring || this.history[this.historyIndex] === value) return;
+            this.history = this.history.slice(0, this.historyIndex + 1);
+            this.history.push(value);
+            if (this.history.length > 50) this.history.shift();
+            this.historyIndex = this.history.length - 1;
+        },
+
+        onInput() {
+            this.remember(this.textarea.value);
+            this.resize();
+        },
+
+        resize() {
+            if (!this.textarea) return;
+            this.textarea.style.height = 'auto';
+            this.textarea.style.height = Math.max(180, this.textarea.scrollHeight) + 'px';
+        },
+
+        sync() {
+            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            this.resize();
+        },
+
+        replaceSelection(before, after = '', fallback = 'Nội dung') {
+            const value = this.textarea.value;
+            const start = this.textarea.selectionStart;
+            const end = this.textarea.selectionEnd;
+            const selected = value.slice(start, end) || fallback;
+            const replacement = before + selected + after;
+            this.textarea.setRangeText(replacement, start, end, 'select');
+            this.sync();
+            this.textarea.focus();
+        },
+
+        prefixLines(prefix) {
+            const value = this.textarea.value;
+            const start = this.textarea.selectionStart;
+            const end = this.textarea.selectionEnd;
+            const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+            const lineEndIndex = value.indexOf('\n', end);
+            const lineEnd = lineEndIndex === -1 ? value.length : lineEndIndex;
+            const selectedLines = value.slice(lineStart, lineEnd);
+            const replacement = selectedLines.split('\n').map(line => prefix + line).join('\n');
+            this.textarea.setRangeText(replacement, lineStart, lineEnd, 'select');
+            this.sync();
+            this.textarea.focus();
+        },
+
+        insertLink() {
+            const selected = this.textarea.value.slice(this.textarea.selectionStart, this.textarea.selectionEnd) || 'Nội dung link';
+            const url = window.prompt('Nhập URL https://');
+            if (!url || !/^https?:\/\//i.test(url)) return;
+            this.replaceSelection('[', `](${url})`, selected);
+        },
+
+        insertVideo() {
+            const url = window.prompt('Dán link YouTube hoặc video https://');
+            if (!url || !/^https?:\/\//i.test(url)) return;
+            this.replaceSelection('', '', url);
+        },
+
+        insertEmoji(emoji) {
+            const start = this.textarea.selectionStart;
+            const end = this.textarea.selectionEnd;
+            this.textarea.setRangeText(emoji, start, end, 'end');
+            this.sync();
+            this.textarea.focus();
+        },
+
+        undo() {
+            if (this.historyIndex <= 0) return;
+            this.historyIndex--;
+            this.restore(this.history[this.historyIndex]);
+        },
+
+        redo() {
+            if (this.historyIndex >= this.history.length - 1) return;
+            this.historyIndex++;
+            this.restore(this.history[this.historyIndex]);
+        },
+
+        restore(value) {
+            this.restoring = true;
+            this.textarea.value = value;
+            this.sync();
+            this.restoring = false;
+        },
+    };
+};

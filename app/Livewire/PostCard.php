@@ -9,10 +9,10 @@ use App\Models\Post;
 use App\Models\Report;
 use App\Notifications\GenericNotification;
 use App\Services\XpService;
+use App\Support\PostContentRenderer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class PostCard extends Component
@@ -427,28 +427,12 @@ class PostCard extends Component
 
     public function renderContent(bool $showFull): string
     {
-        $text = ($showFull || strlen($this->post->content) <= 500)
-            ? $this->post->content
-            : Str::limit($this->post->content, 500);
+        return app(PostContentRenderer::class)->render($this->post->content, !$showFull, 500);
+    }
 
-        $escaped = e($text);
-
-        // Auto-embed YouTube URLs
-        $escaped = preg_replace_callback(
-            '#(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})[^\s<]*)#i',
-            fn ($m) => '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:0.5rem;margin:0.5rem 0;"><iframe src="https://www.youtube.com/embed/'.$m[2].'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>',
-            $escaped
-        );
-
-        // Linkify remaining URLs (skip URLs inside HTML attributes like src="...")
-        // Use a regex that stops before HTML entities (&quot;, &lt;, &gt;) to prevent attribute breakout.
-        $escaped = preg_replace(
-            '#(?<!src="|href=")(https?://(?:(?!&quot;|&lt;|&gt;)[^\s<"])+)#i',
-            '<a href="$1" target="_blank" rel="noopener" style="color:#d17856; text-decoration:underline; word-break:break-all;">$1</a>',
-            $escaped
-        );
-
-        return $escaped;
+    public function contentPreview(): string
+    {
+        return app(PostContentRenderer::class)->excerpt($this->post->content, 180);
     }
 
     public function render()

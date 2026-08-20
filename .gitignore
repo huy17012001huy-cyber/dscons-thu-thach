@@ -27,3 +27,6 @@ Thumbs.db
 /claudekit-engineer-main 2
 /.claude/settings.local.json
 /.agents/
+/.playwright-cli/
+/menu-active.png
+/compose-*.png

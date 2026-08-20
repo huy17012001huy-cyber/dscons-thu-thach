@@ -15,19 +15,9 @@
     </div>
     @endif
 
-    {{-- Compose Box (Lv10+ only) --}}
+    {{-- Compose Box --}}
     @auth
-    @if(auth()->user()->level >= 10)
     <livewire:compose-post />
-    @else
-    <div class="card mb-4" style="text-align:center; padding:1rem;">
-        <p style="font-size:0.85rem; color:#5C5C66;">▪ Đạt <strong style="color:#d17856;">Level 10</strong> để mở khóa đăng bài. Hãy tương tác bằng comment!</p>
-        <div class="xp-bar mt-2" style="height:6px; max-width:200px; margin:0.5rem auto 0;">
-            <div class="xp-bar-fill" style="width:{{ min(100, auth()->user()->level * 10) }}%;"></div>
-        </div>
-        <p style="font-size:0.7rem; color:#5C5C66; margin-top:0.375rem;">Level {{ auth()->user()->level }}/10</p>
-    </div>
-    @endif
     @endauth
 
     {{-- Tab bar + Pillar dropdown --}}

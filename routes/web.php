@@ -32,6 +32,13 @@ use App\Livewire\LeaderboardPage;
 use App\Livewire\ProfilePage;
 use App\Livewire\QaPage;
 use App\Livewire\SignalsPage;
+use App\Livewire\EventsPage;
+use App\Livewire\AdminEvents;
+use App\Livewire\AdminCommunities;
+use App\Livewire\CommunitiesPage;
+use App\Livewire\CommunityPreview;
+use App\Livewire\CreateCommunity;
+use App\Livewire\CommunityManage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +47,54 @@ Route::prefix('api/bot')->group(function () {
     Route::get('/member', [\App\Http\Controllers\BotApiController::class, 'lookupMember']);
     Route::get('/challenge-progress', [\App\Http\Controllers\BotApiController::class, 'challengeProgress']);
     Route::get('/pending-submissions', [\App\Http\Controllers\BotApiController::class, 'pendingSubmissions']);
+});
+
+// Creator application. The account must be verified and belong to an active
+// community before submitting a new community for review.
+Route::middleware([
+    'auth',
+    \App\Http\Middleware\EnsureEmailVerified::class,
+    \App\Http\Middleware\RequireActiveMembership::class,
+])->group(function () {
+    Route::get('/tao-cong-dong', CreateCommunity::class)->name('community.create');
+});
+
+// Public discovery and preview pages.
+Route::get('/cong-dong', CommunitiesPage::class)->name('communities');
+Route::get('/cong-dong/{community:slug}', CommunityPreview::class)->name('community.preview');
+
+// Contextual community routes. The legacy routes above remain the default
+// DSCons context so existing bookmarks and integrations continue to work.
+Route::prefix('c/{community:slug}')->name('community.')->group(function () {
+    Route::middleware([
+        'auth',
+        \App\Http\Middleware\EnsureEmailVerified::class,
+        \App\Http\Middleware\RequireActiveMembership::class,
+        \App\Http\Middleware\HydrateCommunityStats::class,
+    ])->group(function () {
+        Route::get('/feed', Feed::class)->name('feed');
+        Route::get('/cot', CotPage::class)->name('cot');
+        Route::get('/tin-hieu', SignalsPage::class)->name('signals');
+        Route::get('/hoi-dap', QaPage::class)->name('qa');
+        Route::get('/challenge', ChallengePage::class)->name('challenge');
+        Route::get('/challenge/{slug}', ChallengeDetail::class)->name('challenge.show');
+        Route::get('/leaderboard', LeaderboardPage::class)->name('leaderboard');
+        Route::get('/khoa-hoc', AcademyPage::class)->name('academy');
+        Route::get('/khoa-hoc/{id}', AcademyDetail::class)->name('academy.show');
+        Route::get('/su-kien', EventsPage::class)->name('events');
+        Route::get('/membership', MembershipPricing::class)->name('membership');
+        Route::get('/marketplace', \App\Livewire\MarketplacePage::class)->name('marketplace');
+        Route::get('/affiliate', AffiliatePage::class)->name('affiliate');
+        Route::get('/messages/{conversation?}', MessagesPage::class)->name('messages');
+        Route::get('/search', SearchResults::class)->name('search');
+        Route::get('/manage', CommunityManage::class)->name('manage');
+    });
+});
+
+Route::middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class])->group(function () {
+    Route::get('/admin/communities', AdminCommunities::class)
+        ->name('admin.communities')
+        ->can('admin');
 });
 
 // ─── SePay webhook (no auth, verified by API key) ──────────────────
@@ -149,7 +204,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:20,1');
 
     // ─── Main platform (require verified email + active membership) ──
-    Route::middleware([\App\Http\Middleware\EnsureEmailVerified::class, 'App\Http\Middleware\RequireActiveMembership'])->group(function () {
+    Route::middleware([
+        \App\Http\Middleware\EnsureEmailVerified::class,
+        'App\Http\Middleware\RequireActiveMembership',
+        \App\Http\Middleware\HydrateCommunityStats::class,
+    ])->group(function () {
         Route::get('/feed',              Feed::class)->name('feed');
         Route::get('/cot',               CotPage::class)->name('cot');
         Route::get('/tin-hieu',          SignalsPage::class)->name('signals');
@@ -162,6 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/leaderboard',       LeaderboardPage::class)->name('leaderboard');
         Route::get('/khoa-hoc',          AcademyPage::class)->name('academy');
         Route::get('/khoa-hoc/{id}',     AcademyDetail::class)->name('academy.show');
+        Route::get('/su-kien',            EventsPage::class)->name('events');
         Route::get('/marketplace',       \App\Livewire\MarketplacePage::class)->name('marketplace');
         Route::get('/affiliate',         AffiliatePage::class)->name('affiliate');
         Route::get('/messages/{conversation?}', MessagesPage::class)->name('messages');
@@ -180,6 +240,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/courses/{id}/build', AdminCourseBuilder::class)->name('courses.build')
                 ->can('admin');
             Route::get('/challenges', AdminChallenges::class)->name('challenges')
+                ->can('admin');
+            Route::get('/events', AdminEvents::class)->name('events')
                 ->can('admin');
             Route::get('/cot-review', AdminCotReview::class)->name('cot')
                 ->can('admin');

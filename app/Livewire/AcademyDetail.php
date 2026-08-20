@@ -18,6 +18,7 @@ class AcademyDetail extends Component
     public Course $course;
     public bool $enrolled = false;
     public bool $pendingPayment = false;
+    public bool $premiumLocked = false;
     public int $completedLessons = 0;
     public int $totalLessons = 0;
     public ?int $openLessonId = null;
@@ -37,6 +38,9 @@ class AcademyDetail extends Component
                 ->first();
             $this->enrolled = $enrollment && $enrollment->status === 'active';
             $this->pendingPayment = $enrollment && $enrollment->status === 'pending_payment';
+            $this->premiumLocked = ($this->course->access_tier ?? 'premium') === 'premium'
+                && !Auth::user()->hasPremiumMembership()
+                && !Auth::user()->isBrandAdmin();
 
             if ($this->enrolled) {
                 $lessonIds = $this->course->modules->flatMap(fn($m) => $m->lessons->pluck('id'));
@@ -52,6 +56,11 @@ class AcademyDetail extends Component
     {
         if (!Auth::check() || $this->enrolled) return;
         $user = Auth::user();
+
+        if ($this->premiumLocked) {
+            $this->dispatch('toast', message: 'Khóa học này thuộc Premium. Hãy nâng hạng membership để mở toàn bộ nội dung.', type: 'info');
+            return;
+        }
 
         if ($user->level < $this->course->min_level) {
             $this->dispatch('toast', message: 'Cần đạt Lv.' . $this->course->min_level . ' để tham gia', type: 'error');
@@ -137,7 +146,7 @@ class AcademyDetail extends Component
         );
 
         if ($lesson->xp_reward > 0) {
-            app(XpService::class)->award(Auth::user(), 'post', 1.0, 'Hoàn thành bài: ' . $lesson->title, $lesson);
+            app(XpService::class)->award(Auth::user(), 'lesson_complete', 1.0, 'Hoàn thành bài: ' . $lesson->title, $lesson);
         }
 
         $this->completedLessons++;
@@ -149,7 +158,7 @@ class AcademyDetail extends Component
                 ->update(['completed_at' => now()]);
 
             if ($this->course->xp_reward > 0) {
-                app(XpService::class)->award(Auth::user(), 'challenge', 1.0, 'Hoàn thành khóa học: ' . $this->course->title, $this->course);
+                app(XpService::class)->award(Auth::user(), 'course_complete', 1.0, 'Hoàn thành khóa học: ' . $this->course->title, $this->course);
             }
 
             $this->dispatch('toast', message: 'Chúc mừng! Bạn đã hoàn thành khóa học!', type: 'success');

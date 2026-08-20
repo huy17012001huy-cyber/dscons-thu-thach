@@ -15,6 +15,9 @@
                     @else
                     <span class="badge" style="background:#D1FAE5; color:#065F46;">Miễn phí</span>
                     @endif
+                    @if(($expedition->access_tier ?? 'premium') === 'premium')
+                    <span class="badge" style="background:#E1F4F7;color:#125A96;border:1px solid #B8D7E6;">Premium</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -61,6 +64,12 @@
             @auth
             @if($isAdminPreview ?? false)
             {{-- Admin preview: skip join button, no member status --}}
+            @elseif(($premiumLocked ?? false))
+            <div style="padding:.75rem 1rem;border:1px solid #B8D7E6;background:#F7FCFD;border-radius:.6rem;display:flex;align-items:center;gap:10px;">
+                <span style="width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#E1F4F7;color:#1F77BE;">★</span>
+                <span style="font-size:.8rem;color:#456477;">Challenge Premium — nâng hạng membership để đăng ký và mở nhiệm vụ.</span>
+                <a href="{{ community_route('membership') }}" class="btn btn-primary" style="margin-left:auto;text-decoration:none;white-space:nowrap;">Nâng hạng</a>
+            </div>
             @elseif(!$isApproved && !$isPending && !$isPendingPayment)
             <button wire:click="requestJoin" class="btn btn-primary">
                 {{ $expedition->price > 0 ? 'Đăng ký tham gia · ' . number_format($expedition->price, 0, ',', '.') . 'đ' : 'Đăng ký tham gia' }}
@@ -163,6 +172,10 @@
         </div>
         @endif
     </div>
+
+    <a href="{{ route('events', ['challengeFilter' => $expedition->id]) }}" class="event-related" style="display:inline-flex;align-items:center;gap:.35rem;margin:-.5rem 0 1rem;color:#1F77BE;font-size:.78rem;font-weight:700;text-decoration:none;">
+        Xem sự kiện liên quan →
+    </a>
 
     {{-- Admin: Pending requests --}}
     @if($pendingMembers->count() > 0)

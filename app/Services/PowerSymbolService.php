@@ -11,8 +11,9 @@ class PowerSymbolService
 
     public function addFragments(User $user, string $pillar, int $fragments): void
     {
+        $brandId = app()->bound('brand') ? brand()->id : null;
         $symbol = PowerSymbol::firstOrCreate(
-            ['user_id' => $user->id, 'pillar' => $pillar],
+            ['user_id' => $user->id, 'pillar' => $pillar, 'brand_id' => $brandId],
             ['level' => 0, 'fragments' => 0]
         );
 

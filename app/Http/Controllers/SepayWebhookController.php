@@ -6,6 +6,7 @@ use App\Livewire\MembershipPricing;
 use App\Models\CourseEnrollment;
 use App\Models\ExpeditionMember;
 use App\Models\Membership;
+use App\Models\MembershipPlan;
 use App\Models\ProductPurchase;
 use App\Models\User;
 use App\Notifications\GenericNotification;
@@ -66,6 +67,10 @@ class SepayWebhookController extends Controller
         // Match membership payment: MEM{weeks}WU{userId}
         elseif (preg_match('/MEM(\d+)WU(\d+)/', $content, $m)) {
             $this->processMembershipPayment((int) $m[1], (int) $m[2], $amount, $refCode);
+        }
+        // Community membership: MC{brandId}P{planId}U{userId}
+        elseif (preg_match('/MC(\d+)P(\d+)U(\d+)/', $content, $m)) {
+            $this->processCommunityMembershipPayment((int) $m[1], (int) $m[2], (int) $m[3], $amount, $refCode);
         }
 
         return response()->json(['success' => true]);
@@ -274,5 +279,42 @@ class SepayWebhookController extends Controller
             'amount' => $amount,
             'expires' => $startsAt->copy()->addWeeks($weeks)->toDateString(),
         ]);
+    }
+
+    private function processCommunityMembershipPayment(int $brandId, int $planId, int $userId, int $amount, string $ref): void
+    {
+        $plan = MembershipPlan::withoutGlobalScopes()
+            ->where('id', $planId)->where('brand_id', $brandId)
+            ->where('tier', 'premium')->where('status', 'published')->first();
+        $user = User::find($userId);
+
+        if (!$plan || !$user || (int) $plan->price <= 0) {
+            Log::warning('SePay: invalid community membership plan', compact('brandId', 'planId', 'userId'));
+            return;
+        }
+        if ($amount < (int) $plan->price) {
+            Log::warning('SePay: underpayment community membership', ['brand' => $brandId, 'plan' => $planId, 'user' => $userId, 'expected' => $plan->price, 'received' => $amount]);
+            return;
+        }
+        if (Membership::withoutGlobalScopes()->where('brand_id', $brandId)->where('user_id', $userId)->where('payment_ref', $ref)->exists()) {
+            return;
+        }
+
+        $current = Membership::withoutGlobalScopes()->where('brand_id', $brandId)->where('user_id', $userId)->whereIn('status', ['active', 'trial'])->latest()->first();
+        $startsAt = $current?->expires_at?->isFuture() ? $current->expires_at : now();
+        $expiresAt = $plan->duration_days ? $startsAt->copy()->addDays($plan->duration_days) : null;
+
+        Membership::withoutGlobalScopes()->create([
+            'brand_id' => $brandId, 'user_id' => $userId, 'plan' => 'community-'.$plan->id,
+            'tier' => 'premium', 'status' => 'active', 'starts_at' => $startsAt,
+            'expires_at' => $expiresAt, 'paid_amount' => $amount, 'payment_ref' => $ref,
+        ]);
+
+        DB::table('brand_user')->updateOrInsert(
+            ['brand_id' => $brandId, 'user_id' => $userId],
+            ['role' => 'member', 'updated_at' => now(), 'created_at' => now()]
+        );
+        $user->notify(new GenericNotification('✓', 'Membership Premium đã được kích hoạt.', url('/c/'.optional($plan->brand)->slug.'/feed')));
+        Log::info('SePay: community membership activated', compact('brandId', 'planId', 'userId', 'amount'));
     }
 }

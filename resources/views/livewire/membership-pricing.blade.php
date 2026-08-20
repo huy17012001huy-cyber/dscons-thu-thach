@@ -1,8 +1,8 @@
-<div @if($selectedPlan) wire:poll.5s @endif>
+<div @if($selectedPlan || $selectedCommunityPlanId) wire:poll.5s @endif>
     <div style="max-width:720px; margin:0 auto;">
         <div class="text-center mb-6">
             <h1 style="font-size:1.5rem; font-weight:800; color:#1A1A1A;">Gói thành viên</h1>
-            <p style="font-size:0.875rem; color:#5C5C66; margin-top:0.375rem;">Học AI, BIM và Vibe Coding theo lộ trình thực chiến dành cho kỹ sư MEP</p>
+            <p style="font-size:0.875rem; color:#5C5C66; margin-top:0.375rem;">Mở toàn bộ lộ trình học tập, Challenge và sự kiện trong {{ brand()->name }}.</p>
         </div>
 
         {{-- Current membership status --}}
@@ -16,6 +16,24 @@
                 </div>
             </div>
         </div>
+        @endif
+
+        @if(isset($communityPlans) && $communityPlans->isNotEmpty())
+        <section class="card" style="margin-bottom:1rem;padding:1rem;border-color:#B8D7E6;background:linear-gradient(135deg,#F7FCFD,#fff);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:.75rem;"><div><h2 style="font-size:1rem;font-weight:800;color:#123B59;margin:0;">Membership của community</h2><p style="font-size:.75rem;color:#61798A;margin:.2rem 0 0;">Free cho nền tảng cơ bản · Premium mở toàn bộ nội dung.</p></div><span style="font-size:.7rem;padding:.3rem .55rem;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ brand()->name }}</span></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;">
+            @foreach($communityPlans as $communityPlan)
+                <button wire:click="selectCommunityPlan({{ $communityPlan->id }})" class="card" style="text-align:left;padding:.85rem;cursor:pointer;{{ $selectedCommunityPlan?->id === $communityPlan->id ? 'border:2px solid #1F77BE;background:#fff;' : '' }}">
+                    <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="font-size:.9rem;color:#123B59;">{{ $communityPlan->name }}</strong><span style="font-size:.7rem;color:#1F77BE;font-weight:700;">{{ $communityPlan->price ? number_format($communityPlan->price,0,',','.').'đ' : 'Miễn phí' }}</span></div>
+                    <div style="font-size:.72rem;color:#61798A;margin-top:.45rem;line-height:1.45;">{{ is_array($communityPlan->benefits) ? implode(' · ', array_slice($communityPlan->benefits,0,2)) : 'Quyền lợi theo community' }}</div>
+                </button>
+            @endforeach
+            </div>
+            @if($selectedCommunityPlan)
+                @php $communityTransferCode = 'MC'.brand()->id.'P'.$selectedCommunityPlan->id.'U'.auth()->id(); $communityQr = config('services.sepay.bank_account') ? 'https://qr.sepay.vn/img?'.http_build_query(['acc'=>config('services.sepay.bank_account'),'bank'=>config('services.sepay.bank_name'),'amount'=>$selectedCommunityPlan->price,'des'=>$communityTransferCode,'template'=>'compact']) : null; @endphp
+                <div class="card" style="margin-top:.8rem;border-left:3px solid #1F77BE;padding:.9rem;"><strong style="font-size:.85rem;color:#123B59;">Thanh toán Premium</strong><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:.55rem;"><div><div style="font-size:.7rem;color:#61798A;">Nội dung chuyển khoản</div><strong style="font-size:.9rem;letter-spacing:.05em;color:#1F77BE;">{{ $communityTransferCode }}</strong></div><div><div style="font-size:.7rem;color:#61798A;">Số tiền</div><strong style="font-size:.9rem;color:#123B59;">{{ number_format($selectedCommunityPlan->price,0,',','.') }}đ</strong></div>@if($communityQr)<img src="{{ $communityQr }}" alt="QR thanh toán" style="width:118px;height:118px;border-radius:8px;">@endif</div><p style="font-size:.7rem;color:#61798A;margin:.6rem 0 0;">Membership sẽ được kích hoạt sau khi hệ thống xác nhận giao dịch.</p></div>
+            @endif
+        </section>
         @endif
 
         {{-- Pricing cards --}}

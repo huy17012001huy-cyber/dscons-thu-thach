@@ -64,7 +64,10 @@
             @endif
 
             {{-- Content --}}
-            <div style="color:#2E2E2E; font-size:0.9rem; line-height:1.75; margin-bottom:16px; white-space:pre-line; overflow-wrap:break-word;">
+            <div class="post-content prose-post" style="color:#2E2E2E; font-size:0.9rem; line-height:1.75; margin-bottom:16px; overflow-wrap:break-word;">
+                {!! $this->renderedPostContent() !!}
+            </div>
+            <div style="display:none;">
                 @php
                     $escaped = e($post->content);
                     $escaped = preg_replace_callback(

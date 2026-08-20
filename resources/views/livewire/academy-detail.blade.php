@@ -84,8 +84,19 @@
         </div>
         @endauth
         @endif
+
+        <a href="{{ community_route('events', ['courseFilter' => $course->id]) }}" class="event-related" style="display:inline-flex;align-items:center;gap:.35rem;margin-top:.75rem;color:#1F77BE;font-size:.78rem;font-weight:700;text-decoration:none;">
+            Xem sự kiện liên quan →
+        </a>
     </div>
 
+    @if($premiumLocked && !$enrolled)
+    <div class="card" style="margin-bottom:1rem;padding:1.25rem;border-color:#B8D7E6;background:linear-gradient(135deg,#F7FCFD,#fff);">
+        <div style="display:flex;align-items:flex-start;gap:12px;"><div style="width:38px;height:38px;border-radius:11px;background:#E1F4F7;color:#1F77BE;display:grid;place-items:center;font-weight:800;">★</div><div><strong style="display:block;color:#123B59;font-size:1rem;">Nội dung Premium</strong><p style="margin:.3rem 0 0;color:#61798A;font-size:.85rem;line-height:1.55;">Nâng hạng membership để mở khóa toàn bộ bài học, bài tập và các sự kiện liên quan.</p><a href="{{ community_route('membership') }}" class="btn btn-primary" style="display:inline-flex;margin-top:.75rem;text-decoration:none;">Xem gói Premium</a></div></div>
+    </div>
+    @endif
+
+    @if(!$premiumLocked || $enrolled)
     {{-- Main content: Video left + Lesson list right --}}
     <div class="flex gap-4" style="align-items:flex-start;">
 
@@ -303,5 +314,6 @@
     <div class="card text-center py-8">
         <p style="color:#5C5C66;">Khóa học này chưa có nội dung.</p>
     </div>
+    @endif
     @endif
 </div>

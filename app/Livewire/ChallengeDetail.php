@@ -18,6 +18,7 @@ class ChallengeDetail extends Component
     use WithPagination;
 
     public Expedition $expedition;
+    public bool $premiumLocked = false;
     #[Rule('required|min:5|max:1000')]
     public string $checkinContent = '';
 
@@ -37,6 +38,11 @@ class ChallengeDetail extends Component
             ->where('slug', $slug)
             ->orWhere('id', is_numeric($slug) ? $slug : 0)
             ->firstOrFail();
+        $user = Auth::user();
+        $this->premiumLocked = ($this->expedition->access_tier ?? 'premium') === 'premium'
+            && $user
+            && !$user->hasPremiumMembership()
+            && !$user->isBrandAdmin();
     }
 
     // ─── Enrollment ─────────────────────────────────────────
@@ -44,6 +50,11 @@ class ChallengeDetail extends Component
     {
         if (!Auth::check()) return;
         $user = Auth::user();
+
+        if ($this->premiumLocked) {
+            $this->dispatch('toast', message: 'Challenge này thuộc Premium. Hãy nâng hạng membership để tham gia.', type: 'info');
+            return;
+        }
 
         $existingMember = $this->expedition->members()->where('user_id', $user->id)->first();
         if ($existingMember) {
@@ -1176,6 +1187,7 @@ class ChallengeDetail extends Component
             'nextDayUnlockAt' => $nextDayUnlockAt,
             'myVotedIds' => $myVotedIds,
             'reviewHistory' => $reviewHistory,
+            'premiumLocked' => $this->premiumLocked,
         ])->layout('layouts.app', ['title' => $this->expedition->title . ' — Challenge']);
     }
 }

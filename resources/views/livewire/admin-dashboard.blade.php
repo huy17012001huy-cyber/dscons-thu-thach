@@ -68,6 +68,15 @@
                 </div>
             </div>
         </a>
+        <a href="{{ route('admin.events') }}" class="card" style="text-decoration:none;">
+            <div class="flex items-center gap-3">
+                <span style="font-size:1.5rem;">◷</span>
+                <div>
+                    <p style="font-size:0.9rem; font-weight:700; color:#1A1A1A;">Quản lý sự kiện</p>
+                    <p style="font-size:0.75rem; color:#5C5C66;">Tạo lịch meeting theo khóa học hoặc Challenge</p>
+                </div>
+            </div>
+        </a>
         <a href="{{ route('admin.cot') }}" class="card" style="text-decoration:none;">
             <div class="flex items-center gap-3">
                 <span style="font-size:1.5rem;">★</span>

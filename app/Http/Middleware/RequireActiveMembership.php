@@ -23,7 +23,8 @@ class RequireActiveMembership
         $membership = $user->membership;
 
         if (!$membership) {
-            return redirect()->route('membership.expired')
+            auth()->logout();
+            return redirect()->route('login')
                 ->with('error', 'Bạn chưa có membership tại ' . brand()->name . '.');
         }
 
@@ -35,7 +36,7 @@ class RequireActiveMembership
             }
             auth()->logout();
             return redirect()->route('login')
-                ->with('error', 'Tài khoản đã bị khóa tại ' . brand()->name . '.');
+                ->with('error', 'Tài khoản đã bị khóa.');
         }
 
         if ($membership->status === 'expired'

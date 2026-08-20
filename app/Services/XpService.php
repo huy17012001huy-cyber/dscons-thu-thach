@@ -43,10 +43,13 @@ class XpService
         $base = self::REWARDS[$type] ?? 0;
         if ($base === 0) return 0;
 
+        $stats = app(CommunityStatsService::class)->for($user);
+        $streak = $stats?->streak ?? $user->streak;
+
         $streakMultiplier = match(true) {
-            $user->streak >= 90 => 1.5,
-            $user->streak >= 30 => 1.2,
-            $user->streak >= 7  => 1.1,
+            $streak >= 90 => 1.5,
+            $streak >= 30 => 1.2,
+            $streak >= 7  => 1.1,
             default             => 1.0,
         };
 
@@ -62,8 +65,20 @@ class XpService
             'description'    => $description,
         ]);
 
-        $user->increment('xp', $total);
+        if ($stats) {
+            $stats->increment('xp', $total);
+            $stats->refresh();
+            $user->setAttribute('xp', (int) $stats->xp);
+        } else {
+            $user->increment('xp', $total);
+        }
         $this->checkLevelUp($user);
+        // Keep legacy user columns in sync for existing reports and integrations;
+        // community_stats remains the source of truth when a community is active.
+        $user->forceFill([
+            'xp' => (int) $user->getAttribute('xp'),
+            'level' => (int) $user->getAttribute('level'),
+        ])->saveQuietly();
 
         // Power symbol fragments
         if (in_array($type, ['cot', 'post_liked', 'post_commented']) && $reference && method_exists($reference, 'getAttribute')) {
@@ -83,14 +98,24 @@ class XpService
     {
         $leveled = false;
 
+        $stats = app(CommunityStatsService::class)->for($user);
+        $currentLevel = $stats?->level ?? (int) $user->level;
+
         while (true) {
-            $nextLevel = $user->level + 1;
+            $nextLevel = $currentLevel + 1;
             if ($nextLevel > 300) break;
 
             $cumulative = $this->cumulativeExpForLevel($nextLevel);
 
-            if ($user->xp >= $cumulative) {
-                $user->increment('level');
+            $currentXp = $stats?->xp ?? (int) $user->xp;
+            if ($currentXp >= $cumulative) {
+                $currentLevel++;
+                if ($stats) {
+                    $stats->update(['level' => $currentLevel]);
+                } else {
+                    $user->increment('level');
+                }
+                $user->setAttribute('level', $currentLevel);
                 $user->notify(new GenericNotification('🎉', 'Chúc mừng! Bạn đã lên Level ' . $nextLevel . '!', route('profile', $user->username ?? $user->id)));
                 $leveled = true;
             } else {
@@ -121,17 +146,23 @@ class XpService
 
     public function expToNextLevel(User $user): int
     {
-        $nextLevel = $user->level + 1;
+        $stats = app(CommunityStatsService::class)->for($user);
+        $level = $stats?->level ?? $user->level;
+        $xp = $stats?->xp ?? $user->xp;
+        $nextLevel = $level + 1;
         if ($nextLevel > 300) return 0;
-        return max(0, $this->cumulativeExpForLevel($nextLevel) - $user->xp);
+        return max(0, $this->cumulativeExpForLevel($nextLevel) - $xp);
     }
 
     public function expProgressPct(User $user): float
     {
-        $currentLevelExp = $this->cumulativeExpForLevel($user->level);
-        $nextLevelExp    = $this->cumulativeExpForLevel($user->level + 1);
+        $stats = app(CommunityStatsService::class)->for($user);
+        $level = $stats?->level ?? $user->level;
+        $xp = $stats?->xp ?? $user->xp;
+        $currentLevelExp = $this->cumulativeExpForLevel($level);
+        $nextLevelExp    = $this->cumulativeExpForLevel($level + 1);
         $range = $nextLevelExp - $currentLevelExp;
         if ($range === 0) return 100;
-        return min(100, max(0, round(($user->xp - $currentLevelExp) / $range * 100, 1)));
+        return min(100, max(0, round(($xp - $currentLevelExp) / $range * 100, 1)));
     }
 }

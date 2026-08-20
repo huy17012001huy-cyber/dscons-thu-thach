@@ -10,7 +10,7 @@ class Expedition extends Model {
     use HasBrand;
     protected $fillable = [
         'title','slug','description','boss_name','difficulty','required_days','max_members',
-        'created_by','leader_id','status','deposit_aip','starts_at','ends_at','price','brand_id',
+        'created_by','leader_id','status','deposit_aip','starts_at','ends_at','price','access_tier','brand_id',
         'freeze_from_day','freeze_starts_at','freeze_ends_at',
     ];
     protected $casts = [
@@ -34,6 +34,7 @@ class Expedition extends Model {
     public function members(): HasMany { return $this->hasMany(ExpeditionMember::class); }
     public function checkins(): HasMany { return $this->hasMany(ExpeditionCheckin::class); }
     public function tasks(): HasMany { return $this->hasMany(ChallengeTask::class); }
+    public function events(): HasMany { return $this->hasMany(Event::class); }
 
     public function activeMembersCount(): int { return $this->members()->whereNull('kicked_at')->count(); }
     public function uniqueClassCount(): int {

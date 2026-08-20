@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use App\Models\MembershipPlan;
 
 class MembershipPricing extends Component
 {
@@ -15,16 +16,37 @@ class MembershipPricing extends Component
     ];
 
     public ?int $selectedPlan = null;
+    public ?int $selectedCommunityPlanId = null;
 
     public function selectPlan(int $weeks): void
     {
         $this->selectedPlan = $weeks;
     }
 
+    public function selectCommunityPlan(int $planId): void
+    {
+        $plan = MembershipPlan::withoutGlobalScopes()
+            ->where('brand_id', brand()->id)
+            ->whereKey($planId)
+            ->where('tier', 'premium')
+            ->where('status', 'published')
+            ->firstOrFail();
+
+        $this->selectedCommunityPlanId = $plan->id;
+        $this->selectedPlan = null;
+    }
+
     public function render()
     {
         $user = Auth::user();
         $membership = $user?->membership;
+        $communityPlans = MembershipPlan::withoutGlobalScopes()
+            ->where('brand_id', brand()->id)
+            ->where('status', 'published')
+            ->orderByDesc('tier')->get();
+        $selectedCommunityPlan = $this->selectedCommunityPlanId
+            ? $communityPlans->firstWhere('id', $this->selectedCommunityPlanId)
+            : null;
 
         // Auto-detect payment success while polling
         if ($this->selectedPlan && $membership && $membership->isActive()) {
@@ -35,6 +57,8 @@ class MembershipPricing extends Component
         return view('livewire.membership-pricing', [
             'plans' => self::PLANS,
             'membership' => $membership,
+            'communityPlans' => $communityPlans,
+            'selectedCommunityPlan' => $selectedCommunityPlan,
         ])->layout('layouts.app', ['title' => 'Gói thành viên — DSCons']);
     }
 }

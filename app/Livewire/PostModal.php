@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use App\Services\XpService;
+use App\Support\PostContentRenderer;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -63,6 +64,13 @@ class PostModal extends Component
     {
         $this->replyToId = null;
         $this->replyToName = null;
+    }
+
+    public function renderedPostContent(): string
+    {
+        return $this->post
+            ? app(PostContentRenderer::class)->render($this->post->content)
+            : '';
     }
 
     public function searchMentions(string $query): void

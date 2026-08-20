@@ -23,7 +23,9 @@
         @endif
 
         {{-- Content preview (2 lines max) --}}
-        <p style="font-size:0.8125rem; color:#6b7280; line-height:1.4; margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">{{ Str::limit(strip_tags($post->content), 180) }}</p>
+        <p style="font-size:0.8125rem; color:#6b7280; line-height:1.4; margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">{{ $this->contentPreview() }}</p>
+        {{-- Keep a sanitized rich representation available for assistive clients and the post modal. --}}
+        <div aria-hidden="true" style="display:none;">{!! $this->renderContent(false) !!}</div>
 
         {{-- Bottom: stats + topic --}}
         <div style="display:flex; align-items:center; gap:10px; font-size:0.75rem; color:#9ca3af;">

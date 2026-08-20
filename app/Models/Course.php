@@ -11,7 +11,7 @@ class Course extends Model
     use HasBrand;
     protected $fillable = [
         'title', 'description', 'pillar', 'difficulty', 'min_level',
-        'xp_reward', 'aip_reward', 'price', 'thumbnail', 'is_published', 'brand_id',
+        'xp_reward', 'aip_reward', 'price', 'thumbnail', 'is_published', 'access_tier', 'brand_id',
     ];
 
     public function isFree(): bool
@@ -29,5 +29,10 @@ class Course extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(CourseEnrollment::class);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class);
     }
 }

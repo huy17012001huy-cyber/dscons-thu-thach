@@ -18,13 +18,21 @@ class AipService
             'reference_id' => $reference?->id,
         ]);
 
-        $user->increment('aip', $amount);
+        $stats = app(CommunityStatsService::class)->for($user);
+        if ($stats) {
+            $stats->increment('aip', $amount);
+            $user->setAttribute('aip', (int) $stats->fresh()->aip);
+        } else {
+            $user->increment('aip', $amount);
+        }
     }
 
     public function spend(User $user, int $amount, string $reason, $reference = null): void
     {
-        if ($user->aip < $amount) {
-            throw new \RuntimeException('Không đủ AIP. Cần ' . $amount . ', hiện có ' . $user->aip);
+        $stats = app(CommunityStatsService::class)->for($user);
+        $currentAip = $stats?->aip ?? $user->aip;
+        if ($currentAip < $amount) {
+            throw new \RuntimeException('Không đủ AIP. Cần ' . $amount . ', hiện có ' . $currentAip);
         }
 
         AipTransaction::create([
@@ -36,6 +44,11 @@ class AipService
             'reference_id' => $reference?->id,
         ]);
 
-        $user->decrement('aip', $amount);
+        if ($stats) {
+            $stats->decrement('aip', $amount);
+            $user->setAttribute('aip', (int) $stats->fresh()->aip);
+        } else {
+            $user->decrement('aip', $amount);
+        }
     }
 }
