@@ -29,16 +29,39 @@ class CommunityPreview extends Component
             ['status' => 'active', 'tier' => 'free', 'starts_at' => now(), 'expires_at' => now()->addYears(10)]
         );
 
-        $this->redirect(community_route('feed'), navigate: true);
+        $this->redirect(route('community.feed', ['community' => $this->community->slug]), navigate: true);
     }
 
     public function render()
     {
-        $courses = Course::query()->where('is_published', true)->latest()->limit(3)->get();
-        $challenges = Expedition::query()->whereIn('status', ['open', 'active'])->latest()->limit(3)->get();
+        $coursesQuery = Course::withoutGlobalScopes()->where('brand_id', $this->community->id)->where('is_published', true);
+        $challengesQuery = Expedition::withoutGlobalScopes()->where('brand_id', $this->community->id)->whereIn('status', ['open', 'active']);
+        $courses = (clone $coursesQuery)->latest()->limit(3)->get();
+        $challenges = (clone $challengesQuery)->latest()->limit(3)->get();
         $memberCount = $this->community->users()->count();
+        $adminCount = $this->community->users()->wherePivotIn('role', ['owner', 'admin'])->count();
+        $courseCount = (clone $coursesQuery)->count();
+        $challengeCount = (clone $challengesQuery)->count();
+        $eventCount = \App\Models\Event::withoutGlobalScopes()->where('brand_id', $this->community->id)->whereIn('status', ['published', 'completed'])->count();
+        $isMember = false;
 
-        return view('livewire.community-preview', compact('courses', 'challenges', 'memberCount'))
+        if (Auth::check()) {
+            $isMember = Auth::user()->isBrandAdmin($this->community->id)
+                || Auth::user()->memberships()->withoutGlobalScopes()
+                    ->where('brand_id', $this->community->id)
+                    ->where(function ($membership) {
+                        $membership
+                            ->where(function ($active) {
+                                $active->where('status', 'active')
+                                    ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+                            })
+                            ->orWhere(function ($trial) {
+                                $trial->where('status', 'trial')->where('trial_ends_at', '>', now());
+                            });
+                    })->exists();
+        }
+
+        return view('livewire.community-preview', compact('courses', 'challenges', 'memberCount', 'adminCount', 'courseCount', 'challengeCount', 'eventCount', 'isMember'))
             ->layout('layouts.app', ['title' => $this->community->name]);
     }
 }

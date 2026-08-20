@@ -69,7 +69,7 @@ class CreateCommunity extends Component
         }
 
         CommunityApplication::create($data);
-        session()->flash('toast', ['message' => 'Đã gửi hồ sơ. DSCons sẽ xem xét và phản hồi cho bạn.', 'type' => 'success']);
+        session()->flash('toast', ['message' => 'Đã gửi hồ sơ. Đội ngũ nền tảng sẽ xem xét và phản hồi cho bạn.', 'type' => 'success']);
         $this->redirect(route('communities'), navigate: true);
     }
 

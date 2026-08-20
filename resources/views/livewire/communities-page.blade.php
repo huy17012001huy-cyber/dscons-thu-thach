@@ -83,9 +83,7 @@
             @foreach($communities as $community)
                 @php
                     $isJoined = $joinedIds->contains($community->id);
-                    $communityUrl = $isJoined
-                        ? route('community.feed', ['community' => $community->slug])
-                        : route('community.preview', $community->slug);
+                    $communityUrl = route('community.preview', $community->slug);
                 @endphp
                 <article class="discovery-card">
                     <a href="{{ $communityUrl }}" class="discovery-card-link" aria-label="{{ $isJoined ? 'Vào' : 'Xem' }} community {{ $community->name }}"></a>
@@ -121,7 +119,7 @@
                         </div>
                         <p class="discovery-card-description">{{ $community->description ?: ($community->tagline ?: 'Một cộng đồng học tập thực chiến trên DSCons.') }}</p>
                         <div class="discovery-card-meta"><span><strong>{{ number_format($community->users_count) }}</strong> thành viên</span><span aria-hidden="true">·</span><span>{{ $isJoined ? 'Đã tham gia' : 'Mở tham gia' }}</span></div>
-                        <a href="{{ $communityUrl }}" class="ds-btn discovery-card-cta discovery-primary-action" style="text-align:center;text-decoration:none;">{{ $isJoined ? 'Vào community' : 'Xem & tham gia' }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+                        <a href="{{ $communityUrl }}" class="ds-btn discovery-card-cta discovery-primary-action" style="text-align:center;text-decoration:none;">Xem giới thiệu<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
                     </div>
                 </article>
             @endforeach
