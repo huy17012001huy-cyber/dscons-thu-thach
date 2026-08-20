@@ -488,6 +488,13 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 .rp-see-all { font-size: var(--fs-xs); font-weight: 600; color: var(--green); text-decoration: none; }
 .rp-see-all:hover { text-decoration: underline; }
 .rp-empty { font-size: var(--fs-sm); color: var(--text-cat); text-align: center; padding: 6px 0; }
+.membership-cta { display: flex !important; align-items: center; justify-content: center; gap: 7px; border: 1px solid #1F77BE !important; background: #1F77BE !important; color: #fff !important; font-weight: 750 !important; box-shadow: 0 5px 12px rgba(31,119,190,.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+.membership-cta.is-active { border-color: #0E527F !important; background: #0E527F !important; }
+.membership-cta:hover { background: #125A96 !important; color: #fff !important; box-shadow: 0 8px 16px rgba(18,90,150,.26); transform: translateY(-1px); }
+.membership-cta:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(18,90,150,.2); }
+.membership-cta svg { width: 15px; height: 15px; }
+.community-invite-button { border-color: #B8D8E4 !important; background: #EAF7FA !important; color: #125A96 !important; font-weight: 750 !important; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+.community-invite-button:hover { border-color: #1F77BE !important; background: #D9F0F5 !important; transform: translateY(-1px); }
 
 /* Profile card components */
 .profile-user-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -940,7 +947,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                     <div style="padding:14px;">
                         <div style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--text);">Nâng hạng thành viên</div>
                         <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:4px 0 12px;">Mở khóa toàn bộ khóa học, challenge và sự kiện.</p>
-                        <a href="{{ community_route('membership') }}" class="ds-btn ds-btn-primary" style="display:block;text-align:center;text-decoration:none;min-height:40px;padding:.55rem;">{{ $__currentMembership?->isPremium() ? 'Đang dùng Premium' : 'Nâng hạng Premium' }}</a>
+                        <a href="{{ community_route('membership') }}" class="ds-btn membership-cta {{ $__currentMembership?->isPremium() ? 'is-active' : '' }}" style="text-align:center;text-decoration:none;min-height:40px;padding:.55rem;">@if($__currentMembership?->isPremium())<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>@endif{{ $__currentMembership?->isPremium() ? 'Đang dùng Premium' : 'Nâng hạng Premium' }}</a>
                     </div>
                 </div>
 
@@ -955,7 +962,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                     <p style="font-size:12px;line-height:1.5;color:var(--text-muted);margin:0 0 11px;">{{ $brand->description ?: ($brand->tagline ?: 'Cộng đồng học tập DSCons.') }}</p>
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;"><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityMemberCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">thành viên</span></div><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityActiveCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">đang hoạt động</span></div><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityAdminCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">quản trị</span></div></div>
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;"><div style="display:flex;padding-left:4px;">@foreach($__communityMembers->take(5) as $__member)<img src="{{ $__member->avatar_url }}" alt="" style="width:25px;height:25px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-5px;">@endforeach</div><span style="font-size:11px;padding:4px 7px;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ $__currentMembership?->isPremium() ? 'Premium' : 'Free' }}</span></div>
-                    <button type="button" onclick="copyCommunityLink('{{ route('community.preview', $brand->slug) }}')" class="ds-btn" style="width:100%;margin-top:12px;min-height:39px;padding:.5rem;">Mời bạn bè</button>
+                    <button type="button" onclick="copyCommunityLink('{{ route('community.preview', $brand->slug) }}')" class="ds-btn community-invite-button" style="width:100%;margin-top:12px;min-height:39px;padding:.5rem;">Mời bạn bè</button>
                 </div>
 
                 {{-- Community leaderboard --}}

@@ -34,6 +34,9 @@
     .discovery-card-description { display: -webkit-box; min-height: 39px; margin: 10px 0 12px; overflow: hidden; color: #5E788A; font-size: 12px; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
     .discovery-card-meta { display: flex; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid #E7EEF1; color: var(--text-muted); font-size: 11px; }
     .discovery-card-meta strong { color: var(--text); font-weight: 800; }
+    .discovery-primary-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #1F77BE !important; background: #1F77BE !important; color: #fff !important; font-weight: 750 !important; box-shadow: 0 5px 12px rgba(31,119,190,.22); }
+    .discovery-primary-action:hover { border-color: #125A96 !important; background: #125A96 !important; box-shadow: 0 8px 16px rgba(18,90,150,.26); transform: translateY(-1px); }
+    .discovery-primary-action:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(18,90,150,.2); }
     .discovery-card-cta { position: relative; z-index: 3; width: 100%; min-height: 37px; margin-top: 13px; padding: 8px 10px; font-size: 12px; pointer-events: auto; }
     .discovery-create-card { display: flex; min-height: 270px; align-items: center; justify-content: center; padding: 24px; border: 1px dashed #AACCD7; border-radius: 14px; background: #F7FBFC; color: var(--green); text-align: center; text-decoration: none; transition: background .17s ease, border-color .17s ease; }
     .discovery-create-card:hover { border-color: var(--green); background: #EDF8FA; }
@@ -56,7 +59,7 @@
             <p>Tìm cộng đồng phù hợp với mục tiêu học tập và nghề nghiệp của bạn.</p>
         </div>
         @auth
-            <a href="{{ route('community.create') }}" class="ds-btn ds-btn-primary discovery-create">Tạo cộng đồng</a>
+            <a href="{{ route('community.create') }}" class="ds-btn discovery-create discovery-primary-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M12 5v14M5 12h14"/></svg>Tạo cộng đồng</a>
         @endauth
     </header>
 
@@ -118,7 +121,7 @@
                         </div>
                         <p class="discovery-card-description">{{ $community->description ?: ($community->tagline ?: 'Một cộng đồng học tập thực chiến trên DSCons.') }}</p>
                         <div class="discovery-card-meta"><span><strong>{{ number_format($community->users_count) }}</strong> thành viên</span><span aria-hidden="true">·</span><span>{{ $isJoined ? 'Đã tham gia' : 'Mở tham gia' }}</span></div>
-                        <a href="{{ $communityUrl }}" class="ds-btn {{ $isJoined ? 'ds-btn-primary' : '' }} discovery-card-cta" style="text-align:center;text-decoration:none;">{{ $isJoined ? 'Vào community' : 'Xem community' }}</a>
+                        <a href="{{ $communityUrl }}" class="ds-btn discovery-card-cta discovery-primary-action" style="text-align:center;text-decoration:none;">{{ $isJoined ? 'Vào community' : 'Xem & tham gia' }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
                     </div>
                 </article>
             @endforeach
