@@ -712,7 +712,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     @foreach(auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active','trial'])->get()->unique('brand_id') as $m)
         <div class="guild-item {{ $m->brand_id === $brand->id ? 'active' : '' }}">
             <a href="{{ route('community.feed', ['community' => $m->brand->slug]) }}" class="guild-icon" title="{{ $m->brand->name }}">
-                @if($m->brand->logo_path)
+                @if(($m->brand->slug ?? null) !== 'dscons' && $m->brand->logo_path)
                     <img src="{{ asset('storage/' . $m->brand->logo_path) }}" alt="{{ $m->brand->slug }}">
                 @else
                     <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:34px;height:34px;object-fit:contain;">
@@ -743,7 +743,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 @if(($brand->slug ?? null) !== 'dscons' && $brand->logo_path)
                     <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" class="community-switcher-logo">
                 @else
-                    <img src="{{ asset('dscons-logo.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">
+                    <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">
                 @endif
                 <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:800;">{{ $brand->name }}</span>
                 @if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:12px;">✓</span>@endif
@@ -759,7 +759,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                         $__community = $__membership->brand;
                     @endphp
                     <a href="{{ route('community.feed', ['community' => $__community->slug]) }}" class="community-switcher-item {{ $__community->id === $brand->id ? 'active' : '' }}">
-                        @if(($__community->slug ?? null) === 'dscons')<img src="{{ asset('dscons-logo.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">@elseif($__community->logo_path)<img src="{{ asset('storage/'.$__community->logo_path) }}" alt="" class="community-switcher-logo">@else<span class="community-switcher-logo" style="display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--green);">{{ strtoupper(substr($__community->name,0,1)) }}</span>@endif
+                        @if(($__community->slug ?? null) === 'dscons')<img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">@elseif($__community->logo_path)<img src="{{ asset('storage/'.$__community->logo_path) }}" alt="" class="community-switcher-logo">@else<span class="community-switcher-logo" style="display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--green);">{{ strtoupper(substr($__community->name,0,1)) }}</span>@endif
                         <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $__community->name }}</span>
                         @if($__community->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif
                     </a>
@@ -975,7 +975,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 <div class="rp-card" style="padding:15px;">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                         <div style="width:40px;height:40px;border-radius:12px;overflow:hidden;background:#E1F4F7;display:grid;place-items:center;color:var(--green);font-weight:800;">
-                            @if($brand->logo_path)<img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" style="width:100%;height:100%;object-fit:cover;">@else{{ strtoupper(substr($brand->name,0,1)) }}@endif
+                            @if(($brand->slug ?? null) === 'dscons')<img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:100%;height:100%;object-fit:contain;padding:4px;">@elseif($brand->logo_path)<img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" style="width:100%;height:100%;object-fit:cover;">@else{{ strtoupper(substr($brand->name,0,1)) }}@endif
                         </div>
                         <div style="min-width:0;flex:1;"><div style="display:flex;gap:5px;align-items:center;font-size:15px;font-weight:800;color:var(--text);">{{ $brand->name }} @if($brand->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif</div><div style="font-size:11px;color:var(--text-muted);">/c/{{ $brand->slug }}</div></div>
                     </div>
