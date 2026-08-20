@@ -221,14 +221,16 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     background: #fff;
     box-shadow: 0 4px 14px rgba(18,59,89,.06);
 }
-.community-switcher-main { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.community-switcher-main { display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; }
 .community-switcher-chevron, .community-switcher-bell {
-    width: 34px; height: 38px; flex: 0 0 auto; border: 0; border-radius: 9px;
+    width: 30px; height: 34px; flex: 0 0 auto; border: 0; border-radius: 8px;
     display: grid; place-items: center; background: transparent; color: var(--text-muted);
     cursor: pointer;
 }
 .community-switcher-chevron:hover, .community-switcher-bell:hover { background: var(--bg-hover); color: var(--text); }
-.community-switcher-bell svg { width: 18px; height: 18px; }
+.community-switcher-chevron svg { width: 14px; height: 14px; }
+.community-switcher-bell { margin-left: auto; }
+.community-switcher-bell svg { width: 17px; height: 17px; }
 #sidebar-header h2 {
     font-size: var(--fs-md);
     font-weight: 600;
@@ -238,7 +240,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     text-overflow: ellipsis;
 }
 .community-switcher-button {
-    width: 100%; min-height: 42px; padding: 6px 7px; border: 0; border-radius: 10px;
+    width: auto; flex: 1 1 auto; min-width: 0; min-height: 40px; padding: 5px 6px; border: 0; border-radius: 10px;
     background: transparent; color: var(--text); display: flex; align-items: center; gap: 9px;
     text-align: left; cursor: pointer; font: inherit;
 }
@@ -721,7 +723,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     <div id="sidebar-header" x-data="{ open: false }" style="position:relative;">
         <div class="community-switcher-main">
             <button type="button" class="community-switcher-chevron" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu" aria-label="Đổi cộng đồng">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:17px;height:17px;transition:transform .18s ease;" :style="open ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.25 15.75 12 19.5l3.75-3.75M8.25 8.25 12 4.5l3.75 3.75"/></svg>
             </button>
             <button type="button" class="community-switcher-button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu">
                 @if(($brand->slug ?? null) !== 'dscons' && $brand->logo_path)
