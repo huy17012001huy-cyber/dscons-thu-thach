@@ -211,17 +211,17 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 #sidebar-header {
     min-height: 58px;
     margin: 8px 8px 6px;
-    padding: 4px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 4px 14px rgba(18,59,89,.06);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
 }
-.community-switcher-main { display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; }
+.community-switcher-main { display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; min-height: 58px; padding: 4px; border: 1px solid var(--border); border-radius: 14px; background: #fff; box-shadow: 0 4px 14px rgba(18,59,89,.06); transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+#sidebar-header.is-open .community-switcher-main { border-color: #B9D7E2; background: #EEF7F9; box-shadow: 0 6px 16px rgba(18,59,89,.08); }
 .community-switcher-chevron, .community-switcher-bell {
     width: 30px; height: 34px; flex: 0 0 auto; border: 0; border-radius: 8px;
     display: grid; place-items: center; background: transparent; color: var(--text-muted);
@@ -244,7 +244,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     background: transparent; color: var(--text); display: flex; align-items: center; gap: 9px;
     text-align: left; cursor: pointer; font: inherit;
 }
-.community-switcher-button:hover, .community-switcher-button[aria-expanded="true"] { background: var(--bg-hover); }
+.community-switcher-button:hover, .community-switcher-button[aria-expanded="true"] { background: transparent; }
 .community-switcher-menu {
     position: absolute; z-index: 100; top: calc(100% + 7px); left: 0; right: 0;
     max-height: min(430px, calc(100vh - 170px)); overflow-y: auto; padding: 8px;
@@ -257,8 +257,8 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 }
 .community-switcher-item:hover, .community-switcher-item.active { background: var(--bg-active); }
 .community-switcher-logo { width: 30px; height: 30px; border-radius: 9px; object-fit: cover; flex: 0 0 auto; background: #E1F4F7; }
-.community-switcher-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border); }
-.community-switcher-footer a { min-height: 38px; display: grid; place-items: center; border-radius: 8px; background: #F4F8FA; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 700; }
+.community-switcher-footer { display: grid; grid-template-columns: 1fr; gap: 6px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border); }
+.community-switcher-footer a { min-height: 40px; display: flex; align-items: center; padding: 0 11px; border-radius: 9px; background: #F4F8FA; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 700; }
 .community-switcher-footer a:hover { background: var(--bg-active); color: var(--green); }
 
 #channel-list {
@@ -727,7 +727,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
             ? auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active', 'trial'])->get()->filter(fn ($membership) => $membership->brand)
             : collect();
     @endphp
-    <div id="sidebar-header" x-data="{ open: false }" style="position:relative;">
+    <div id="sidebar-header" x-data="{ open: false }" :class="{ 'is-open': open }" style="position:relative;">
         <div class="community-switcher-main">
             <button type="button" class="community-switcher-chevron" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu" aria-label="Đổi cộng đồng">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.25 15.75 12 19.5l3.75-3.75M8.25 8.25 12 4.5l3.75 3.75"/></svg>
@@ -763,8 +763,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 <a href="{{ route('community.preview', $brand->slug) }}" class="community-switcher-item active">{{ $brand->name }}</a>
             @endauth
             <div class="community-switcher-footer">
-                <a href="{{ route('communities') }}">Khám phá</a>
-                @auth<a href="{{ route('community.create') }}">Tạo community</a>@else<a href="{{ route('login') }}">Đăng nhập</a>@endauth
+                <a href="{{ route('communities') }}">Khám phá cộng đồng</a>
+                @auth<a href="{{ route('community.create') }}">Tạo cộng đồng</a>@else<a href="{{ route('login') }}">Đăng nhập</a>@endauth
             </div>
         </div>
     </div>
@@ -926,6 +926,34 @@ button, a, input, select, textarea { touch-action: manipulation; }
         {{-- 4. RIGHT PANEL — DSCons gamification ──── --}}
         <div id="right-panel">
             <div id="right-panel-scroll">
+                @if(request()->routeIs('communities'))
+                <div class="rp-card" style="padding:16px;">
+                    <div style="width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#E1F4F7;color:var(--green);margin-bottom:11px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div>
+                    <div style="font-size:15px;font-weight:800;color:var(--text);">Khám phá community</div>
+                    <p style="margin:6px 0 14px;color:var(--text-muted);font-size:12px;line-height:1.55;">Tìm nơi phù hợp để học tập, kết nối và cùng phát triển.</p>
+                    <div style="display:grid;gap:8px;color:var(--text-muted);font-size:12px;"><div style="display:flex;gap:8px;"><strong style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E1F4F7;color:var(--green);font-size:11px;">1</strong><span><b style="color:var(--text);">Khám phá</b> community phù hợp</span></div><div style="display:flex;gap:8px;"><strong style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E1F4F7;color:var(--green);font-size:11px;">2</strong><span><b style="color:var(--text);">Tham gia</b> để vào bảng tin</span></div></div>
+                    @auth
+                        <a href="{{ route('community.create') }}" class="ds-btn membership-cta" style="margin-top:15px;text-decoration:none;min-height:39px;padding:.5rem;">Tạo community</a>
+                    @else
+                        <a href="{{ route('login') }}" class="ds-btn membership-cta" style="margin-top:15px;text-decoration:none;min-height:39px;padding:.5rem;">Đăng nhập để tham gia</a>
+                    @endauth
+                </div>
+                @auth
+                    @php $__discoveryMemberships = auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active', 'trial'])->get()->filter(fn ($membership) => $membership->brand); @endphp
+                    @if($__discoveryMemberships->isNotEmpty())
+                    <div class="rp-card" style="padding:14px;">
+                        <div class="rp-card-header"><div class="rp-card-title">Community của bạn</div></div>
+                        @foreach($__discoveryMemberships->take(4) as $__discoveryMembership)
+                            @php $__discoveryBrand = $__discoveryMembership->brand; @endphp
+                            <a href="{{ route('community.feed', ['community' => $__discoveryBrand->slug]) }}" style="display:flex;align-items:center;gap:8px;padding:7px 0;text-decoration:none;color:var(--text);">
+                                @if(($__discoveryBrand->slug ?? null) === 'dscons')<img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:28px;height:28px;object-fit:contain;padding:2px;border-radius:8px;background:#E1F4F7;">@elseif($__discoveryBrand->logo_path)<img src="{{ asset('storage/'.$__discoveryBrand->logo_path) }}" alt="" style="width:28px;height:28px;object-fit:cover;border-radius:8px;">@else<span style="width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#E1F4F7;color:var(--green);font-size:12px;font-weight:800;">{{ strtoupper(substr($__discoveryBrand->name, 0, 1)) }}</span>@endif
+                                <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700;">{{ $__discoveryBrand->name }}</span><span style="color:var(--green);font-size:12px;">→</span>
+                            </a>
+                        @endforeach
+                    </div>
+                    @endif
+                @endauth
+                @else
                 @auth
                 @php
                     $__currentMembership = auth()->user()->memberships()->where('brand_id', $brand->id)->latest()->first();
@@ -968,6 +996,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 {{-- Community leaderboard --}}
                 <livewire:sidebar-leaderboard />
                 @endauth
+                @endif
             </div>
         </div>
 

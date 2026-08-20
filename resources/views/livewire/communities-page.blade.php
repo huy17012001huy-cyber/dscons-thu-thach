@@ -53,10 +53,10 @@
         <div>
             <div class="discovery-kicker">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
-                DSCons Network
+                Khám phá
             </div>
             <h1>Khám phá cộng đồng</h1>
-            <p>Tìm cộng đồng phù hợp với mục tiêu học tập và nghề nghiệp của bạn.</p>
+            <p>Tìm cộng đồng phù hợp với mục tiêu học tập, nghề nghiệp và những người bạn muốn đồng hành.</p>
         </div>
         @auth
             <a href="{{ route('community.create') }}" class="ds-btn discovery-create discovery-primary-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M12 5v14M5 12h14"/></svg>Tạo cộng đồng</a>
@@ -130,7 +130,7 @@
                     <div>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
                         <strong>Tạo community mới</strong>
-                        <span>Gửi đề xuất để DSCons duyệt và mở community của bạn.</span>
+                        <span>Gửi đề xuất để nền tảng duyệt và mở community của bạn.</span>
                     </div>
                 </a>
             @endif
