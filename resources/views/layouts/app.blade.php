@@ -259,6 +259,14 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 .community-switcher-footer a { min-height: 38px; display: grid; place-items: center; border-radius: 8px; background: #F4F8FA; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 700; }
 .community-switcher-footer a:hover { background: var(--bg-active); color: var(--green); }
 .admin-nav-group { margin-top: 2px; }
+.admin-nav-row { display: flex; align-items: center; gap: 2px; }
+.admin-nav-row > .ch-item { flex: 1; margin-bottom: 0; }
+.admin-nav-toggle {
+    width: 34px; height: 38px; margin-right: 8px; border: 0; border-radius: 8px;
+    display: grid; place-items: center; background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.admin-nav-toggle:hover { background: var(--bg-hover); color: var(--text); }
+.admin-nav-toggle svg { width: 14px; height: 14px; transition: transform .18s ease; }
 .admin-nav-subitem {
     display: flex; align-items: center; gap: 9px; min-height: 34px; margin: 0 8px 2px 38px;
     padding: 6px 9px; border-left: 1px solid var(--border); border-radius: 0 7px 7px 0;
@@ -829,15 +837,22 @@ button, a, input, select, textarea { touch-action: manipulation; }
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             Admin
         </div>
-        <div class="admin-nav-group">
-        <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+        <div class="admin-nav-group" x-data="{ open: {{ request()->routeIs('admin.*') ? 'true' : 'false' }} }">
+            <div class="admin-nav-row">
+            <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             <span class="ch-name">Admin</span>
-        </a>
-        <a href="{{ route('admin.communities') }}" class="admin-nav-subitem {{ request()->routeIs('admin.communities') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M4 5h16M7 5v14M17 5v14M10 9h4M10 13h4"/></svg>
-            <span>Quản lý cộng đồng</span>
-        </a>
+            </a>
+            <button type="button" class="admin-nav-toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="admin-community-subnav" aria-label="Mở menu quản trị">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" :style="open ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            </div>
+            <div id="admin-community-subnav" x-cloak x-show="open" x-transition>
+                <a href="{{ route('admin.communities') }}" class="admin-nav-subitem {{ request()->routeIs('admin.communities') ? 'active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M4 5h16M7 5v14M17 5v14M10 9h4M10 13h4"/></svg>
+                    <span>Quản lý cộng đồng</span>
+                </a>
+            </div>
         </div>
         @endcan
     </div>
