@@ -1,25 +1,45 @@
 <div>
-    <div class="card">
-        <h1 style="font-size:1.5rem; font-weight:700; color:#1A1A1A; margin-bottom:0.25rem;">Quên mật khẩu</h1>
-        <p style="color:#5C5C66; font-size:0.875rem; margin-bottom:1.5rem;">Nhập email của bạn, chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.</p>
+    <style>
+        /* Keep the secondary auth action balanced even if the shared stylesheet is cached. */
+        .auth-card .auth-secondary {
+            display: flex !important;
+            width: 100%;
+            box-sizing: border-box;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: .25rem;
+            margin: 1.25rem 0 0;
+            padding-top: 1rem;
+            border-top: 1px solid var(--ds-border);
+            line-height: 1.45;
+            text-align: center !important;
+        }
+    </style>
+    <div class="card auth-card">
+        <div class="mb-6">
+            <span class="badge" style="background:#E1F4F7;color:#125A96;">Khôi phục tài khoản</span>
+            <h1 class="mt-3" style="font-size:1.5rem;font-weight:800;">Quên mật khẩu?</h1>
+            <p style="font-size:.875rem;margin-top:.4rem;">Nhập email của bạn, chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.</p>
+        </div>
 
         @if($sent)
-        <div style="background:#DCFCE7; border:1px solid #BBF7D0; color:#166534; padding:0.75rem; border-radius:0.5rem; font-size:0.875rem; margin-bottom:1rem;">
-            ✓ Nếu email này có tài khoản, chúng tôi đã gửi một liên kết đặt lại mật khẩu. Kiểm tra hộp thư (và cả mục Spam/Quảng cáo) nhé.
-        </div>
-        <a href="{{ route('login') }}" wire:navigate class="btn btn-primary w-full justify-center">Quay lại đăng nhập</a>
+            <div class="auth-notice auth-notice-success" role="status">
+                <span aria-hidden="true">✓</span>
+                <span>Nếu email này có tài khoản, chúng tôi đã gửi một liên kết đặt lại mật khẩu. Hãy kiểm tra cả mục Spam/Quảng cáo.</span>
+            </div>
+            <a href="{{ route('login') }}" wire:navigate class="btn btn-primary w-full justify-center mt-5">Quay lại đăng nhập</a>
         @else
             @if($error)
-            <div style="background:#FEE2E2; border:1px solid #FECACA; color:#991B1B; padding:0.75rem; border-radius:0.5rem; font-size:0.875rem; margin-bottom:1rem;">
-                {{ $error }}
-            </div>
+                <div class="auth-notice auth-notice-error mb-4" role="alert">{{ $error }}</div>
             @endif
 
-            <form wire:submit="submit" class="flex flex-col gap-4">
+            <form wire:submit.prevent="submit" class="flex flex-col gap-4">
                 <div>
-                    <label style="display:block; font-size:0.8rem; font-weight:600; color:#2E2E2E; margin-bottom:0.375rem;">Email</label>
-                    <input wire:model="email" type="email" class="input" placeholder="ban@email.com" autofocus>
-                    @error('email') <p style="color:#991B1B; font-size:0.75rem; margin-top:0.25rem;">{{ $message }}</p> @enderror
+                    <label for="forgot-email" class="auth-label">Email</label>
+                    <input id="forgot-email" wire:model="email" type="email" class="input" placeholder="ban@email.com" autocomplete="email" autofocus
+                        @error('email') aria-invalid="true" aria-describedby="forgot-email-error" @enderror>
+                    @error('email') <p id="forgot-email-error" class="auth-error" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <button type="submit" class="btn btn-primary w-full justify-center" wire:loading.attr="disabled" wire:target="submit">
@@ -28,9 +48,8 @@
                 </button>
             </form>
 
-            <p style="text-align:center; margin-top:1.25rem; font-size:0.875rem; color:#5C5C66;">
-                Nhớ ra mật khẩu rồi?
-                <a href="{{ route('login') }}" wire:navigate style="color:#d17856; font-weight:600;">Đăng nhập</a>
+            <p class="auth-secondary"><span>Đã nhớ mật khẩu?</span>
+                <a href="{{ route('login') }}" wire:navigate>Đăng nhập</a>
             </p>
         @endif
     </div>

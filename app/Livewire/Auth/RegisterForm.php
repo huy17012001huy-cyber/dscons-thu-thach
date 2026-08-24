@@ -86,6 +86,9 @@ class RegisterForm extends Component
             'expires_at'    => '2099-12-31',
             'referred_by'   => $referrer?->id,
         ]);
+        $user->brandRoles()->syncWithoutDetaching([
+            brand()->id => ['role' => 'member'],
+        ]);
 
         session()->forget('referral');
 

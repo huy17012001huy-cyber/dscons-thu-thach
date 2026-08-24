@@ -18,11 +18,6 @@ class CommunitiesPage extends Component
         $user = Auth::user();
 
         $user->brandRoles()->syncWithoutDetaching([$community->id => ['role' => 'member']]);
-        \App\Models\Membership::withoutGlobalScopes()->updateOrCreate(
-            ['brand_id' => $community->id, 'user_id' => $user->id],
-            ['status' => 'active', 'tier' => 'free', 'starts_at' => now(), 'expires_at' => now()->addYears(10)]
-        );
-
         $this->dispatch('toast', message: 'Đã tham gia '.$community->name.'.', type: 'success');
     }
 
@@ -38,22 +33,11 @@ class CommunitiesPage extends Component
         $joinedIds = collect();
 
         if (Auth::check()) {
-            $joinedIds = Auth::user()->memberships()
-                ->withoutGlobalScopes()
-                ->where(function ($membership) {
-                    $membership
-                        ->where(function ($active) {
-                            $active->where('status', 'active')
-                                ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now()));
-                        })
-                        ->orWhere(function ($trial) {
-                            $trial->where('status', 'trial')->where('trial_ends_at', '>', now());
-                        });
-                })
-                ->pluck('brand_id')
-                ->filter()
-                ->unique()
-                ->values();
+            $roleIds = Auth::user()->brandRoles()
+                ->whereIn('brand_user.role', ['member', 'moderator', 'admin', 'owner'])
+                ->pluck('brands.id');
+
+            $joinedIds = $roleIds->unique()->values();
         }
 
         return view('livewire.communities-page', compact('communities', 'joinedIds'))

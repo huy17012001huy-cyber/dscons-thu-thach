@@ -28,5 +28,6 @@ Thumbs.db
 /.claude/settings.local.json
 /.agents/
 /.playwright-cli/
+/output/
 /menu-active.png
 /compose-*.png

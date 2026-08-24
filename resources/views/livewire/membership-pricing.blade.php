@@ -1,4 +1,17 @@
-<div @if($selectedPlan || $selectedCommunityPlanId) wire:poll.5s @endif>
+<div class="membership-page" @if($selectedPlan || $selectedCommunityPlanId) wire:poll.5s @endif>
+<style>
+    .membership-page { width: min(100%, 760px); margin: 0 auto; }
+    .membership-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .membership-plan-option, .community-plan-option { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease; }
+    .membership-plan-option:hover, .community-plan-option:hover { transform: translateY(-2px); border-color: #8FB9CB !important; box-shadow: 0 8px 18px rgba(18,59,89,.09); }
+    .membership-plan-option:focus-visible, .community-plan-option:focus-visible { outline: 3px solid rgba(31,119,190,.20); outline-offset: 2px; }
+    .membership-plan-option { min-height: 154px; }
+    .membership-plan-option[style*="#F0FDF4"] { background:#F7FCFD !important; }
+    .membership-page [style*="background:#F7F5F3"] { background:#F7FAFC !important; }
+    .membership-page img[alt^="QR"] { box-shadow: 0 4px 12px rgba(18,59,89,.10); }
+    @media (max-width: 640px) { .membership-page > div { max-width: none !important; } }
+</style>
+
     <div style="max-width:720px; margin:0 auto;">
         <div class="text-center mb-6">
             <h1 style="font-size:1.5rem; font-weight:800; color:#1A1A1A;">Gói thành viên</h1>
@@ -8,10 +21,10 @@
         {{-- Current membership status --}}
         @if($membership && $membership->isActive())
         <div class="card mb-4" style="background:#D1FAE5; border:1px solid #A7F3D0;">
-            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2">
                 <span style="font-size:1.25rem;">✓</span>
                 <div>
-                    <p style="font-size:0.85rem; font-weight:700; color:#065F46;">Membership đang hoạt động</p>
+                    <p style="font-size:0.85rem; font-weight:700; color:#065F46;">{{ $membershipLabel }} đang hoạt động</p>
                     <p style="font-size:0.75rem; color:#065F46;">Hết hạn: {{ $membership->expires_at?->format('d/m/Y') ?? 'Không giới hạn' }}</p>
                 </div>
             </div>
@@ -19,11 +32,11 @@
         @endif
 
         @if(isset($communityPlans) && $communityPlans->isNotEmpty())
-        <section class="card" style="margin-bottom:1rem;padding:1rem;border-color:#B8D7E6;background:linear-gradient(135deg,#F7FCFD,#fff);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:.75rem;"><div><h2 style="font-size:1rem;font-weight:800;color:#123B59;margin:0;">Membership của community</h2><p style="font-size:.75rem;color:#61798A;margin:.2rem 0 0;">Free cho nền tảng cơ bản · Premium mở toàn bộ nội dung.</p></div><span style="font-size:.7rem;padding:.3rem .55rem;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ brand()->name }}</span></div>
+        <section class="card" style="margin-bottom:1rem;padding:1rem;border-color:#B8D7E6;background:#F7FCFD;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:.75rem;"><div><h2 style="font-size:1rem;font-weight:800;color:#123B59;margin:0;">Membership của community</h2><p style="font-size:.75rem;color:#61798A;margin:.2rem 0 0;">Thành viên cộng đồng cơ bản · {{ $membershipLabel }} mở toàn bộ nội dung.</p></div><span style="font-size:.7rem;padding:.3rem .55rem;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ brand()->name }}</span></div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;">
             @foreach($communityPlans as $communityPlan)
-                <button wire:click="selectCommunityPlan({{ $communityPlan->id }})" class="card" style="text-align:left;padding:.85rem;cursor:pointer;{{ $selectedCommunityPlan?->id === $communityPlan->id ? 'border:2px solid #1F77BE;background:#fff;' : '' }}">
+                <button type="button" wire:click="selectCommunityPlan({{ $communityPlan->id }})" class="community-plan-option card" style="text-align:left;padding:.85rem;cursor:pointer;{{ $selectedCommunityPlan?->id === $communityPlan->id ? 'border:2px solid #1F77BE;background:#fff;' : '' }}">
                     <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="font-size:.9rem;color:#123B59;">{{ $communityPlan->name }}</strong><span style="font-size:.7rem;color:#1F77BE;font-weight:700;">{{ $communityPlan->price ? number_format($communityPlan->price,0,',','.').'đ' : 'Miễn phí' }}</span></div>
                     <div style="font-size:.72rem;color:#61798A;margin-top:.45rem;line-height:1.45;">{{ is_array($communityPlan->benefits) ? implode(' · ', array_slice($communityPlan->benefits,0,2)) : 'Quyền lợi theo community' }}</div>
                 </button>
@@ -31,7 +44,7 @@
             </div>
             @if($selectedCommunityPlan)
                 @php $communityTransferCode = 'MC'.brand()->id.'P'.$selectedCommunityPlan->id.'U'.auth()->id(); $communityQr = config('services.sepay.bank_account') ? 'https://qr.sepay.vn/img?'.http_build_query(['acc'=>config('services.sepay.bank_account'),'bank'=>config('services.sepay.bank_name'),'amount'=>$selectedCommunityPlan->price,'des'=>$communityTransferCode,'template'=>'compact']) : null; @endphp
-                <div class="card" style="margin-top:.8rem;border-left:3px solid #1F77BE;padding:.9rem;"><strong style="font-size:.85rem;color:#123B59;">Thanh toán Premium</strong><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:.55rem;"><div><div style="font-size:.7rem;color:#61798A;">Nội dung chuyển khoản</div><strong style="font-size:.9rem;letter-spacing:.05em;color:#1F77BE;">{{ $communityTransferCode }}</strong></div><div><div style="font-size:.7rem;color:#61798A;">Số tiền</div><strong style="font-size:.9rem;color:#123B59;">{{ number_format($selectedCommunityPlan->price,0,',','.') }}đ</strong></div>@if($communityQr)<img src="{{ $communityQr }}" alt="QR thanh toán" style="width:118px;height:118px;border-radius:8px;">@endif</div><p style="font-size:.7rem;color:#61798A;margin:.6rem 0 0;">Membership sẽ được kích hoạt sau khi hệ thống xác nhận giao dịch.</p></div>
+                <div class="card" style="margin-top:.8rem;border-left:3px solid #1F77BE;padding:.9rem;"><strong style="font-size:.85rem;color:#123B59;">Thanh toán {{ $membershipLabel }}</strong><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:.55rem;"><div><div style="font-size:.7rem;color:#61798A;">Nội dung chuyển khoản</div><strong style="font-size:.9rem;letter-spacing:.05em;color:#1F77BE;">{{ $communityTransferCode }}</strong></div><div><div style="font-size:.7rem;color:#61798A;">Số tiền</div><strong style="font-size:.9rem;color:#123B59;">{{ number_format($selectedCommunityPlan->price,0,',','.') }}đ</strong></div>@if($communityQr)<img src="{{ $communityQr }}" alt="QR thanh toán" style="width:118px;height:118px;border-radius:8px;">@endif</div><p style="font-size:.7rem;color:#61798A;margin:.6rem 0 0;">{{ $membershipLabel }} sẽ được kích hoạt sau khi hệ thống xác nhận giao dịch.</p></div>
             @endif
         </section>
         @endif
@@ -44,12 +57,12 @@
                 $isPopular = $weeks === 52;
                 $isSelected = $selectedPlan === $weeks;
             @endphp
-            <button wire:click="selectPlan({{ $weeks }})"
-                class="card text-center" style="padding:1.25rem 0.75rem; cursor:pointer; transition:all 0.15s; position:relative;
-                    {{ $isSelected ? 'border:2px solid #d17856; background:#F0FDF4;' : 'border:1px solid #E1E1E1;' }}
-                    {{ $isPopular ? 'border-color:#d17856;' : '' }}">
+            <button type="button" wire:click="selectPlan({{ $weeks }})"
+                class="membership-plan-option card text-center" style="padding:1.25rem 0.75rem; cursor:pointer; position:relative;
+                    {{ $isSelected ? 'border:2px solid #1F77BE; background:#F7FCFD;' : 'border:1px solid #E1E1E1;' }}
+                    {{ $isPopular ? 'border-color:#F39402;' : '' }}">
                 @if($isPopular)
-                <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#d17856; color:#FFF; font-size:0.6rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; white-space:nowrap;">HOT</div>
+                <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#F39402; color:#FFF; font-size:0.6rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; white-space:nowrap;">HOT</div>
                 @endif
                 @if($plan['save'] > 0)
                 <div style="position:absolute; top:-10px; right:8px; background:#DC2626; color:#FFF; font-size:0.6rem; font-weight:700; padding:0.15rem 0.375rem; border-radius:999px;">-{{ $plan['save'] }}%</div>

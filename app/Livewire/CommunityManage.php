@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Brand;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -17,6 +18,8 @@ class CommunityManage extends Component
     public string $description = '';
     public $logo;
     public $banner;
+    public bool $removeLogo = false;
+    public bool $removeBanner = false;
 
     public function mount(): void
     {
@@ -38,10 +41,39 @@ class CommunityManage extends Component
             'banner' => 'nullable|image|max:8192',
         ]);
 
-        $data = ['name' => trim($this->name), 'tagline' => trim($this->tagline) ?: null, 'description' => trim($this->description) ?: null];
-        if ($this->logo) $data['logo_path'] = $this->logo->store('community/logos', 'public');
-        if ($this->banner) $data['banner_path'] = $this->banner->store('community/banners', 'public');
+        $oldLogo = $this->community->logo_path;
+        $oldBanner = $this->community->banner_path;
+        $data = [
+            'name' => trim($this->name),
+            'tagline' => trim($this->tagline) ?: null,
+            'description' => trim($this->description) ?: null,
+        ];
+
+        if ($this->logo) {
+            $data['logo_path'] = $this->logo->store('community/logos', 'public');
+        } elseif ($this->removeLogo) {
+            $data['logo_path'] = null;
+        }
+
+        if ($this->banner) {
+            $data['banner_path'] = $this->banner->store('community/banners', 'public');
+        } elseif ($this->removeBanner) {
+            $data['banner_path'] = null;
+        }
+
         $this->community->update($data);
+
+        foreach ([
+            [$oldLogo, $data['logo_path'] ?? $oldLogo],
+            [$oldBanner, $data['banner_path'] ?? $oldBanner],
+        ] as [$oldPath, $newPath]) {
+            if ($oldPath && $oldPath !== $newPath && str_starts_with($oldPath, 'community/')) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        $this->community->refresh();
+        $this->reset(['logo', 'banner', 'removeLogo', 'removeBanner']);
         $this->dispatch('toast', message: 'Đã cập nhật cộng đồng.', type: 'success');
     }
 

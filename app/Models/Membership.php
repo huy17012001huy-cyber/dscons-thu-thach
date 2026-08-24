@@ -13,7 +13,13 @@ class Membership extends Model {
     protected $casts = ['trial_ends_at'=>'datetime','starts_at'=>'datetime','expires_at'=>'datetime'];
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function referrer(): BelongsTo { return $this->belongsTo(User::class, 'referred_by'); }
-    public function isActive(): bool { return $this->status === 'active' && $this->expires_at?->isFuture(); }
-    public function isTrial(): bool { return $this->status === 'trial' && $this->trial_ends_at?->isFuture(); }
+    public function isActive(): bool {
+        return $this->status === 'active'
+            && ($this->expires_at === null || $this->expires_at->isFuture());
+    }
+    public function isTrial(): bool {
+        return $this->status === 'trial'
+            && ($this->trial_ends_at === null || $this->trial_ends_at->isFuture());
+    }
     public function isPremium(): bool { return $this->tier === 'premium'; }
 }

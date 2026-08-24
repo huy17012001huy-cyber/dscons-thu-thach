@@ -27,6 +27,9 @@ class AdminChallenges extends Component
     public string $expTitle = '';
     public string $expSlug = '';
     public string $expDescription = '';
+    public $expCover = null;
+    public ?string $existingExpCover = null;
+    public bool $removeExpCover = false;
     public string $expBossName = '';
     public ?int $expLeaderId = null;
     #[Rule('required|in:normal,hard,chaos')]
@@ -39,6 +42,7 @@ class AdminChallenges extends Component
     public string $expPrice = '';
     #[Rule('required|in:open,active,completed,failed')]
     public string $expStatus = 'open';
+    public bool $expFeatured = false;
     public string $expStartsAt = '';
     public string $expEndsAt = '';
 
@@ -65,6 +69,7 @@ class AdminChallenges extends Component
     public string $taskTitle = '';
     public string $taskDescription = '';
     public string $taskSopContent = '';
+    public string $taskInstructionJson = '';
     public string $taskVideoUrl = '';
     public string $taskMeetingAt = '';
     #[Rule('required|in:text,screenshot')]
@@ -97,6 +102,9 @@ class AdminChallenges extends Component
         $this->expTitle        = $exp->title;
         $this->expSlug         = $exp->slug;
         $this->expDescription  = $exp->description ?? '';
+        $this->expCover        = null;
+        $this->existingExpCover = $exp->cover_path;
+        $this->removeExpCover  = false;
         $this->expBossName     = $exp->boss_name ?? '';
         $this->expLeaderId     = $exp->leader_id;
         $this->expDifficulty   = $exp->difficulty;
@@ -105,6 +113,7 @@ class AdminChallenges extends Component
         $this->expDepositAip   = $exp->deposit_aip ?? 0;
         $this->expPrice        = $exp->price ? (string) $exp->price : '';
         $this->expStatus       = $exp->status;
+        $this->expFeatured     = (bool) $exp->is_featured;
         $this->expStartsAt     = $exp->starts_at?->format('Y-m-d\TH:i') ?? '';
         $this->expEndsAt       = $exp->ends_at?->format('Y-m-d\TH:i') ?? '';
         $this->showExpeditionModal = true;
@@ -112,7 +121,7 @@ class AdminChallenges extends Component
 
     public function saveExpedition(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->validate([
             'expTitle'        => 'required|string|max:255',
             'expBossName'     => 'required|string|max:255',
@@ -121,7 +130,13 @@ class AdminChallenges extends Component
             'expRequiredDays' => 'required|integer|min:1',
             'expMaxMembers'   => 'required|integer|min:1',
             'expStatus'       => 'required|in:open,active,completed,failed',
+            'expCover'        => 'nullable|image|max:8192',
         ]);
+
+        $expedition = $this->editingExpeditionId
+            ? Expedition::findOrFail($this->editingExpeditionId)
+            : null;
+        $oldCoverPath = $expedition?->cover_path;
 
         $data = [
             'title'         => $this->expTitle,
@@ -133,19 +148,31 @@ class AdminChallenges extends Component
             'required_days' => $this->expRequiredDays,
             'max_members'   => $this->expMaxMembers,
             'deposit_aip'   => $this->expDepositAip,
-            'price'         => $this->expPrice !== '' ? $this->expPrice : null,
+            'price'         => $this->expPrice !== '' ? $this->expPrice : 0,
             'status'        => $this->expStatus,
+            'is_featured'   => $this->expFeatured,
             'starts_at'     => $this->expStartsAt ?: null,
             'ends_at'       => $this->expEndsAt ?: null,
             'created_by'    => Auth::id(),
         ];
 
-        if ($this->editingExpeditionId) {
-            Expedition::findOrFail($this->editingExpeditionId)->update($data);
+        if ($this->expCover) {
+            $data['cover_path'] = $this->expCover->store('challenge/covers', 'public');
+        } elseif ($this->removeExpCover) {
+            $data['cover_path'] = null;
+        }
+
+        if ($expedition) {
+            $expedition->update($data);
             $this->dispatch('toast', message: 'Đã cập nhật challenge', type: 'success');
         } else {
             Expedition::create($data);
             $this->dispatch('toast', message: 'Đã tạo challenge mới', type: 'success');
+        }
+
+        $newCoverPath = $data['cover_path'] ?? $oldCoverPath;
+        if ($oldCoverPath && $oldCoverPath !== $newCoverPath && str_starts_with($oldCoverPath, 'challenge/covers/')) {
+            Storage::disk('public')->delete($oldCoverPath);
         }
 
         $this->showExpeditionModal = false;
@@ -154,8 +181,12 @@ class AdminChallenges extends Component
 
     public function deleteExpedition(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
-        Expedition::findOrFail($id)->delete();
+        if (!Auth::user()?->isBrandAdmin()) return;
+        $expedition = Expedition::findOrFail($id);
+        if ($expedition->cover_path && str_starts_with($expedition->cover_path, 'challenge/covers/')) {
+            Storage::disk('public')->delete($expedition->cover_path);
+        }
+        $expedition->delete();
         if ($this->managingExpeditionId === $id) $this->managingExpeditionId = null;
         $this->dispatch('toast', message: 'Đã xóa challenge', type: 'success');
     }
@@ -180,7 +211,7 @@ class AdminChallenges extends Component
 
     public function saveFreeze(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->validate([
             'freezeFromDay' => 'required|integer|min:1',
             'freezeUntil'   => 'required|date',
@@ -210,7 +241,7 @@ class AdminChallenges extends Component
 
     public function clearFreeze(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         Expedition::findOrFail($id)->update([
             'freeze_from_day'  => null,
             'freeze_starts_at' => null,
@@ -222,7 +253,7 @@ class AdminChallenges extends Component
     // ─── Quiz report ─────────────────────────────────────────────────
     public function toggleQuizReport(int $taskId): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->quizReportTaskId = $this->quizReportTaskId === $taskId ? null : $taskId;
     }
 
@@ -309,6 +340,9 @@ class AdminChallenges extends Component
         $this->taskTitle          = $task->title;
         $this->taskDescription    = $task->description ?? '';
         $this->taskSopContent     = $task->sop_content ?? '';
+        $this->taskInstructionJson = $task->instruction_payload
+            ? json_encode($task->instruction_payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            : '';
         $this->taskVideoUrl       = $task->video_url ?? '';
         $this->taskMeetingAt      = $task->meeting_at?->format('Y-m-d\TH:i') ?? '';
         $this->taskEvidenceType   = $task->evidence_type ?? 'text';
@@ -330,7 +364,7 @@ class AdminChallenges extends Component
 
     public function saveTask(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->validate([
             'taskDayNumber'     => 'required|integer|min:1',
             'taskTitle'         => 'required|string|max:255',
@@ -369,6 +403,21 @@ class AdminChallenges extends Component
             $quizJson = $decoded;
         }
 
+        $instructionPayload = null;
+        if (trim($this->taskInstructionJson) !== '') {
+            $instructionPayload = json_decode($this->taskInstructionJson, true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($instructionPayload)) {
+                $this->addError('taskInstructionJson', 'instruction_payload phải là JSON object hợp lệ.');
+                return;
+            }
+            foreach (['modality', 'learning_objectives', 'sop_steps', 'verification_checklist', 'homework', 'rubric', 'common_errors', 'pass_score', 'track'] as $key) {
+                if (!array_key_exists($key, $instructionPayload)) {
+                    $this->addError('taskInstructionJson', "Thiếu key bắt buộc: {$key}");
+                    return;
+                }
+            }
+        }
+
         // Validate file upload riêng (max 20MB, whitelist extension)
         if ($this->taskRewardFile) {
             $this->validate([
@@ -395,6 +444,7 @@ class AdminChallenges extends Component
             'contest_duration_hours' => $this->taskIsContest ? ($this->taskContestDurationHours ?: null) : null,
             'reward_file_label' => $this->taskRewardFileLabel ?: null,
             'quiz_json'       => $quizJson,
+            'instruction_payload' => $instructionPayload,
         ];
 
         if ($this->editingTaskId) {
@@ -434,7 +484,7 @@ class AdminChallenges extends Component
 
     public function deleteTask(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $task = ChallengeTask::findOrFail($id);
         if ($task->reward_file_path && Storage::disk('local')->exists($task->reward_file_path)) {
             Storage::disk('local')->delete($task->reward_file_path);
@@ -445,7 +495,7 @@ class AdminChallenges extends Component
 
     public function removeRewardFile(): void
     {
-        if (!Auth::user()?->is_admin || !$this->editingTaskId) return;
+        if (!Auth::user()?->isBrandAdmin() || !$this->editingTaskId) return;
         $task = ChallengeTask::findOrFail($this->editingTaskId);
         if ($task->reward_file_path && Storage::disk('local')->exists($task->reward_file_path)) {
             Storage::disk('local')->delete($task->reward_file_path);
@@ -460,6 +510,9 @@ class AdminChallenges extends Component
     private function resetExpeditionForm(): void
     {
         $this->expTitle = $this->expSlug = $this->expDescription = $this->expBossName = '';
+        $this->expCover = null;
+        $this->existingExpCover = null;
+        $this->removeExpCover = false;
         $this->expLeaderId = null;
         $this->expDifficulty = 'normal';
         $this->expRequiredDays = 21;
@@ -467,6 +520,7 @@ class AdminChallenges extends Component
         $this->expDepositAip = 0;
         $this->expPrice = $this->expStartsAt = $this->expEndsAt = '';
         $this->expStatus = 'open';
+        $this->expFeatured = false;
     }
 
     private function resetTaskForm(): void
@@ -474,6 +528,7 @@ class AdminChallenges extends Component
         $this->taskDayNumber = 1;
         $this->taskLabel = '';
         $this->taskTitle = $this->taskDescription = $this->taskSopContent = '';
+        $this->taskInstructionJson = '';
         $this->taskVideoUrl = $this->taskMeetingAt = $this->taskEvidenceLabel = $this->taskAdminNote = '';
         $this->taskEvidenceType = 'text';
         $this->taskIsContest = false;

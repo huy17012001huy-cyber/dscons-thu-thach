@@ -3,29 +3,29 @@
     <style>
         /* Scoped quiz styles — palette warm-paper + accent đỏ cam, không leak ra ngoài */
         .quiz-skin {
-            --paper:       #faf7f2;
-            --paper-warm:  #f2ece0;
-            --paper-deep:  #ebe3d3;
-            --rule:        #d6cdbc;
-            --accent:      #c8441f;
-            --accent-soft: #fce4dc;
-            --gold:        #b8882d;
-            --gold-soft:   #f8ecd0;
-            --sage:        #5c6b4d;
-            --sage-soft:   #e8ede0;
-            --ink:         #1a1612;
-            --ink-soft:    #4a4038;
-            --ink-mute:    #8a7f75;
-            --shadow:      0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+            --paper:       #F7FAFC;
+            --paper-warm:  #E1F4F7;
+            --paper-deep:  #DCECF7;
+            --rule:        #D4E1E8;
+            --accent:      #1F77BE;
+            --accent-soft: #E1F4F7;
+            --gold:        #C97700;
+            --gold-soft:   #FFF1D6;
+            --sage:        #147F96;
+            --sage-soft:   #E6F6F8;
+            --ink:         #102A3B;
+            --ink-soft:    #29485B;
+            --ink-mute:    #61798A;
+            --shadow:      0 1px 2px rgba(18,59,89,0.05), 0 10px 26px rgba(18,59,89,0.08);
             font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
             margin: 16px 0 8px;
         }
         .quiz-skin .quiz-intro {
-            background: linear-gradient(135deg, var(--gold-soft) 0%, #faf2e0 100%);
+            background: var(--gold-soft);
             padding: 22px 26px;
             margin-bottom: 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(184, 136, 45, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(201, 119, 0, 0.3);
         }
         .quiz-skin .quiz-intro h3 {
             margin: 0 0 8px;
@@ -62,7 +62,7 @@
             background: white;
             padding: 22px 24px;
             margin: 14px 0;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid var(--rule);
             box-shadow: var(--shadow);
         }
@@ -95,7 +95,7 @@
         .quiz-skin .quiz-helper-text { flex: 1; min-width: 200px; }
         .quiz-skin .quiz-ask-btn {
             background: var(--ink);
-            color: #f5ede0;
+            color: #FFFFFF;
             border: none;
             padding: 7px 12px;
             border-radius: 6px;
@@ -164,7 +164,7 @@
             padding: 7px 14px;
             border-radius: 8px;
             font-size: 12.5px; cursor: pointer;
-            transition: all 0.15s;
+            transition: border-color .15s ease, color .15s ease, background-color .15s ease, box-shadow .15s ease;
         }
         .quiz-skin .quiz-retry:hover { border-color: var(--accent); color: var(--accent); }
         .quiz-skin .quiz-feedback {
@@ -188,10 +188,10 @@
         .quiz-skin .quiz-feedback p { margin: 4px 0; }
         .quiz-skin .quiz-feedback em { font-style: italic; color: var(--ink-soft); }
         .quiz-skin .quiz-success {
-            background: linear-gradient(135deg, var(--sage-soft) 0%, #eef2e6 100%);
+            background: var(--sage-soft);
             padding: 22px 26px;
             margin-top: 18px;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid var(--sage);
             text-align: center;
         }
@@ -211,13 +211,20 @@
         }
     </style>
 
-    @php $questions = $task->quiz_json ?? []; @endphp
+    @php
+        $questions = $task->quiz_json ?? [];
+        $quizConfig = config('communities.quiz.' . brand()->slug, config('communities.quiz.default'));
+    @endphp
 
     <div class="quiz-intro">
-        <h3>Trắc nghiệm — bắt buộc dùng AI để trả lời</h3>
+        <h3>Trắc nghiệm kỹ thuật</h3>
         <p>Mỗi câu là 1 tình huống thật. Bạn phải đoán: <strong>cấp skill nào phù hợp nhất</strong>?</p>
-        <p><strong>Quy tắc:</strong> với mỗi câu, mở agent coding (Cursor / Antigravity / Claude Code) và bấm nút <strong>"Hỏi AI"</strong> — nó copy sẵn prompt, dán vào agent → agent giải thích. Sau đó quay lại đây chọn đáp án.</p>
-        <p>⚠ <strong>Chốt 1 lần là chốt vĩnh viễn</strong> — không retry, không sửa. Đừng đoán mò: hỏi AI, hiểu kỹ rồi mới chọn. Mỗi câu đúng được +2 XP.</p>
+        @if($quizConfig['show_agent_helper'])
+            <p><strong>Quy tắc:</strong> dùng công cụ hỗ trợ phù hợp để phân tích tình huống, sau đó quay lại đây chọn đáp án.</p>
+        @else
+            <p><strong>Quy tắc:</strong> đọc kỹ tình huống và đối chiếu với quy trình kỹ thuật trước khi chọn đáp án.</p>
+        @endif
+        <p>⚠ <strong>Chốt 1 lần là chốt vĩnh viễn</strong> — không retry, không sửa. Mỗi câu đúng được +2 XP.</p>
     </div>
 
     <div class="quiz-progress">
@@ -239,16 +246,22 @@
             <div class="quiz-num">Câu {{ str_pad((string)($idx + 1), 2, '0', STR_PAD_LEFT) }} / {{ count($questions) }}</div>
             <div class="quiz-question">{!! Str::markdown($q['q'] ?? '', ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}</div>
 
-            <div class="quiz-helper">
-                <span class="quiz-helper-text">⚠ <strong>Chỉ chọn 1 lần</strong> — bấm "Hỏi AI" trước, hiểu kỹ rồi mới chọn đáp án.</span>
-                <button type="button"
-                    class="quiz-ask-btn"
-                    :class="copied[{{ $idx }}] ? 'copied' : ''"
-                    @click.prevent="navigator.clipboard.writeText(@js($q['ai_prompt'] ?? '')).then(() => { copied[{{ $idx }}] = true; setTimeout(() => copied[{{ $idx }}] = false, 2200); }).catch(() => { copied[{{ $idx }}] = true; setTimeout(() => copied[{{ $idx }}] = false, 2200); });">
-                    <span x-show="!copied[{{ $idx }}]">Hỏi AI</span>
-                    <span x-show="copied[{{ $idx }}]" x-cloak>ĐÃ COPY · Mở agent</span>
-                </button>
-            </div>
+            @if($quizConfig['show_agent_helper'])
+                <div class="quiz-helper">
+                    <span class="quiz-helper-text">⚠ <strong>Chỉ chọn 1 lần</strong> — hãy phân tích kỹ trước khi chọn đáp án.</span>
+                    <button type="button"
+                        class="quiz-ask-btn"
+                        :class="copied[{{ $idx }}] ? 'copied' : ''"
+                        @click.prevent="navigator.clipboard.writeText(@js($q['ai_prompt'] ?? '')).then(() => { copied[{{ $idx }}] = true; setTimeout(() => copied[{{ $idx }}] = false, 2200); }).catch(() => { copied[{{ $idx }}] = true; setTimeout(() => copied[{{ $idx }}] = false, 2200); });">
+                        <span x-show="!copied[{{ $idx }}]">Xem gợi ý</span>
+                        <span x-show="copied[{{ $idx }}]" x-cloak>Đã sao chép</span>
+                    </button>
+                </div>
+            @else
+                <div class="quiz-helper">
+                    <span class="quiz-helper-text">⚠ <strong>Chỉ chọn 1 lần</strong> — đối chiếu với quy trình kỹ thuật trước khi quyết định.</span>
+                </div>
+            @endif
 
             <div class="quiz-options">
                 @foreach($q['options'] ?? [] as $letter => $text)

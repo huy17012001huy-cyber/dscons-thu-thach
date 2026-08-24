@@ -19,6 +19,17 @@ class CommunityStatsService
             return null;
         }
 
+        // A host-level brand can be bound for every request, including
+        // onboarding, admin, CLI and legacy records. Only switch a user to
+        // community-scoped stats after they actually belong to this brand.
+        $belongsToBrand = $user->memberships()
+            ->withoutGlobalScopes()
+            ->where('brand_id', $brandId)
+            ->exists();
+        if (!$belongsToBrand) {
+            return null;
+        }
+
         return CommunityUserStat::firstOrCreate(
             ['brand_id' => $brandId, 'user_id' => $user->id],
             [

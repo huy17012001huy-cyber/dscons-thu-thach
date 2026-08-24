@@ -21,6 +21,8 @@ class BrandSeeder extends Seeder
             'has_academy' => true,
             'has_marketplace' => true,
             'has_qa' => true,
+            'has_cv' => true,
+            'has_recruitment' => true,
             'is_invite_only' => true,
             'registration_mode' => 'invite',
         ]);

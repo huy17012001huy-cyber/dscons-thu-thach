@@ -3,12 +3,15 @@
 namespace App\Livewire;
 
 use App\Models\Comment;
+use App\Models\Bookmark;
+use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use App\Services\XpService;
 use App\Support\PostContentRenderer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -27,12 +30,18 @@ class PostModal extends Component
     /** @var array<int, array{username:string,name:string,avatar_url:string}> */
     public array $mentionResults = [];
 
+    public bool $isLiked = false;
+
+    public bool $isBookmarked = false;
+
+    public int $likesCount = 0;
+
     #[On('open-post')]
     public function openPost(int $postId): void
     {
         // Performance: Optimized query to pre-fetch all counts and user-specific states
         // to avoid N+1 queries during modal render. Deep eager load for nested comments.
-        $this->post = Post::with(['user.daKhongCuc', 'topic', 'images'])
+        $this->post = Post::with(['user.daKhongCuc', 'topic', 'subject', 'postType', 'images'])
             ->withCount(['likes', 'allComments'])
             ->withExists(['likes' => fn ($q) => $q->where('user_id', auth()->id())])
             ->withExists(['bookmarks' => fn ($q) => $q->where('user_id', auth()->id())])
@@ -42,8 +51,12 @@ class PostModal extends Component
                     ->withExists(['likes' => fn ($q) => $q->where('user_id', auth()->id())])
                     ->oldest(),
             ])
+            ->when(app()->bound('brand'), fn ($query) => $query->where('brand_id', brand()->id))
             ->find($postId);
         $this->show = $this->post !== null;
+        $this->likesCount = (int) ($this->post?->likes_count ?? 0);
+        $this->isLiked = (bool) ($this->post?->likes_exists ?? false);
+        $this->isBookmarked = (bool) ($this->post?->bookmarks_exists ?? false);
         $this->resetComposer();
     }
 
@@ -51,6 +64,9 @@ class PostModal extends Component
     {
         $this->show = false;
         $this->post = null;
+        $this->isLiked = false;
+        $this->isBookmarked = false;
+        $this->likesCount = 0;
         $this->resetComposer();
     }
 
@@ -69,8 +85,65 @@ class PostModal extends Component
     public function renderedPostContent(): string
     {
         return $this->post
-            ? app(PostContentRenderer::class)->render($this->post->content)
+            ? app(PostContentRenderer::class)->renderPost($this->post)
             : '';
+    }
+
+    public function toggleLike(): void
+    {
+        if (! Auth::check() || ! $this->post) {
+            return;
+        }
+
+        DB::transaction(function (): void {
+            $like = Like::withTrashed()
+                ->where('likeable_type', Post::class)
+                ->where('likeable_id', $this->post->id)
+                ->where('user_id', Auth::id())
+                ->lockForUpdate()
+                ->first();
+
+            if ($like && ! $like->trashed()) {
+                $like->delete();
+                $this->likesCount = max(0, $this->likesCount - 1);
+                $this->isLiked = false;
+                return;
+            }
+
+            if ($like) {
+                $like->restore();
+            } else {
+                Like::create([
+                    'likeable_type' => Post::class,
+                    'likeable_id' => $this->post->id,
+                    'user_id' => Auth::id(),
+                ]);
+            }
+
+            $this->likesCount++;
+            $this->isLiked = true;
+        });
+    }
+
+    public function toggleBookmark(): void
+    {
+        if (! Auth::check() || ! $this->post) {
+            return;
+        }
+
+        $bookmark = Bookmark::query()
+            ->where('user_id', Auth::id())
+            ->where('post_id', $this->post->id)
+            ->first();
+
+        if ($bookmark) {
+            $bookmark->delete();
+            $this->isBookmarked = false;
+            return;
+        }
+
+        Bookmark::create(['user_id' => Auth::id(), 'post_id' => $this->post->id]);
+        $this->isBookmarked = true;
     }
 
     public function searchMentions(string $query): void
@@ -117,9 +190,13 @@ class PostModal extends Component
             return;
         }
 
+        $parentId = $this->replyToId
+            ? $this->post->allComments()->whereKey($this->replyToId)->value('id')
+            : null;
+
         $comment = $this->post->allComments()->create([
             'user_id' => Auth::id(),
-            'parent_id' => $this->replyToId,
+            'parent_id' => $parentId,
             'content' => $this->newComment,
         ]);
 
@@ -182,7 +259,7 @@ class PostModal extends Component
         }
     }
 
-    private function resetComposer(): void
+    protected function resetComposer(): void
     {
         $this->newComment = '';
         $this->replyToId = null;

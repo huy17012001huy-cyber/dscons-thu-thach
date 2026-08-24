@@ -8,10 +8,13 @@ use App\Models\ExpeditionMember;
 use App\Models\Membership;
 use App\Models\MembershipPlan;
 use App\Models\ProductPurchase;
+use App\Models\RecruiterEntitlement;
+use App\Models\RecruiterOrder;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SepayWebhookController extends Controller
 {
@@ -71,6 +74,10 @@ class SepayWebhookController extends Controller
         // Community membership: MC{brandId}P{planId}U{userId}
         elseif (preg_match('/MC(\d+)P(\d+)U(\d+)/', $content, $m)) {
             $this->processCommunityMembershipPayment((int) $m[1], (int) $m[2], (int) $m[3], $amount, $refCode);
+        }
+        // Recruiter plan: RECPLAN{planId}U{userId}
+        elseif (preg_match('/RECPLAN(\d+)U(\d+)/', $content, $m)) {
+            $this->processRecruiterPlanPayment((int) $m[1], (int) $m[2], $amount, $refCode);
         }
 
         return response()->json(['success' => true]);
@@ -316,5 +323,40 @@ class SepayWebhookController extends Controller
         );
         $user->notify(new GenericNotification('✓', 'Membership Premium đã được kích hoạt.', url('/c/'.optional($plan->brand)->slug.'/feed')));
         Log::info('SePay: community membership activated', compact('brandId', 'planId', 'userId', 'amount'));
+    }
+
+    private function processRecruiterPlanPayment(int $planId, int $userId, int $amount, string $ref): void
+    {
+        // The webhook has no browser community context. Resolve the order by
+        // its payment reference first, then carry the order's brand into the
+        // entitlement instead of accidentally using the host/DSCons scope.
+        $order = RecruiterOrder::withoutGlobalScopes()->with(['plan' => fn ($query) => $query->withoutGlobalScopes()])
+            ->where('recruiter_id', $userId)
+            ->where('plan_id', $planId)
+            ->where('status', 'pending_payment')
+            ->where('payment_ref', 'RECPLAN'.$planId.'U'.$userId)
+            ->first();
+
+        if (! $order || ! $order->plan || $amount < (int) $order->amount) {
+            Log::warning('SePay: invalid recruiter payment', compact('planId', 'userId', 'amount'));
+            return;
+        }
+
+        DB::transaction(function () use ($order, $amount, $ref): void {
+            $order->refresh();
+            if ($order->status === 'active' || $order->entitlement()->exists()) {
+                return;
+            }
+
+            $order->update(['status' => 'active', 'amount_paid' => $amount, 'paid_at' => now(), 'payment_ref' => $ref ?: $order->payment_ref]);
+            $order->entitlement()->create([
+                'brand_id' => $order->brand_id,
+                'recruiter_id' => $order->recruiter_id,
+                'credits_total' => $order->plan->contact_credits,
+                'starts_at' => now(),
+                'expires_at' => $order->plan->duration_days ? now()->addDays($order->plan->duration_days) : null,
+            ]);
+            User::find($order->recruiter_id)?->notify(new GenericNotification('✓', 'Gói tuyển dụng đã được kích hoạt.', route('recruiter.dashboard')));
+        });
     }
 }

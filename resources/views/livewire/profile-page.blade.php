@@ -1,11 +1,20 @@
-<div>
+<div class="profile-page">
+<style>
+    .profile-page { width: min(100%, 920px); margin: 0 auto; }
+    .profile-page > .card { border-radius: 18px; border-color: #D7E5EA; box-shadow: 0 2px 10px rgba(18,59,89,.045); }
+    .profile-page .profile-stats-row { padding-top: 14px; border-top: 1px solid #E4EDF1; }
+    .profile-page .profile-stat-value { font-variant-numeric: tabular-nums; }
+    .profile-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    @media (max-width: 640px) { .profile-page > .card { padding: 16px !important; border-radius: 15px; } }
+</style>
+
     <div class="card mb-4" style="padding:1.5rem;">
         <div class="flex flex-col sm:flex-row gap-4">
             <div class="shrink-0" style="width:80px;">
                 <div style="position:relative; width:80px; height:80px;">
                     <img src="{{ $profileUser->avatar_url }}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid #E1E1E1;" alt="">
                     @if(auth()->id() === $profileUser->id)
-                    <label style="position:absolute; bottom:0; right:0; background:#d17856; color:#FFF; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid #FFF; z-index:2;">
+                    <label class="profile-avatar-upload" aria-label="Đổi ảnh đại diện" tabindex="0" style="position:absolute; bottom:0; right:0; background:#F39402; color:#FFF; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid #FFF; z-index:2;">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
                         <input type="file" wire:model="avatarUpload" accept="image/*" style="display:none;">
                     </label>
@@ -35,11 +44,11 @@
                     @else
                     <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">{{ $profileUser->name }}</h1>
                     @if(auth()->id() === $profileUser->id)
-                    <button wire:click="startEditProfile" style="color:#5C5C66; cursor:pointer; padding:0.125rem;" title="Chỉnh sửa">
+                    <button wire:click="startEditProfile" aria-label="Chỉnh sửa hồ sơ" style="color:#5C5C66; cursor:pointer; padding:0.35rem; border-radius:8px;" title="Chỉnh sửa">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                     </button>
                     @endif
-                    <span class="badge badge-class-{{ $profileUser->class_color }}" style="font-size:0.7rem;">{{ $profileUser->class_emoji }} {{ $profileUser->class_label }}</span>
+                    <span class="badge badge-class-{{ $profileUser->class_color }}" style="font-size:0.7rem;"><x-icon name="{{ $profileUser->class_icon }}" size="13" /> {{ $profileUser->class_label }}</span>
                     <span class="level-badge" style="font-size:0.75rem;">Lv.{{ $profileUser->level }}</span>
                     @if($profileUser->da_count > 0)
                     <span class="da-gem" style="font-size:0.8rem;">◆ {{ $profileUser->da_count }} Đá</span>
@@ -78,11 +87,11 @@
                     <div class="xp-bar-fill" style="width:{{ $xpProgress }}%;"></div>
                 </div>
 
-                <div class="flex gap-4 flex-wrap">
-                    <div><p style="font-size:1rem; font-weight:700; color:#d17856;">{{ number_format($profileUser->aip) }}</p><p style="font-size:0.65rem; color:#5C5C66;">AIP</p></div>
-                    <div><p style="font-size:1rem; font-weight:700; color:#DC2626;">{{ $profileUser->streak }}</p><p style="font-size:0.65rem; color:#5C5C66;"> Streak</p></div>
-                    <div><p style="font-size:1rem; font-weight:700; color:#1A1A1A;">{{ $profileUser->posts()->count() }}</p><p style="font-size:0.65rem; color:#5C5C66;">Bài viết</p></div>
-                    <div><p style="font-size:1rem; font-weight:700; color:#d17856;">{{ $profileUser->posts()->where('is_cot',true)->count() }}</p><p style="font-size:0.65rem; color:#5C5C66;">★ CỐT</p></div>
+                <div class="profile-stats-row flex gap-4 flex-wrap">
+                    <div><p class="profile-stat-value" style="font-size:1rem; font-weight:700; color:#d17856;">{{ number_format($profileUser->aip) }}</p><p style="font-size:0.65rem; color:#5C5C66;">AIP</p></div>
+                    <div><p class="profile-stat-value" style="font-size:1rem; font-weight:700; color:#DC2626;">{{ $profileUser->streak }}</p><p style="font-size:0.65rem; color:#5C5C66;"> Streak</p></div>
+                    <div><p class="profile-stat-value" style="font-size:1rem; font-weight:700; color:#1A1A1A;">{{ $profileUser->posts()->count() }}</p><p style="font-size:0.65rem; color:#5C5C66;">Bài viết</p></div>
+                    <div><p class="profile-stat-value" style="font-size:1rem; font-weight:700; color:#d17856;">{{ $profileUser->posts()->where('is_cot',true)->count() }}</p><p style="font-size:0.65rem; color:#5C5C66;">★ CỐT</p></div>
                 </div>
             </div>
         </div>
@@ -109,8 +118,8 @@
                 @foreach($badges as $ub)
                 <div title="{{ $ub->badge->name }}: {{ $ub->badge->description }}" style="padding:0.25rem 0.5rem; border-radius:0.375rem; font-size:0.75rem; font-weight:600;
                     {{ match($ub->badge->rarity) {
-                        'legendary' => 'background:#E8F5E9; color:#1B5E20; border:1px solid #d17856;',
-                        'epic'      => 'background:#E8F5E9; color:#1B5E20; border:1px solid #81C784;',
+                        'legendary' => 'background:#FFF1D6; color:#8A5A00; border:1px solid #F4C56C;',
+                        'epic'      => 'background:#E1F4F7; color:#125A96; border:1px solid #8BC9D8;',
                         'rare'      => 'background:#DBEAFE; color:#1E40AF; border:1px solid #93C5FD;',
                         default     => 'background:#F7F5F3; color:#5C5C66; border:1px solid #E1E1E1;',
                     } }}">
@@ -127,7 +136,7 @@
                 $totalContributions = array_sum($contributions);
                 $activeDays = count($contributions);
                 $maxXp = max(1, max($contributions ?: [1]));
-                $colors = ['#EEECE9', '#81C784', '#e7a07f', '#d17856', '#1B5E20'];
+                $colors = ['#F1F6F8', '#C8EAF0', '#8DD4DF', '#F4B84A', '#1F77BE'];
 
                 // Build weeks array — exactly 53 columns, always ending on today's week
                 $todayDate = now();

@@ -7,10 +7,8 @@ use App\Models\Membership;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class RegisterWebhookController extends Controller
 {
@@ -31,7 +29,6 @@ class RegisterWebhookController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|min:2|max:50',
             'email' => 'required|email',
-            'password' => 'nullable|string|min:8',
             'referral' => 'nullable|string|exists:users,username',
             'source' => 'nullable|string|max:80',
         ]);
@@ -57,9 +54,6 @@ class RegisterWebhookController extends Controller
             $username = $base . $i++;
         }
 
-        $generatedPassword = empty($validated['password']);
-        $password = $validated['password'] ?? Str::password(14);
-
         $referrer = null;
         if (! empty($validated['referral'])) {
             $referrer = User::where('username', $validated['referral'])->first();
@@ -69,7 +63,6 @@ class RegisterWebhookController extends Controller
             'name'        => $validated['name'],
             'email'       => $validated['email'],
             'username'    => $username,
-            'password'    => Hash::make($password),
             'level'       => 1,
             'xp'          => 0,
             'aip'         => 0,
@@ -90,6 +83,9 @@ class RegisterWebhookController extends Controller
             'expires_at' => '2099-12-31',
             'referred_by' => $referrer?->id,
         ]);
+        $user->brandRoles()->syncWithoutDetaching([
+            brand()->id => ['role' => 'member'],
+        ]);
 
         Log::info('Webhook: user registered', [
             'user_id' => $user->id,
@@ -97,15 +93,13 @@ class RegisterWebhookController extends Controller
             'username' => $username,
         ]);
 
-        // Gửi email chào mừng kèm thông tin đăng nhập. Bọc try/catch để lỗi mail
+        // Gửi email chào mừng hướng dẫn Google login. Bọc try/catch để lỗi mail
         // không làm hỏng việc tạo tài khoản (đã tạo xong ở trên rồi).
         try {
             Mail::to($user->email)->send(new WelcomeMemberMail(
                 name:      $user->name,
                 email:     $user->email,
-                password:  $password,
                 loginUrl:  route('login'),
-                resetUrl:  route('password.request'),
                 brandName: config('app.name'),
             ));
         } catch (\Throwable $e) {
@@ -117,8 +111,6 @@ class RegisterWebhookController extends Controller
             'user_id' => $user->id,
             'username' => $username,
             'email' => $user->email,
-            // Chỉ trả password khi webhook tự sinh (caller không gửi) để bên bắn webhook chuyển cho thành viên
-            'password' => $generatedPassword ? $password : null,
         ], 201);
     }
 }

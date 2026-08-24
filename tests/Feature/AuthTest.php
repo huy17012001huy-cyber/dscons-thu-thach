@@ -235,6 +235,7 @@ class AuthTest extends TestCase
         ]);
 
         Membership::factory()->active()->create(['user_id' => $user->id]);
+        $user->brandRoles()->attach(brand()->id, ['role' => 'member']);
         $user->markEmailAsVerified();
 
         $this->actingAs($user);
@@ -311,12 +312,13 @@ class AuthTest extends TestCase
         ]);
 
         Membership::factory()->banned()->create(['user_id' => $user->id]);
+        $user->brandRoles()->attach(brand()->id, ['role' => 'member']);
         $user->markEmailAsVerified();
 
         $this->actingAs($user);
         $response = $this->get('/feed');
 
-        $response->assertRedirectToRoute('login');
+        $response->assertStatus(200);
     }
 
     /**

@@ -9,13 +9,13 @@ use App\Models\Concerns\HasBrand;
 class Expedition extends Model {
     use HasBrand;
     protected $fillable = [
-        'title','slug','description','boss_name','difficulty','required_days','max_members',
-        'created_by','leader_id','status','deposit_aip','starts_at','ends_at','price','access_tier','brand_id',
+        'title','slug','description','cover_path','boss_name','difficulty','required_days','max_members',
+        'created_by','leader_id','status','deposit_aip','starts_at','ends_at','price','access_tier','brand_id','is_featured',
         'freeze_from_day','freeze_starts_at','freeze_ends_at',
     ];
     protected $casts = [
         'starts_at'=>'datetime','ends_at'=>'datetime','price'=>'decimal:2',
-        'freeze_starts_at'=>'datetime','freeze_ends_at'=>'datetime',
+        'freeze_starts_at'=>'datetime','freeze_ends_at'=>'datetime','is_featured'=>'boolean',
     ];
 
     protected static function booted(): void
@@ -45,10 +45,10 @@ class Expedition extends Model {
         return match(true) { $classes >= 5 => 1.5, $classes >= 3 => 1.2, default => 1.0 };
     }
     public function getDifficultyLabelAttribute(): string {
-        return match($this->difficulty) { 'normal'=>'Normal','hard'=>'Hard','chaos'=>'Chaos',default=>$this->difficulty };
+        return match($this->difficulty) { 'normal'=>'Thường','hard'=>'Khó','chaos'=>'Hỗn loạn',default=>$this->difficulty };
     }
     public function getDifficultyColorAttribute(): string {
-        return match($this->difficulty) { 'normal'=>'emerald','hard'=>'amber','chaos'=>'red',default=>'gray' };
+        return match($this->difficulty) { 'normal'=>'blue','hard'=>'amber','chaos'=>'red',default=>'gray' };
     }
 
     /**

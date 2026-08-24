@@ -1,4 +1,4 @@
-<section class="rp-card leaderboard-card" style="padding:15px;">
+<section class="rp-card sidebar-widget leaderboard-card" style="padding:15px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
         <h2 style="margin:0;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--text);">Bảng xếp hạng · 30 ngày</h2>
         <a href="{{ community_route('leaderboard') }}" style="font-size:11px;color:var(--green);font-weight:750;text-decoration:none;white-space:nowrap;">Xem tất cả</a>

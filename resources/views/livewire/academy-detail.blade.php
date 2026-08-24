@@ -1,4 +1,22 @@
-<div x-data="{ openLesson: @entangle('openLessonId') }">
+<div class="academy-detail-page" x-data="{ openLesson: @entangle('openLessonId') }">
+<style>
+    .academy-detail-page { width: min(100%, 980px); margin: 0 auto; }
+    .academy-detail-page > .card { border-radius: 18px; border-color: #D7E5EA; box-shadow: 0 2px 10px rgba(18,59,89,.045); }
+    .academy-detail-page .card h1 { text-wrap: balance; }
+    .academy-detail-page .card input:focus, .academy-detail-page .card textarea:focus, .academy-detail-page .card select:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    .academy-detail-page [style*="#1A1A1A"] { color:#102A3B !important; }
+    .academy-detail-page [style*="#2E2E2E"] { color:#29485B !important; }
+    .academy-detail-page [style*="#5C5C66"] { color:#61798A !important; }
+    .academy-detail-page [style*="#d17856"] { color:#F39402 !important; }
+    .academy-detail-page [style*="#059669"] { color:#147F96 !important; }
+    .academy-detail-page [style*="#F7F5F3"], .academy-detail-page [style*="#F0EDE8"], .academy-detail-page [style*="#EEECE9"] { background:#F1F6F8 !important; }
+    .academy-detail-page [style*="#FFFBEB"] { background:#FFF8E9 !important; border-color:#F5D58A !important; }
+    @media (max-width: 640px) {
+        .academy-detail-page > .card { padding: 16px !important; border-radius: 15px; }
+    }
+</style>
+@php $pillars = brand()->pillarProfiles(); @endphp
+
     <div class="mb-4">
         <a href="{{ route('academy') }}" style="font-size:0.8rem; color:#5C5C66;">← Quay lại Khóa học</a>
     </div>
@@ -6,7 +24,7 @@
     {{-- Course header --}}
     <div class="card mb-4">
         <div class="flex items-center gap-2 mb-3">
-            <span class="badge badge-pillar-{{ $course->pillar }}" style="font-size:0.7rem;">{{ ucfirst($course->pillar) }}</span>
+            <span class="badge badge-pillar-{{ $course->pillar }}" style="font-size:0.7rem;"><x-icon name="{{ $pillars[$course->pillar]['icon'] ?? 'layers' }}" size="13" />{{ $pillars[$course->pillar]['name'] ?? ucfirst($course->pillar) }}</span>
             <span class="badge" style="font-size:0.7rem; {{ match($course->difficulty) { 'basic' => 'background:#D1FAE5; color:#065F46;', 'advanced' => 'background:#E8F5E9; color:#1B5E20;', 'expert' => 'background:#FEE2E2; color:#991B1B;', default => 'background:#EEECE9; color:#5C5C66;' } }}">{{ ucfirst($course->difficulty) }}</span>
             @if($course->min_level > 1)
             <span class="level-badge">Lv.{{ $course->min_level }}+</span>
@@ -91,7 +109,7 @@
     </div>
 
     @if($premiumLocked && !$enrolled)
-    <div class="card" style="margin-bottom:1rem;padding:1.25rem;border-color:#B8D7E6;background:linear-gradient(135deg,#F7FCFD,#fff);">
+    <div class="card" style="margin-bottom:1rem;padding:1.25rem;border-color:#B8D7E6;background:#F7FCFD;">
         <div style="display:flex;align-items:flex-start;gap:12px;"><div style="width:38px;height:38px;border-radius:11px;background:#E1F4F7;color:#1F77BE;display:grid;place-items:center;font-weight:800;">★</div><div><strong style="display:block;color:#123B59;font-size:1rem;">Nội dung Premium</strong><p style="margin:.3rem 0 0;color:#61798A;font-size:.85rem;line-height:1.55;">Nâng hạng membership để mở khóa toàn bộ bài học, bài tập và các sự kiện liên quan.</p><a href="{{ community_route('membership') }}" class="btn btn-primary" style="display:inline-flex;margin-top:.75rem;text-decoration:none;">Xem gói Premium</a></div></div>
     </div>
     @endif

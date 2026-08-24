@@ -1,4 +1,10 @@
-<div>
+<div class="admin-feedbacks-page">
+<style>
+    .admin-feedbacks-page { max-width: 920px; margin: 0 auto; }
+    .admin-feedbacks-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .admin-feedbacks-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+</style>
+
     <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">📬 Góp ý & Khiếu nại</h1>
 
     {{-- Filters --}}

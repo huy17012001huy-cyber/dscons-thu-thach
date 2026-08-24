@@ -1,4 +1,12 @@
-<div>
+<style>
+    .class-selection-page { max-width: 760px; margin: 0 auto; }
+    .class-selection-page .class-option { min-height: 178px; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease; }
+    .class-selection-page .class-option:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(18,59,89,.10) !important; }
+    .class-selection-page .class-option:focus-visible { outline: 3px solid rgba(31,119,190,.24); outline-offset: 3px; }
+    @media (max-width: 640px) { .class-selection-page .class-option { min-height: 0; padding: 18px !important; } }
+</style>
+
+<div class="class-selection-page">
     <div style="max-width:680px; margin:0 auto;">
         <div class="text-center mb-8">
             <h1 style="font-size:1.75rem; font-weight:800; color:#1A1A1A; margin-bottom:0.5rem;">Chọn Class của bạn</h1>
@@ -9,6 +17,7 @@
             @foreach($classes as $key => $class)
             <button
                 wire:click="selectClass('{{ $key }}')"
+                class="class-option"
                 style="
                     background: {{ $selectedClass === $key ? $class['bg'] : '#FFFFFF' }};
                     border: 2px solid {{ $selectedClass === $key ? $class['color'] : '#E1E1E1' }};
@@ -16,7 +25,6 @@
                     padding: 1.25rem;
                     text-align: left;
                     cursor: pointer;
-                    transition: all 0.2s;
                     position: relative;
                     box-shadow: {{ $selectedClass === $key ? '0 2px 8px rgba(0,0,0,0.08)' : 'none' }};
                 ">
@@ -27,7 +35,9 @@
                 @endif
 
                 <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-                    <span style="font-size:2rem; line-height:1;">{{ $class['emoji'] }}</span>
+                    <span style="width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:{{ $class['bg'] }};color:{{ $class['color'] }};">
+                        <x-icon name="{{ $class['icon'] }}" size="21" color="{{ $class['color'] }}" />
+                    </span>
                     <div>
                         <p style="font-weight:700; color:#1A1A1A; font-size:0.95rem;">{{ $class['name'] }}</p>
                         <span class="badge" style="background:{{ $class['bg'] }}; color:{{ $class['color'] }}; border:1px solid {{ $class['border'] }}; font-size:0.65rem;">

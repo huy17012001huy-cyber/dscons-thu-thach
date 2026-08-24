@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(BrandSeeder::class);
         app()->instance('brand', Brand::query()->findOrFail(1));
-        $this->call([TopicSeeder::class, BadgeSeeder::class]);
+        $this->call([TopicSeeder::class, BadgeSeeder::class, RecruiterPlansSeeder::class]);
 
         foreach ([
             ['membership_price_current', '0', 'Giá membership hiện tại (VNĐ)'],
@@ -59,5 +59,9 @@ class DatabaseSeeder extends Seeder
             'starts_at' => now(),
             'expires_at' => now()->addYear(),
         ]);
+
+        if (filter_var(env('SEED_REVIT_CHALLENGE', false), FILTER_VALIDATE_BOOL)) {
+            $this->call(Revit21DaysSeeder::class);
+        }
     }
 }

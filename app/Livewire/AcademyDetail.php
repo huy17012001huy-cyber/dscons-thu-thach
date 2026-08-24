@@ -38,9 +38,24 @@ class AcademyDetail extends Component
                 ->first();
             $this->enrolled = $enrollment && $enrollment->status === 'active';
             $this->pendingPayment = $enrollment && $enrollment->status === 'pending_payment';
-            $this->premiumLocked = ($this->course->access_tier ?? 'premium') === 'premium'
-                && !Auth::user()->hasPremiumMembership()
-                && !Auth::user()->isBrandAdmin();
+            // Membership opens every course automatically, but a non-member
+            // can still purchase this course individually.
+            $this->premiumLocked = false;
+
+            // Premium membership includes every course in the current community.
+            // Create the enrollment lazily so progress, completion and XP keep
+            // using the existing course flow without a second payment.
+            if (!$this->premiumLocked && !$this->enrolled && !$this->pendingPayment
+                && Auth::user()->hasPremiumMembership()
+                && $this->course->is_published) {
+                $enrollment = CourseEnrollment::firstOrCreate(
+                    ['user_id' => Auth::id(), 'course_id' => $this->course->id],
+                    ['status' => 'active', 'enrolled_at' => now()]
+                );
+                if ($enrollment->status === 'active') {
+                    $this->enrolled = true;
+                }
+            }
 
             if ($this->enrolled) {
                 $lessonIds = $this->course->modules->flatMap(fn($m) => $m->lessons->pluck('id'));
@@ -57,11 +72,6 @@ class AcademyDetail extends Component
         if (!Auth::check() || $this->enrolled) return;
         $user = Auth::user();
 
-        if ($this->premiumLocked) {
-            $this->dispatch('toast', message: 'Khóa học này thuộc Premium. Hãy nâng hạng membership để mở toàn bộ nội dung.', type: 'info');
-            return;
-        }
-
         if ($user->level < $this->course->min_level) {
             $this->dispatch('toast', message: 'Cần đạt Lv.' . $this->course->min_level . ' để tham gia', type: 'error');
             return;
@@ -73,7 +83,7 @@ class AcademyDetail extends Component
             ->first();
         if ($existing) return;
 
-        if ($this->course->isFree()) {
+        if ($user->hasPremiumMembership() || $this->course->isFree()) {
             // Free course — enroll immediately
             CourseEnrollment::create([
                 'user_id' => $user->id,
@@ -91,6 +101,7 @@ class AcademyDetail extends Component
                 'status' => 'pending_payment',
                 'enrolled_at' => now(),
             ]);
+            $this->pendingPayment = true;
             $this->dispatch('toast', message: 'Vui lòng chuyển khoản để hoàn tất đăng ký!', type: 'info');
         }
     }

@@ -19,16 +19,28 @@ class LoginForm extends Component
 
     public bool $remember = false;
     public string $error = '';
-
-    // Hash truncated SHA-256 client-side tính từ canvas+webgl+screen+navigator.
-    // Set bởi inline JS trong view trước khi user nhấn nút Đăng nhập.
     public string $fingerprint = '';
+    public string $redirectTo = '';
+
+    public function mount(): void
+    {
+        $redirect = request()->query('redirect');
+        if (is_string($redirect) && str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+            $this->redirectTo = $redirect;
+            session()->put('auth_redirect', $redirect);
+        }
+    }
 
     public function login(): void
     {
+        if (config('auth.mode') !== 'password') {
+            $this->error = 'Môi trường này chỉ hỗ trợ đăng nhập bằng Google.';
+            return;
+        }
+
         $this->validate();
 
-        $throttleKey = Str::lower($this->email) . '|' . request()->ip();
+        $throttleKey = Str::lower(trim($this->email)) . '|' . request()->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
@@ -36,12 +48,14 @@ class LoginForm extends Component
             return;
         }
 
-        // Đẩy fingerprint vào session để RecordLoginLog listener đọc khi event Login fire
         if ($this->fingerprint !== '') {
             session()->put('_login_fp', $this->fingerprint);
         }
 
-        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        if (!Auth::attempt([
+            'email' => trim($this->email),
+            'password' => $this->password,
+        ], $this->remember)) {
             session()->forget('_login_fp');
             RateLimiter::hit($throttleKey);
             $this->error = 'Email hoặc mật khẩu không đúng.';
@@ -53,31 +67,13 @@ class LoginForm extends Component
 
         $user = Auth::user();
 
-        // Chưa xác minh email → đẩy sang trang chờ verify (nếu admin còn bật yêu cầu)
         if (Setting::get('email_verification_required', '1') !== '0' && !$user->hasVerifiedEmail()) {
             $this->redirect(route('verification.notice'), navigate: true);
             return;
         }
 
-        // Check membership status
-        $membership = $user->membership;
-        if (!$membership || $membership->status === 'expired') {
-            $this->redirect(route('membership.expired'), navigate: true);
-            return;
-        }
-        if ($membership->status === 'banned') {
-            Auth::logout();
-            $this->error = 'Tài khoản của bạn đã bị khóa.';
-            return;
-        }
-
-        // If no class selected, go to onboarding
-        if (!$user->class) {
-            $this->redirect(route('onboarding'), navigate: true);
-            return;
-        }
-
-        $this->redirect(route('feed'), navigate: true);
+        $redirect = session()->pull('auth_redirect');
+        $this->redirect($redirect ?: ($user->class ? route('feed') : route('onboarding')), navigate: true);
     }
 
     public function render()

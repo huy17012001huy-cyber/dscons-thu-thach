@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\PillarStat;
 use App\Models\Post;
+use App\Models\Brand;
 use Illuminate\Console\Command;
 
 class RecalcPillarStats extends Command
@@ -15,33 +16,44 @@ class RecalcPillarStats extends Command
     {
         $since = now()->subDays(7);
         $pillars = ['offer', 'traffic', 'conversion', 'delivery', 'continuity'];
-        $counts = [];
-        $total = 0;
 
-        foreach ($pillars as $p) {
-            $count = Post::where('pillar', $p)->where('created_at', '>=', $since)->count();
-            $counts[$p] = $count;
-            $total += $count;
-        }
+        Brand::query()->each(function (Brand $brand) use ($since, $pillars): void {
+            $counts = [];
+            $total = 0;
 
-        $minPillar = array_keys($counts, min($counts))[0];
+            foreach ($pillars as $pillar) {
+                $count = Post::withoutGlobalScopes()
+                    ->where('brand_id', $brand->id)
+                    ->where('pillar', $pillar)
+                    ->where('created_at', '>=', $since)
+                    ->count();
+                $counts[$pillar] = $count;
+                $total += $count;
+            }
 
-        foreach ($pillars as $p) {
-            $pct = $total > 0 ? round($counts[$p] / $total * 100, 2) : 20;
-            $isBurning = ($p === $minPillar && $total > 0);
+            $minPillar = array_keys($counts, min($counts))[0];
 
-            PillarStat::updateOrCreate(
-                ['pillar' => $p],
-                [
-                    'post_count_7d' => $counts[$p],
-                    'post_pct' => $pct,
-                    'is_burning' => $isBurning,
-                    'burning_started_at' => $isBurning ? (PillarStat::where('pillar', $p)->value('burning_started_at') ?? now()) : null,
-                    'last_calculated_at' => now(),
-                ]
-            );
-        }
+            foreach ($pillars as $pillar) {
+                $pct = $total > 0 ? round($counts[$pillar] / $total * 100, 2) : 20;
+                $isBurning = $pillar === $minPillar && $total > 0;
+                $previous = PillarStat::withoutGlobalScopes()
+                    ->where('brand_id', $brand->id)
+                    ->where('pillar', $pillar)
+                    ->first();
 
-        $this->info("Pillar stats updated. Burning: {$minPillar}");
+                PillarStat::withoutGlobalScopes()->updateOrCreate(
+                    ['brand_id' => $brand->id, 'pillar' => $pillar],
+                    [
+                        'post_count_7d' => $counts[$pillar],
+                        'post_pct' => $pct,
+                        'is_burning' => $isBurning,
+                        'burning_started_at' => $isBurning ? ($previous?->burning_started_at ?? now()) : null,
+                        'last_calculated_at' => now(),
+                    ]
+                );
+            }
+
+            $this->info("{$brand->slug}: burning {$minPillar}");
+        });
     }
 }

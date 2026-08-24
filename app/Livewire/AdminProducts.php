@@ -25,11 +25,13 @@ class AdminProducts extends Component
     public string $accessUrl = '';
     public $uploadFile = null;
     public bool $isPublished = true;
+    public bool $isFeatured = false;
 
     public function create(): void
     {
-        $this->reset(['editingId', 'title', 'description', 'pillar', 'price', 'deliveryType', 'accessUrl', 'uploadFile', 'isPublished']);
+        $this->reset(['editingId', 'title', 'description', 'pillar', 'price', 'deliveryType', 'accessUrl', 'uploadFile', 'isPublished', 'isFeatured']);
         $this->isPublished = true;
+        $this->isFeatured = false;
         $this->showForm = true;
     }
 
@@ -44,6 +46,7 @@ class AdminProducts extends Component
         $this->deliveryType = $product->delivery_type;
         $this->accessUrl = $product->access_url ?? '';
         $this->isPublished = $product->is_published;
+        $this->isFeatured = (bool) $product->is_featured;
         $this->showForm = true;
     }
 
@@ -63,6 +66,7 @@ class AdminProducts extends Component
             'delivery_type' => $this->deliveryType,
             'access_url' => $this->accessUrl ?: null,
             'is_published' => $this->isPublished,
+            'is_featured' => $this->isFeatured,
         ];
 
         // Handle file upload

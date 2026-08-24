@@ -1,4 +1,11 @@
-<div>
+<div class="admin-topics-page">
+<style>
+    .admin-topics-page { max-width: 760px; margin: 0 auto; }
+    .admin-topics-page .card { border-radius: 18px; border-color: #D7E5EA; }
+    .admin-topics-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    @media (max-width: 640px) { .admin-topics-page .flex.gap-3 { flex-wrap: wrap; } }
+</style>
+
     <div class="card mb-4" style="max-width:720px; margin-left:auto; margin-right:auto;">
         {{-- Header --}}
         <div class="flex items-center justify-between mb-4">

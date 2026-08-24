@@ -14,7 +14,7 @@ class ChallengeTask extends Model
         'evidence_type', 'evidence_label', 'admin_note', 'locked_until',
         'is_contest', 'contest_title', 'contest_description',
         'duration_hours', 'contest_duration_hours',
-        'reward_file_path', 'reward_file_label', 'quiz_json',
+        'reward_file_path', 'reward_file_label', 'quiz_json', 'instruction_payload',
     ];
 
     protected $casts = [
@@ -25,6 +25,7 @@ class ChallengeTask extends Model
         'duration_hours' => 'integer',
         'contest_duration_hours' => 'integer',
         'quiz_json' => 'array',
+        'instruction_payload' => 'array',
     ];
 
     public function expedition(): BelongsTo

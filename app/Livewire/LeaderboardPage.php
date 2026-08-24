@@ -34,7 +34,7 @@ class LeaderboardPage extends Component {
             if ($myRank === false) $myRank = null;
         }
         return view('livewire.leaderboard-page', ['top' => $top, 'myRank' => $myRank])
-            ->layout('layouts.app', ['title' => 'Leaderboard — DSCons']);
+            ->layout('layouts.app', ['title' => 'Bảng xếp hạng — ' . brand()->name]);
     }
 
     private function leaderboardByPeriod(\Carbon\Carbon $since) {

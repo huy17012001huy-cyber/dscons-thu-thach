@@ -11,7 +11,7 @@ class Course extends Model
     use HasBrand;
     protected $fillable = [
         'title', 'description', 'pillar', 'difficulty', 'min_level',
-        'xp_reward', 'aip_reward', 'price', 'thumbnail', 'is_published', 'access_tier', 'brand_id',
+        'xp_reward', 'aip_reward', 'price', 'thumbnail', 'is_published', 'access_tier', 'brand_id', 'is_featured',
     ];
 
     public function isFree(): bool
@@ -19,7 +19,7 @@ class Course extends Model
         return $this->price <= 0;
     }
 
-    protected $casts = ['is_published' => 'boolean'];
+    protected $casts = ['is_published' => 'boolean', 'is_featured' => 'boolean'];
 
     public function modules(): HasMany
     {

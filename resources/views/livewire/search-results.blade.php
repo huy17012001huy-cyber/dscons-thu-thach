@@ -1,4 +1,12 @@
-<div>
+<div class="search-results-page">
+<style>
+    .search-results-page { width: min(100%, 960px); margin: 0 auto; }
+    .search-results-page .search-section-title { color: var(--text-muted); font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .search-results-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .search-results-page .search-result-card { transition: border-color .16s ease, box-shadow .16s ease; }
+    .search-results-page .search-result-card:hover { border-color: #A9CAD7; box-shadow: 0 7px 16px rgba(18,59,89,.07); }
+</style>
+
     <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:0.25rem;">🔍 Tìm kiếm</h1>
     <p style="font-size:0.8rem; color:#5C5C66; margin-bottom:1.5rem;">Kết quả cho "{{ $q }}"</p>
 
@@ -10,7 +18,7 @@
 
     {{-- Users --}}
     @if($users->count())
-    <h2 style="font-size:0.85rem; font-weight:700; color:#5C5C66; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Thành viên ({{ $users->count() }})</h2>
+    <h2 class="search-section-title" style="font-size:0.85rem; font-weight:700; color:#5C5C66; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Thành viên ({{ $users->count() }})</h2>
     <div class="card mb-4">
         @foreach($users as $user)
         <div class="flex items-center gap-3 py-2 {{ !$loop->last ? 'border-b' : '' }}" style="{{ !$loop->last ? 'border-color:#E1E1E1;' : '' }}">
@@ -19,7 +27,7 @@
                 <a href="{{ route('profile', $user->username ?? $user->id) }}" style="font-size:0.85rem; font-weight:600; color:#1A1A1A;">{{ $user->name }}</a>
                 <p style="font-size:0.7rem; color:#5C5C66;">@{{ $user->username }} · {{ $user->job_stage }} · Lv.{{ $user->level }}</p>
             </div>
-            <span class="badge badge-class-{{ $user->class_color }}" style="font-size:0.65rem;">{{ $user->class_emoji }}</span>
+            <span class="badge badge-class-{{ $user->class_color }}" style="font-size:0.65rem;"><x-icon name="{{ $user->class_icon }}" size="12" /></span>
         </div>
         @endforeach
     </div>
@@ -27,10 +35,10 @@
 
     {{-- Posts --}}
     @if($posts->count())
-    <h2 style="font-size:0.85rem; font-weight:700; color:#5C5C66; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Bài viết ({{ $posts->count() }})</h2>
+    <h2 class="search-section-title" style="font-size:0.85rem; font-weight:700; color:#5C5C66; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Bài viết ({{ $posts->count() }})</h2>
     <div class="flex flex-col gap-2 mb-4">
         @foreach($posts as $post)
-        <div class="card">
+        <div class="search-result-card card">
             <div class="flex items-center gap-2 mb-2">
                 <img src="{{ $post->user->avatar_url }}" class="avatar w-7 h-7" alt="">
                 <span style="font-size:0.8rem; font-weight:600; color:#1A1A1A;">{{ $post->user->name }}</span>
@@ -52,10 +60,10 @@
 
     {{-- Questions --}}
     @if($questions->count())
-    <h2 style="font-size:0.85rem; font-weight:700; color:#5C5C66; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Câu hỏi ({{ $questions->count() }})</h2>
+    <h2 class="search-section-title" style="font-size:0.85rem; font-weight:700; color:#5C5C66; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Câu hỏi ({{ $questions->count() }})</h2>
     <div class="flex flex-col gap-2 mb-4">
         @foreach($questions as $question)
-        <div class="card">
+        <div class="search-result-card card">
             <div class="flex items-center gap-2 mb-1">
                 <span style="font-size:0.8rem; font-weight:600; color:#1A1A1A;">{{ $question->title }}</span>
                 <span class="badge" style="font-size:0.6rem; background:#EEECE9; color:#5C5C66;">{{ $question->answers_count }} câu trả lời</span>

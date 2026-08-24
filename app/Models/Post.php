@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use App\Models\Concerns\HasBrand;
 
 class Post extends Model
@@ -17,9 +18,10 @@ class Post extends Model
     use HasFactory, SoftDeletes, HasBrand;
 
     protected $fillable = [
-        'user_id', 'title', 'content', 'pillar', 'topic_id', 'is_cot', 'cot_at', 'cot_by',
+        'user_id', 'brand_id', 'title', 'slug', 'content', 'content_html', 'content_format',
+        'pillar', 'topic_id', 'subject_id', 'post_type_id', 'is_cot', 'cot_at', 'cot_by',
         'is_pinned', 'is_signal', 'rune_active', 'rune_expires_at',
-        'rune_first_comment_user_id', 'view_count', 'brand_id',
+        'rune_first_comment_user_id', 'view_count',
     ];
 
     protected $casts = [
@@ -31,6 +33,18 @@ class Post extends Model
         'rune_expires_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (self $post): void {
+            if (filled($post->slug)) {
+                return;
+            }
+
+            $base = Str::slug($post->title ?: Str::limit(strip_tags($post->content), 60, '')) ?: 'bai-viet';
+            $post->forceFill(['slug' => $base.'-'.$post->id])->saveQuietly();
+        });
+    }
+
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function comments(): HasMany { return $this->hasMany(Comment::class)->whereNull('parent_id'); }
     public function allComments(): HasMany { return $this->hasMany(Comment::class); }
@@ -40,12 +54,11 @@ class Post extends Model
     public function images(): HasMany { return $this->hasMany(PostImage::class)->orderBy('order_index'); }
     public function cotBy(): BelongsTo { return $this->belongsTo(User::class, 'cot_by'); }
     public function topic(): BelongsTo { return $this->belongsTo(Topic::class); }
+    public function subject(): BelongsTo { return $this->belongsTo(CommunitySubject::class, 'subject_id'); }
+    public function postType(): BelongsTo { return $this->belongsTo(CommunityPostType::class, 'post_type_id'); }
 
     public function getPillarLabelAttribute(): string {
-        return match($this->pillar) {
-            'offer' => 'Offer', 'traffic' => 'Thu hút', 'conversion' => 'Chuyển đổi',
-            'delivery' => 'Cung ứng', 'continuity' => 'Continuity', default => $this->pillar,
-        };
+        return app()->bound('brand') ? brand()->pillarLabel($this->pillar) : (string) $this->pillar;
     }
 
     public function getPillarColorAttribute(): string {

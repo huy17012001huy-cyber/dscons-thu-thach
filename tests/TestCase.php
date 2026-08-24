@@ -17,7 +17,7 @@ abstract class TestCase extends BaseTestCase
 
         $brand = Brand::query()->firstOrCreate(['id' => 1], [
             'name' => 'Website Thử Thách',
-            'slug' => 'website-thu-thach',
+            'slug' => 'dscons',
             'domain' => 'localhost',
             'tagline' => 'Học tập · Thử thách · Cộng đồng',
             'theme_primary' => '#2563EB',

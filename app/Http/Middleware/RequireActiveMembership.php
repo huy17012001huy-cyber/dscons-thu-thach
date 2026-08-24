@@ -10,7 +10,8 @@ class RequireActiveMembership
     {
         $user = $request->user();
 
-        // Admin always bypasses membership check
+        // This middleware protects community participation, not Premium
+        // learning access. Premium is checked by ChallengeDetail/AcademyDetail.
         if ($user->is_admin) {
             return $next($request);
         }
@@ -20,30 +21,13 @@ class RequireActiveMembership
             return redirect()->route('onboarding');
         }
 
-        $membership = $user->membership;
-
-        if (!$membership) {
-            auth()->logout();
-            return redirect()->route('login')
-                ->with('error', 'Bạn chưa có membership tại ' . brand()->name . '.');
-        }
-
-        if ($membership->status === 'banned') {
-            // Don't logout when admin is impersonating — would strand the admin
-            if ($request->session()->has('impersonator_id')) {
-                return redirect()->route('membership.expired')
-                    ->with('error', 'User này đang bị khóa tại ' . brand()->name . '.');
-            }
-            auth()->logout();
-            return redirect()->route('login')
-                ->with('error', 'Tài khoản đã bị khóa.');
-        }
-
-        if ($membership->status === 'expired'
-            || ($membership->status === 'trial' && $membership->trial_ends_at?->isPast())
-            || ($membership->status === 'active' && $membership->expires_at?->isPast())
-        ) {
-            return redirect()->route('membership.expired');
+        if (!$user->isCommunityParticipant()) {
+            $communitySlug = app()->bound('brand') ? brand()->slug : null;
+            return $communitySlug
+                ? redirect()->route('community.preview', ['community' => $communitySlug])
+                    ->with('error', 'Hãy tham gia cộng đồng để đăng bài và tương tác.')
+                : redirect()->route('discovery')
+                    ->with('error', 'Hãy tham gia cộng đồng để đăng bài và tương tác.');
         }
 
         return $next($request);

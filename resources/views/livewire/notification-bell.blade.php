@@ -1,4 +1,4 @@
-<div class="relative" x-data="{ open: false }" @click.away="open = false">
+<div class="relative notification-bell" x-data="{ open: false }" @click.away="open = false">
     <button @click="open = !open; if(open) $wire.toggleDropdown()"
         aria-label="Thông báo" :aria-expanded="open.toString()" aria-haspopup="true"
         style="position:relative; padding:0.375rem; border-radius:0.375rem; color:#5C5C66; transition:color 0.15s;" class="hover:text-gray-900">
@@ -10,7 +10,7 @@
     </button>
 
     @if($showDropdown)
-    <div style="position:absolute; right:0; top:calc(100% + 8px); background:#FFFFFF; border:1px solid #E1E1E1; border-radius:0.75rem; width:320px; max-height:400px; overflow-y:auto; z-index:100; box-shadow:0 8px 32px rgba(0,0,0,0.10);">
+    <div class="notification-dropdown" style="position:absolute; right:0; top:calc(100% + 8px); background:#FFFFFF; border:1px solid #E1E1E1; border-radius:0.75rem; width:320px; max-height:400px; overflow-y:auto; z-index:100; box-shadow:0 8px 32px rgba(0,0,0,0.10);">
         <div class="flex items-center justify-between" style="padding:0.75rem 1rem; border-bottom:1px solid #E1E1E1;">
             <p style="font-weight:600; font-size:0.875rem; color:#1A1A1A;">Thông báo</p>
             @if($count > 0)

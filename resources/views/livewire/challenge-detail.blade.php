@@ -1,4 +1,54 @@
-<div>
+<div class="challenge-detail-page">
+<style>
+    .challenge-curriculum { margin: 0 0 1rem; padding: 1rem; border: 1px solid #B8D7E6; border-radius: 12px; background: #F7FBFE; color: #123B59; }
+    .challenge-curriculum-head { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
+    .challenge-curriculum-head h3 { margin:.15rem 0 0; color:#125A96; font-size:1rem; font-weight:800; }
+    .challenge-eyebrow { color:#61798A; font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .challenge-track { flex:0 0 auto; padding:.22rem .5rem; border-radius:999px; background:#E1F4F7; color:#125A96; font-size:.65rem; font-weight:800; }
+    .challenge-curriculum-why { margin:.5rem 0 .8rem; color:#456477; font-size:.78rem; line-height:1.55; }
+    .challenge-curriculum-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+    .challenge-curriculum h4 { margin:.55rem 0 .3rem; color:#125A96; font-size:.75rem; font-weight:800; }
+    .challenge-curriculum p, .challenge-curriculum li { color:#456477; font-size:.76rem; line-height:1.55; }
+    .challenge-curriculum ul, .challenge-curriculum ol { margin:.3rem 0 0; padding-left:1.15rem; }
+    .challenge-curriculum-details { margin-top:.8rem; padding-top:.65rem; border-top:1px solid #D7E5EE; }
+    .challenge-curriculum-details summary { color:#125A96; cursor:pointer; font-size:.76rem; font-weight:800; }
+    .challenge-prompt-box { margin-top:.8rem; overflow:hidden; border:1px solid #D7E5EE; border-radius:8px; background:#123B59; }
+    .challenge-prompt-title { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.45rem .65rem; color:#fff; font-size:.72rem; }
+    .challenge-prompt-title button { min-height:30px; padding:.25rem .55rem; border:1px solid rgba(255,255,255,.45); border-radius:6px; color:#fff; background:transparent; cursor:pointer; font-size:.68rem; }
+    .challenge-prompt-box pre { max-height:260px; overflow:auto; margin:0; padding:.7rem; color:#DDF5FF; font: .68rem/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
+    .challenge-submission-guide { display:flex; flex-direction:column; gap:.45rem; margin-top:.8rem; padding:.75rem; border-left:3px solid #1F77BE; background:#EAF5FB; }
+    .challenge-submission-guide h4 { margin:.1rem 0 .2rem; }
+    .challenge-submission-guide label { display:flex; flex-direction:column; gap:.25rem; color:#456477; font-size:.73rem; line-height:1.4; }
+    .challenge-submission-guide label:has(input[type="checkbox"]) { flex-direction:row; align-items:flex-start; }
+    .challenge-submission-guide input[type="checkbox"] { accent-color:#1F77BE; margin-top:.18rem; }
+    .challenge-submission-guide textarea { width:100%; min-height:55px; font-size:.74rem; }
+    .challenge-rubric-preview { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem .5rem; margin-top:.8rem; padding-top:.65rem; border-top:1px solid #D7E5EE; color:#456477; font-size:.68rem; }
+    .challenge-rubric-preview strong { color:#125A96; }
+    .challenge-rubric-preview span { padding:.2rem .4rem; border:1px solid #B8D7E6; border-radius:5px; background:#fff; }
+    .challenge-rubric-preview small { flex-basis:100%; color:#61798A; line-height:1.45; }
+    @media (max-width: 640px) { .challenge-curriculum-grid { grid-template-columns:1fr; gap:.25rem; } .challenge-curriculum { padding:.75rem; } }
+
+    .challenge-detail-page { width: min(100%, 960px); margin: 0 auto; }
+    .challenge-detail-page > .card { border-radius: 18px; border-color: #D7E5EA; box-shadow: 0 2px 10px rgba(18,59,89,.045); }
+    .challenge-detail-page > .card + .card { margin-top: 16px; }
+    .challenge-detail-page .card .border-b { border-color: #E4EDF1 !important; }
+    .challenge-detail-page .card h1 { text-wrap: balance; }
+    .challenge-detail-page .card a:not(.btn) { text-underline-offset: 3px; }
+    .challenge-detail-page .card input:focus, .challenge-detail-page .card textarea:focus, .challenge-detail-page .card select:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    .challenge-detail-page [style*="#1A1A1A"] { color:#102A3B !important; }
+    .challenge-detail-page [style*="#2E2E2E"] { color:#29485B !important; }
+    .challenge-detail-page [style*="#5C5C66"] { color:#61798A !important; }
+    .challenge-detail-page [style*="#d17856"] { color:#F39402 !important; }
+    .challenge-detail-page [style*="#059669"] { color:#147F96 !important; }
+    .challenge-detail-page [style*="#F7F5F3"] { background:#F1F6F8 !important; }
+    .challenge-detail-page [style*="#D1FAE5"] { background:#E6F6F8 !important; color:#147F96 !important; }
+    .challenge-detail-page [style*="#FEF3C7"] { background:#FFF8E9 !important; border-color:#F5D58A !important; }
+    @media (max-width: 640px) {
+        .challenge-detail-page > .card { padding: 16px !important; border-radius: 15px; }
+        .challenge-detail-page .flex.items-center.justify-between { gap: 10px; }
+    }
+</style>
+
     <div class="mb-4">
         <a href="{{ route('challenge') }}" style="font-size:0.8rem; color:#5C5C66;">← Quay lại Challenge</a>
     </div>
@@ -54,8 +104,8 @@
         {{-- Admin preview banner --}}
         @if($isAdminPreview ?? false)
         <div style="background:#FEF3C7; border:1px solid #FDE68A; border-radius:0.5rem; padding:0.625rem 0.875rem; margin-bottom:0.75rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:0.78rem; color:#92400E;"><strong>🛡 Admin preview</strong> — đang xem như thành viên (không lưu DB, không nhận XP). Mọi tasks đều unlock để check UX.</span>
-            <span style="font-size:0.7rem; color:#92400E; opacity:0.7;">Bấm ✏️ trên task để chỉnh sửa</span>
+            <span style="font-size:0.78rem; color:#92400E;"><strong>Xem trước quản trị</strong> — đang xem như thành viên (không lưu DB, không nhận XP). Mọi nhiệm vụ đều được mở để kiểm tra UX.</span>
+            <span style="font-size:0.7rem; color:#92400E; opacity:0.7;">Dùng nút Sửa trên nhiệm vụ để chỉnh sửa</span>
         </div>
         @endif
 
@@ -124,7 +174,7 @@
                     <span style="font-size:0.8rem; font-weight:600; color:#065F46;">Đã được duyệt</span>
                 </div>
                 <button wire:click="startMyChallenge" wire:confirm="Bắt đầu thử thách? Nhiệm vụ sẽ unlock hàng ngày từ bây giờ." class="btn btn-primary" style="font-size:0.85rem; padding:0.5rem 1.25rem;">
-                    🚀 Bắt đầu thử thách
+                    Bắt đầu thử thách
                 </button>
             </div>
             @elseif($isApproved && $personalDaysLeft !== null)
@@ -236,12 +286,15 @@
 
                 {{-- Admin edit button (outside opacity wrapper so it stays visible on locked tasks) --}}
                 @can('admin')
-                <button wire:click="startEditTask({{ $task->id }})" @click.stop style="position:absolute; top:0.75rem; right:1.5rem; color:#5C5C66; font-size:0.65rem; padding:0.125rem 0.375rem; cursor:pointer; z-index:1;" title="Sửa nhiệm vụ">✏️</button>
+                <button wire:click="startEditTask({{ $task->id }})" @click.stop style="position:absolute; top:0.75rem; right:1.5rem; color:#5C5C66; font-size:0.65rem; padding:0.125rem 0.375rem; cursor:pointer; z-index:1;" title="Sửa nhiệm vụ" aria-label="Sửa nhiệm vụ">Sửa</button>
                 @endcan
 
                 <div style="{{ !$isUnlocked ? 'opacity:0.5;' : '' }}">
                 {{-- Task header --}}
-                <div class="flex items-start gap-3" @click="if({{ $isUnlocked ? 'true' : 'false' }}) expanded = !expanded" style="{{ $isUnlocked ? 'cursor:pointer;' : '' }}">
+                <div class="flex items-start gap-3"
+                     @if($isUnlocked) role="button" tabindex="0" :aria-expanded="expanded.toString()" @keydown.enter.prevent="expanded = !expanded" @keydown.space.prevent="expanded = !expanded" @endif
+                     @click="if({{ $isUnlocked ? 'true' : 'false' }}) expanded = !expanded"
+                     style="{{ $isUnlocked ? 'cursor:pointer;' : '' }}">
                     @if($isRejected)
                     <span style="font-size:1rem; margin-top:0.1rem; color:#DC2626;">✗</span>
                     @elseif($statusPending)
@@ -263,8 +316,8 @@
                         <div class="flex items-center gap-2" style="flex-wrap:wrap;">
                             <span style="font-size:0.7rem; font-weight:600; color:#d17856; background:#E8F5E9; padding:0.125rem 0.5rem; border-radius:999px;">Ngày {{ $task->day_number }}</span>
                             @if($task->is_contest && $statusApproved)
-                            <span style="font-size:0.65rem; font-weight:700; color:#78350F; background:linear-gradient(135deg, #FEF3C7, #FDE68A); padding:0.15rem 0.55rem; border-radius:999px; border:1px solid #F59E0B; box-shadow:0 1px 2px rgba(245,158,11,0.2);">
-                                🏆 Mini-game
+                            <span style="font-size:0.65rem; font-weight:700; color:#78350F; background:#FFF1D6; padding:0.15rem 0.55rem; border-radius:999px; border:1px solid #F59E0B; box-shadow:0 1px 2px rgba(245,158,11,0.2);">
+                                Mini-game
                             </span>
                             @endif
                             @if($isRejected)
@@ -287,9 +340,9 @@
                             <span style="font-size:0.65rem; color:#5C5C66; font-weight:500;">Mở lúc {{ $nextDayUnlockAt->timezone('Asia/Ho_Chi_Minh')->format('H:i · d/m') }}</span>
                             @endif
                             @if($task->meeting_at)
-                            <span style="font-size:0.6rem; color:#1A73E8; background:#E8F0FE; padding:0.1rem 0.375rem; border-radius:4px; font-weight:500;">▶ Meeting · {{ $task->meeting_at->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m') }}</span>
+                            <span style="font-size:0.6rem; color:#1F77BE; background:#E1F4F7; padding:0.1rem 0.375rem; border-radius:4px; font-weight:500;">▶ Meeting · {{ $task->meeting_at->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m') }}</span>
                             @elseif($task->video_url && preg_match('/meet\.google|zoom\.us/i', $task->video_url))
-                            <span style="font-size:0.6rem; color:#1A73E8; background:#E8F0FE; padding:0.1rem 0.375rem; border-radius:4px; font-weight:500;">▶ Meeting</span>
+                            <span style="font-size:0.6rem; color:#1F77BE; background:#E1F4F7; padding:0.1rem 0.375rem; border-radius:4px; font-weight:500;">▶ Meeting</span>
                             @endif
                             @if($task->reward_file_path && $statusApproved)
                             <a href="{{ route('challenge.reward.download', ['slug' => $expedition->slug, 'day' => $task->day_number]) }}" @click.stop style="font-size:0.65rem; color:#1E40AF; background:#DBEAFE; padding:0.15rem 0.5rem; border-radius:999px; font-weight:600; border:1px solid #BFDBFE; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;">⬇ Tài liệu</a>
@@ -350,9 +403,9 @@
                         📝 Quiz (JSON) <span style="font-weight:400; color:#5C5C66;">— để trống nếu task này không có quiz</span>
                     </label>
                     <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:0.375rem; padding:0.5rem 0.625rem; margin-bottom:0.375rem; font-size:0.7rem; color:#78716C; line-height:1.5;">
-                        Mỗi phần tử cần có: <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">q</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">options{A,B,C,D}</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">correct</code> (A/B/C/D), <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">explanation</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">ai_prompt</code>. Mỗi câu đúng = +2 XP cho user.
+                        Mỗi phần tử cần có: <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">q</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">options{A,B,C,D}</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">correct</code> (A/B/C/D), <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">explanation</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">ai_prompt</code> (giữ key cũ để tương thích). Với DSCons, dùng field này cho gợi ý đối chiếu quy trình kỹ thuật. Mỗi câu đúng = +2 XP cho user.
                     </div>
-                    <textarea wire:model="editTaskQuizJson" rows="10" class="input" placeholder='[{"q":"Câu hỏi 1","options":{"A":"...","B":"...","C":"...","D":"..."},"correct":"A","explanation":"Giải thích...","ai_prompt":"Prompt copy cho user paste vào Cursor..."}]'
+                    <textarea wire:model="editTaskQuizJson" rows="10" class="input" placeholder='[{"q":"Câu hỏi 1","options":{"A":"...","B":"...","C":"...","D":"..."},"correct":"A","explanation":"Giải thích...","ai_prompt":"Gợi ý đối chiếu quy trình kỹ thuật..."}]'
                         style="font-family:monospace; font-size:0.72rem; line-height:1.5; resize:vertical; min-height:140px; margin-bottom:0.5rem;"></textarea>
                     @error('editTaskQuizJson') <p style="color:#DC2626; font-size:0.7rem; margin-bottom:0.5rem;">{{ $message }}</p> @enderror
 
@@ -389,7 +442,7 @@
                             <iframe src="https://www.youtube.com/embed/{{ $ytId }}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         </div>
                         @elseif($isMeet)
-                        <a href="{{ $videoUrl }}" target="_blank" rel="noopener" class="flex items-center gap-2" style="font-size:0.8rem; font-weight:600; padding:0.625rem; border-radius:0.5rem; color:#1A73E8; background:#E8F0FE; border:1px solid #C2D7F4;">
+                        <a href="{{ $videoUrl }}" target="_blank" rel="noopener" class="flex items-center gap-2" style="font-size:0.8rem; font-weight:600; padding:0.625rem; border-radius:0.5rem; color:#1F77BE; background:#E1F4F7; border:1px solid #B8D7E6;">
                             <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24"><path d="M14.5 10.5L18.2 7.4C18.5 7.2 19 7.4 19 7.8V16.2C19 16.6 18.5 16.8 18.2 16.6L14.5 13.5V10.5Z" fill="#00832D"/><rect x="3" y="6" width="12" height="12" rx="1.5" fill="#00AC47"/><path d="M14.5 10.5L18.2 7.4C18.5 7.2 19 7.4 19 7.8V12H14.5V10.5Z" fill="#00832D"/><path d="M3 14.5H9V18H4.5C3.67 18 3 17.33 3 16.5V14.5Z" fill="#0066DA"/><path d="M9 14.5H14.5V18H9V14.5Z" fill="#00AC47"/><path d="M9 6H14.5V10.5H9V6Z" fill="#FFBA00"/><path d="M3 7.5C3 6.67 3.67 6 4.5 6H9V10.5H3V7.5Z" fill="#0066DA"/><path d="M3 10.5H9V14.5H3V10.5Z" fill="#0066DA"/></svg>
                             Tham gia Google Meet
                         </a>
@@ -414,6 +467,84 @@
                     {{-- Quiz (when task has quiz_json defined) --}}
                     @if(!empty($task->quiz_json))
                     <livewire:quiz-section :task="$task" :wire:key="'quiz-'.$task->id" />
+                    @endif
+
+                    @php
+                        $curriculum = is_array($task->instruction_payload) ? $task->instruction_payload : [];
+                        $myTaskStatus = $myCompletions[$task->id]->status ?? null;
+                    @endphp
+                    @if($curriculum)
+                    <section class="challenge-curriculum" aria-labelledby="curriculum-{{ $task->id }}">
+                        <div class="challenge-curriculum-head">
+                            <div>
+                                <span class="challenge-eyebrow">{{ strtoupper($curriculum['modality'] ?? 'BÀI HỌC') }} · {{ $curriculum['estimated_minutes'] ?? 0 }} phút</span>
+                                <h3 id="curriculum-{{ $task->id }}">Lộ trình học ngày {{ $task->day_number }}</h3>
+                            </div>
+                            <span class="challenge-track">{{ $curriculum['track'] ?? 'common' }}</span>
+                        </div>
+                        @if(!empty($curriculum['why']))
+                        <p class="challenge-curriculum-why"><strong>Vì sao kỹ sư MEP cần?</strong> {{ $curriculum['why'] }}</p>
+                        @endif
+                        <div class="challenge-curriculum-grid">
+                            <div>
+                                <h4>Kiến thức và kết quả bắt buộc</h4>
+                                <p>{{ $curriculum['minimum_knowledge'] ?? '' }}</p>
+                                <p><strong>{{ $curriculum['required_outcome'] ?? '' }}</strong></p>
+                                @if(!empty($curriculum['learning_objectives']))
+                                <ul>
+                                    @foreach($curriculum['learning_objectives'] as $objective)
+                                    <li>{{ $objective }}</li>
+                                    @endforeach
+                                </ul>
+                                @endif
+                            </div>
+                            <div>
+                                <h4>AI thực hiện</h4>
+                                <ul>
+                                    @foreach($curriculum['ai_actions'] ?? [] as $action)
+                                    <li>{{ $action }}</li>
+                                    @endforeach
+                                </ul>
+                                <h4>Học viên thực hiện</h4>
+                                <ul>
+                                    @foreach($curriculum['student_actions'] ?? [] as $action)
+                                    <li>{{ $action }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        <details class="challenge-curriculum-details">
+                            <summary>SOP chuẩn bị môi trường và các bước thực hiện</summary>
+                            <ol>
+                                @foreach($curriculum['sop_steps'] ?? [] as $step)
+                                <li>{{ $step }}</li>
+                                @endforeach
+                            </ol>
+                        </details>
+                        @if(!empty($curriculum['ai_prompt']))
+                        <div class="challenge-prompt-box" x-data="{ copied: false }">
+                            <div class="challenge-prompt-title"><strong>Prompt copy vào AI Agent</strong><button type="button" @click="navigator.clipboard.writeText($refs.prompt.innerText); copied = true; setTimeout(() => copied = false, 1600)" aria-label="Sao chép prompt"><span x-show="!copied">Sao chép</span><span x-show="copied" x-cloak>Đã sao chép</span></button></div>
+                            <pre x-ref="prompt">{{ $curriculum['ai_prompt'] }}</pre>
+                        </div>
+                        @endif
+                        @if(!$isCompleted || $myTaskStatus === 'rejected')
+                        <div class="challenge-submission-guide">
+                            <h4>Checklist trước khi nộp</h4>
+                            @foreach($curriculum['verification_checklist'] ?? [] as $index => $check)
+                            <label><input type="checkbox" value="{{ $index }}" wire:model="structuredSubmission.{{ $task->id }}.checklist.{{ $index }}"> <span>{{ $check }}</span></label>
+                            @endforeach
+                            <h4>Ba câu bắt buộc để chứng minh bạn đã kiểm chứng</h4>
+                            <label>Bạn đã yêu cầu AI làm gì?<textarea wire:model="structuredSubmission.{{ $task->id }}.reflection_request" rows="2" placeholder="Ví dụ: Tôi yêu cầu AI lọc Duct ở Level 2..." class="input"></textarea></label>
+                            <label>AI đã sửa/tạo file nào?<textarea wire:model="structuredSubmission.{{ $task->id }}.reflection_files" rows="2" placeholder="Ghi tên file và thay đổi chính..." class="input"></textarea></label>
+                            <label>Bạn kiểm chứng kết quả thế nào?<textarea wire:model="structuredSubmission.{{ $task->id }}.reflection_verification" rows="2" placeholder="Ví dụ: đối chiếu Schedule và chạy lại trên bản sao..." class="input"></textarea></label>
+                        </div>
+                        @endif
+                        <div class="challenge-rubric-preview">
+                            <strong>Đạt từ {{ $curriculum['pass_score'] ?? 70 }}/100</strong>
+                            <span>Đủ bằng chứng 30</span><span>Kết quả đúng 40</span><span>Cá nhân hóa 15</span><span>Kiểm chứng 15</span>
+                            <small>Critical Fail: chỉ nộp ảnh code, không có kết quả Revit, sửa model gốc, không thể đối chiếu hoặc không cài lại được.</small>
+                        </div>
+                    </section>
                     @endif
 
                     {{-- Evidence: show submission or form (cùng UI cho contest & non-contest cho phần "bài chính ngày 15") --}}
@@ -529,10 +660,10 @@
                         $miniDeadline = $contestEnds[$task->id] ?? ($taskDeadlines[$task->id] ?? null);
                         $miniExpired = $miniDeadline && now()->greaterThan($miniDeadline);
                     @endphp
-                    <div style="background:linear-gradient(135deg, #FEF3C7, #FDE68A); border:1px solid #F59E0B; border-radius:0.5rem; padding:0.75rem; margin-top:0.75rem;">
+                    <div style="background:#FFF8E9; border:1px solid #F59E0B; border-radius:0.5rem; padding:0.75rem; margin-top:0.75rem;">
                         <div class="flex items-center justify-between" style="margin-bottom:0.4rem;">
                             <div style="font-size:0.85rem; font-weight:700; color:#78350F; display:flex; align-items:center; gap:0.4rem;">
-                                {{ $task->contest_title ?? '🏆 Mini game' }}
+                                {{ $task->contest_title ?? 'Mini-game' }}
                             </div>
                             @if($approvedCount > 0)
                             <span style="font-size:0.72rem; font-weight:700; color:#065F46; background:#D1FAE5; padding:0.15rem 0.5rem; border-radius:999px;">
@@ -861,7 +992,7 @@
             <div style="padding-left:2rem; margin-top:0.375rem; display:flex; gap:0.375rem; flex-wrap:wrap;">
                 {{-- Vote hay (good) --}}
                 @if($isAdmin)
-                <button wire:click="toggleVote({{ $sub->completion_id }}, 'good')" style="font-size:0.75rem; cursor:pointer; padding:0.2rem 0.5rem; border-radius:999px; border:1px solid {{ $votedGood ? '#d17856' : '#E1E1E1' }}; background:{{ $votedGood ? '#E8F5E9' : '#FFF' }}; color:{{ $votedGood ? '#d17856' : '#5C5C66' }}; transition:all 0.15s;">
+                <button wire:click="toggleVote({{ $sub->completion_id }}, 'good')" style="font-size:0.75rem; cursor:pointer; padding:0.2rem 0.5rem; border-radius:999px; border:1px solid {{ $votedGood ? '#d17856' : '#E1E1E1' }}; background:{{ $votedGood ? '#E8F5E9' : '#FFF' }}; color:{{ $votedGood ? '#d17856' : '#5C5C66' }}; transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;">
                     ▲ {{ $goodCount > 0 ? $goodCount : '' }} {{ $votedGood ? 'Đã vote hay' : 'Vote hay' }}
                 </button>
                 @elseif($goodCount > 0)
@@ -872,7 +1003,7 @@
 
                 {{-- Vote xuất sắc (excellent) --}}
                 @if($isAdmin)
-                <button wire:click="toggleVote({{ $sub->completion_id }}, 'excellent')" style="font-size:0.75rem; cursor:pointer; padding:0.2rem 0.5rem; border-radius:999px; border:1px solid {{ $votedExcellent ? '#C2410C' : '#E1E1E1' }}; background:{{ $votedExcellent ? '#FEF3C7' : '#FFF' }}; color:{{ $votedExcellent ? '#C2410C' : '#5C5C66' }}; transition:all 0.15s;">
+                <button wire:click="toggleVote({{ $sub->completion_id }}, 'excellent')" style="font-size:0.75rem; cursor:pointer; padding:0.2rem 0.5rem; border-radius:999px; border:1px solid {{ $votedExcellent ? '#C2410C' : '#E1E1E1' }}; background:{{ $votedExcellent ? '#FEF3C7' : '#FFF' }}; color:{{ $votedExcellent ? '#C2410C' : '#5C5C66' }}; transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;">
                     ★ {{ $excellentCount > 0 ? $excellentCount : '' }} {{ $votedExcellent ? 'Đã vote xuất sắc' : 'Vote xuất sắc' }}
                 </button>
                 @elseif($excellentCount > 0)
@@ -887,6 +1018,23 @@
             @can('admin')
             @if($sub->review_status === 'pending')
             <div x-data="{ showReject: false, note: '' }" style="padding-left:2rem; margin-top:0.375rem;">
+                @php
+                    $reviewTask = $tasks->firstWhere('day_number', $sub->day_number);
+                    $reviewPayload = is_array($reviewTask?->instruction_payload) ? $reviewTask->instruction_payload : [];
+                @endphp
+                <div style="display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; margin-bottom:.4rem;">
+                    <label style="font-size:.7rem; color:#456477;">Điểm <input type="number" min="0" max="100" wire:model="reviewScores.{{ $sub->completion_id }}" class="input" style="width:72px; padding:.2rem .35rem; font-size:.72rem;" placeholder="70"></label>
+                    @if(!empty($reviewPayload['milestone_rubric']))
+                    <details style="flex-basis:100%;">
+                        <summary style="color:#125A96; cursor:pointer; font-size:.7rem; font-weight:700;">Mở rubric chấm nhanh</summary>
+                        <div style="display:flex; flex-direction:column; gap:.25rem; margin:.35rem 0 .5rem; padding:.5rem; border:1px solid #D7E5EE; border-radius:6px; background:#F7FBFE;">
+                            @foreach($reviewPayload['milestone_rubric'] as $criterion)
+                            <label style="display:flex; align-items:flex-start; gap:.35rem; color:#456477; font-size:.68rem;"><input type="checkbox" wire:model="reviewRubrics.{{ $sub->completion_id }}.{{ $criterion['key'] }}"> <span>{{ $criterion['label'] }} ({{ $criterion['points'] }}đ)</span></label>
+                            @endforeach
+                        </div>
+                    </details>
+                    @endif
+                </div>
                 <div class="flex gap-1">
                     <button wire:click="approveSubmission({{ $sub->completion_id }})" class="btn btn-primary" style="font-size:0.7rem; padding:0.2rem 0.5rem;">✓ Duyệt</button>
                     <button @click="showReject = !showReject" class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem; color:#991B1B;">✗ Từ chối</button>

@@ -1,255 +1,142 @@
 <div>
-@if($show && $post)
-{{-- Panel container — no backdrop, no body lock --}}
-<div style="position:fixed; top:0; right:0; bottom:0; width:100%; max-width:560px; z-index:200; pointer-events:none;"
-     x-data
-     x-on:keydown.escape.window="$wire.close()"
-     wire:key="post-modal-{{ $post->id }}">
-
-    {{-- Right Panel --}}
-    <div style="pointer-events:auto; background:#FFF; width:100%; height:100%; overflow-y:auto; box-shadow:-2px 0 12px rgba(0,0,0,0.08); border-left:1px solid rgba(0,0,0,0.08);"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="translate-x-full"
-         x-transition:enter-end="translate-x-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="translate-x-0"
-         x-transition:leave-end="translate-x-full">
-
-        {{-- Header --}}
-        <div style="position:sticky; top:0; background:#FFF; border-bottom:1px solid rgba(0,0,0,0.08); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; z-index:2;">
-            <span style="font-size:0.8125rem; font-weight:600; color:#6b7280;">Bài viết</span>
-            <button wire:click="close" style="width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#6b7280; border:none; background:transparent;" onmouseenter="this.style.background='#f0ede8'" onmouseleave="this.style.background='transparent'">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-
-        <div style="padding:20px;">
-            {{-- Author --}}
-            <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:16px;">
-                <a href="{{ route('profile', $post->user->username ?? $post->user->id) }}">
-                    <img src="{{ $post->user->avatar_url }}" style="width:44px; height:44px; border-radius:50%; object-fit:cover;" alt="">
-                </a>
-                <div>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <a href="{{ route('profile', $post->user->username ?? $post->user->id) }}" style="font-weight:600; color:#1A1A1A; font-size:0.9rem; text-decoration:none;">{{ $post->user->name }}</a>
-                        <span class="badge badge-class-{{ $post->user->class_color }}" style="font-size:0.6rem;">{{ $post->user->class_emoji }} {{ $post->user->class_label }}</span>
-                        <span class="level-badge">Lv.{{ $post->user->level }}</span>
+    @if($show && $post)
+        <div class="post-reader-backdrop" wire:key="post-modal-{{ $post->id }}" x-data x-on:keydown.escape.window="$wire.close()" wire:click.self="close">
+            <section class="post-reader-dialog" role="dialog" aria-modal="true" aria-labelledby="post-reader-title" tabindex="-1" x-init="$nextTick(() => $el.focus())">
+                <header class="post-reader-header">
+                    <div>
+                        <span class="post-reader-kicker">DSCons · Bài viết</span>
+                        <h2 id="post-reader-title">Đọc bài viết</h2>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
-                        @if($post->pillar)
-                        <span class="badge badge-pillar-{{ $post->pillar }}" style="font-size:0.6rem;">{{ $post->pillar_label }}</span>
-                        @endif
-                        @if($post->topic)
-                        <span style="font-size:0.75rem; color:#6b7280;">{{ $post->topic->emoji }} {{ $post->topic->name }}</span>
-                        @endif
-                        <span style="font-size:0.75rem; color:#9ca3af;">{{ $post->created_at->diffForHumans() }}</span>
-                    </div>
-                </div>
-            </div>
+                    <button type="button" class="post-reader-close" wire:click="close" aria-label="Đóng bài viết">
+                        <x-icon name="close" size="20" />
+                    </button>
+                </header>
 
-            {{-- Title --}}
-            @if($post->title)
-            <h2 style="font-size:1.25rem; font-weight:700; color:#1A1A1A; margin-bottom:8px; line-height:1.35;">{{ $post->title }}</h2>
-            @endif
-
-            {{-- Images --}}
-            @if($post->images->count() > 0)
-            <div style="margin-bottom:12px; border-radius:8px; overflow:hidden;">
-                @foreach($post->images as $img)
-                <a href="{{ asset('storage/' . $img->path) }}" target="_blank" style="display:block; margin-bottom:{{ $loop->last ? '0' : '4px' }};">
-                    <img src="{{ asset('storage/' . $img->path) }}" alt="" style="width:100%; max-height:400px; object-fit:cover; border-radius:8px;">
-                </a>
-                @endforeach
-            </div>
-            @endif
-
-            {{-- Content --}}
-            <div class="post-content prose-post" style="color:#2E2E2E; font-size:0.9rem; line-height:1.75; margin-bottom:16px; overflow-wrap:break-word;">
-                {!! $this->renderedPostContent() !!}
-            </div>
-            <div style="display:none;">
-                @php
-                    $escaped = e($post->content);
-                    $escaped = preg_replace_callback(
-                        '#(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})[^\s<]*)#i',
-                        fn ($m) => '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin:8px 0;"><iframe src="https://www.youtube.com/embed/'.$m[2].'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>',
-                        $escaped
-                    );
-                    $escaped = preg_replace(
-                        '#(?<!src="|href=")(https?://(?:(?!&quot;|&lt;|&gt;)[^\s<"])+)#i',
-                        '<a href="$1" target="_blank" rel="noopener" style="color:#d17856; text-decoration:underline; word-break:break-all;">$1</a>',
-                        $escaped
-                    );
-                @endphp
-                {!! $escaped !!}
-            </div>
-
-            {{-- Stats --}}
-            <div style="display:flex; align-items:center; gap:16px; padding:10px 0; border-top:1px solid rgba(0,0,0,0.08); border-bottom:1px solid rgba(0,0,0,0.08); margin-bottom:16px;">
-                <span style="font-size:0.8125rem; color:#6b7280; display:flex; align-items:center; gap:4px;">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    {{ $post->likes_count }}
-                </span>
-                <span style="font-size:0.8125rem; color:#6b7280; display:flex; align-items:center; gap:4px;">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                    {{ $post->all_comments_count }}
-                </span>
-            </div>
-
-            {{-- Comments --}}
-            <div>
-                @foreach($post->allComments->whereNull('parent_id') as $comment)
-                <div style="display:flex; gap:10px; margin-bottom:14px;">
-                    <img src="{{ $comment->user->avatar_url }}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0;" alt="">
-                    <div style="flex:1; min-width:0;">
-                        <div style="background:#f5f4f2; border-radius:8px; padding:8px 12px;">
-                            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:3px;">
-                                <span style="font-weight:600; font-size:0.8125rem; color:#1A1A1A;">{{ $comment->user->name }}</span>
-                                <span class="badge badge-class-{{ $comment->user->class_color }}" style="font-size:0.6rem;">{{ $comment->user->class_emoji }}</span>
-                                <span style="font-size:0.6875rem; color:#9ca3af;">{{ $comment->created_at->diffForHumans() }}</span>
-                            </div>
-                            <p style="color:#2E2E2E; font-size:0.8125rem; line-height:1.5; overflow-wrap:break-word;">{!! preg_replace('/@([a-zA-Z0-9._-]+)/', '<a href="/@$1" style="color:#d17856;font-weight:600;text-decoration:none;">@$1</a>', e($comment->content)) !!}</p>
-                        </div>
-                        @auth
-                        <button wire:click="replyTo({{ $comment->id }}, '{{ addslashes($comment->user->name) }}')" style="font-size:0.7rem; color:#6b7280; margin-top:3px; margin-left:8px; cursor:pointer; background:transparent; border:none; padding:0;">Trả lời</button>
-                        @endauth
-
-                        @foreach($comment->replies as $reply)
-                        <div style="display:flex; gap:8px; margin-top:8px; margin-left:16px;">
-                            <img src="{{ $reply->user->avatar_url }}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; flex-shrink:0;" alt="">
-                            <div style="flex:1; background:#f0ede8; border-radius:8px; padding:6px 10px;">
-                                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-bottom:2px;">
-                                    <span style="font-weight:600; font-size:0.75rem; color:#1A1A1A;">{{ $reply->user->name }}</span>
-                                    <span class="badge badge-class-{{ $reply->user->class_color }}" style="font-size:0.55rem;">{{ $reply->user->class_emoji }}</span>
-                                    <span style="font-size:0.625rem; color:#9ca3af;">{{ $reply->created_at->diffForHumans() }}</span>
-                                </div>
-                                <p style="color:#2E2E2E; font-size:0.75rem; line-height:1.4; overflow-wrap:break-word;">{!! preg_replace('/@([a-zA-Z0-9._-]+)/', '<a href="/@$1" style="color:#d17856;font-weight:600;text-decoration:none;">@$1</a>', e($reply->content)) !!}</p>
+                <div class="post-reader-scroll">
+                    <div class="post-reader-author">
+                        <img src="{{ $post->user->avatar_url }}" width="48" height="48" alt="Ảnh đại diện của {{ $post->user->name }}">
+                        <div>
+                            <a href="{{ route('profile', $post->user->username ?? $post->user->id) }}">{{ $post->user->name }}</a>
+                            <div class="post-reader-meta">
+                                <span>{{ $post->created_at->diffForHumans() }}</span>
+                                @if($post->subject)<span>· {{ $post->subject->name }}</span>@endif
+                                @if($post->postType)<span>· {{ $post->postType->name }}</span>@endif
                             </div>
                         </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endforeach
-
-                @if($post->allComments->count() === 0)
-                <p style="text-align:center; color:#9ca3af; font-size:0.8125rem; padding:16px 0;">Chưa có bình luận nào</p>
-                @endif
-            </div>
-
-            {{-- Composer --}}
-            @auth
-            <div style="position:sticky; bottom:0; background:#fff; padding-top:10px; margin-top:12px; border-top:1px solid rgba(0,0,0,0.08);">
-                @if($replyToName)
-                <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; color:#6b7280; margin-bottom:6px;">
-                    <span>Trả lời <strong>{{ $replyToName }}</strong></span>
-                    <button wire:click="cancelReply" style="color:#dc2626; cursor:pointer; background:transparent; border:none; padding:0;">✕ huỷ</button>
-                </div>
-                @endif
-                <div x-data="postComposerMentions()"
-                    x-init="$nextTick(() => textarea = $refs.ta)"
-                    style="position:relative;">
-                    {{-- Mention dropdown --}}
-                    <div x-show="open && $wire.mentionResults.length > 0" x-cloak x-transition
-                        @click.outside="close()"
-                        style="position:absolute; bottom:100%; left:38px; right:70px; margin-bottom:6px; background:#fff; border:1px solid rgba(0,0,0,0.1); border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); max-height:220px; overflow-y:auto; z-index:20;">
-                        <template x-for="(u, i) in $wire.mentionResults" :key="u.username">
-                            <button type="button" @click="pick(u.username)"
-                                @mouseenter="selectedIndex = i"
-                                :style="'display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:6px 10px; cursor:pointer; background:' + (selectedIndex===i ? '#f0ede8' : 'transparent') + '; border:none;'">
-                                <img :src="u.avatar_url" style="width:26px; height:26px; border-radius:50%; object-fit:cover; flex-shrink:0;" alt="">
-                                <div style="min-width:0; flex:1;">
-                                    <div style="font-size:0.78rem; font-weight:600; color:#1A1A1A;" x-text="u.name"></div>
-                                    <div style="font-size:0.68rem; color:#6b7280;" x-text="'@' + u.username"></div>
-                                </div>
-                            </button>
-                        </template>
                     </div>
 
-                    <div style="display:flex; gap:8px; align-items:flex-end;">
-                        <img src="{{ auth()->user()->avatar_url }}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0;" alt="">
-                        <textarea wire:model="newComment" x-ref="ta"
-                            x-init="$el.style.height = $el.scrollHeight + 'px'"
-                            @input="$el.style.height='auto'; $el.style.height=$el.scrollHeight + 'px'; detectMention()"
-                            @keydown="onKeydown($event)"
-                            rows="1"
-                            placeholder="{{ $replyToName ? 'Trả lời '.$replyToName.'...' : 'Viết bình luận... (@ để tag)' }}"
-                            style="flex:1; background:#f5f4f2; border:1px solid rgba(0,0,0,0.06); border-radius:18px; padding:8px 12px; font-size:0.85rem; line-height:1.4; resize:none; overflow:hidden; outline:none; max-height:160px;"></textarea>
-                        <button wire:click="addComment" wire:loading.attr="disabled" wire:target="addComment"
-                            style="padding:6px 14px; font-size:0.8rem; font-weight:600; background:#d17856; color:#fff; border:none; border-radius:18px; cursor:pointer; white-space:nowrap;">
-                            <span wire:loading.remove wire:target="addComment">Đăng</span>
-                            <span wire:loading wire:target="addComment">...</span>
+                    @if($post->title)
+                        <h1 class="post-reader-title">{{ $post->title }}</h1>
+                    @endif
+
+                    <div class="post-reader-content prose-post">{!! $this->renderedPostContent() !!}</div>
+
+                    @if($post->images->count())
+                        <div class="post-reader-images">
+                            @foreach($post->images as $image)
+                                <img src="{{ asset('storage/'.$image->path) }}" width="720" height="420" loading="lazy" alt="Ảnh trong bài viết">
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="post-reader-actions" aria-label="Tương tác bài viết">
+                        <button type="button" wire:click="toggleLike" class="post-reader-action {{ $isLiked ? 'is-active' : '' }}" aria-pressed="{{ $isLiked ? 'true' : 'false' }}" aria-label="{{ $isLiked ? 'Bỏ thích' : 'Thích bài viết' }}">
+                            <x-icon name="heart" size="18" /><span>{{ $likesCount }}</span>
                         </button>
+                        <span class="post-reader-action" aria-label="Số bình luận"><x-icon name="comment" size="18" />{{ $post->all_comments_count }}</span>
+                        <button type="button" wire:click="toggleBookmark" class="post-reader-action {{ $isBookmarked ? 'is-active' : '' }}" aria-pressed="{{ $isBookmarked ? 'true' : 'false' }}" aria-label="{{ $isBookmarked ? 'Bỏ lưu' : 'Lưu bài viết' }}"><x-icon name="bookmark" size="18" /></button>
+                        <button type="button" class="post-reader-action" x-on:click="navigator.clipboard?.writeText(window.location.href); $dispatch('toast', { message: 'Đã sao chép liên kết.', type: 'success' })" aria-label="Sao chép liên kết"><x-icon name="link" size="18" /></button>
                     </div>
+
+                    <section class="post-reader-comments" aria-labelledby="post-reader-comments-title">
+                        <h3 id="post-reader-comments-title">Bình luận ({{ $post->all_comments_count }})</h3>
+                        @forelse($post->allComments->whereNull('parent_id') as $comment)
+                            <article class="post-reader-comment">
+                                <img src="{{ $comment->user->avatar_url }}" width="36" height="36" alt="Ảnh đại diện của {{ $comment->user->name }}">
+                                <div class="post-reader-comment-main">
+                                    <div class="post-reader-bubble">
+                                        <strong>{{ $comment->user->name }}</strong>
+                                        <p>{{ $comment->content }}</p>
+                                    </div>
+                                    <div class="post-reader-comment-meta">
+                                        <time>{{ $comment->created_at->diffForHumans() }}</time>
+                                        <button type="button" wire:click="replyTo({{ $comment->id }}, @js($comment->user->name))">Trả lời</button>
+                                    </div>
+                                    @foreach($comment->replies as $reply)
+                                        <div class="post-reader-reply">
+                                            <img src="{{ $reply->user->avatar_url }}" width="30" height="30" alt="Ảnh đại diện của {{ $reply->user->name }}">
+                                            <div class="post-reader-bubble">
+                                                <strong>{{ $reply->user->name }}</strong>
+                                                <p>{{ $reply->content }}</p>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </article>
+                        @empty
+                            <p class="post-reader-empty">Chưa có bình luận nào.</p>
+                        @endforelse
+
+                        @auth
+                            @if($replyToName)
+                                <div class="post-reader-replying">Đang trả lời <strong>{{ $replyToName }}</strong><button type="button" wire:click="cancelReply">Huỷ</button></div>
+                            @endif
+                            <form class="post-reader-composer" wire:submit="addComment">
+                                <img src="{{ auth()->user()->avatar_url }}" width="36" height="36" alt="Ảnh đại diện của {{ auth()->user()->name }}">
+                                <textarea wire:model="newComment" rows="1" aria-label="Viết bình luận" placeholder="Viết bình luận..."></textarea>
+                                <button type="submit" class="post-reader-submit">Gửi</button>
+                            </form>
+                            @error('newComment')<p class="post-reader-error" role="alert">{{ $message }}</p>@enderror
+                        @endauth
+                    </section>
                 </div>
-                @error('newComment') <p style="color:#dc2626; font-size:0.7rem; margin-top:4px;">{{ $message }}</p> @enderror
-            </div>
-            <script>
-                function postComposerMentions() {
-                    return {
-                        open: false,
-                        textarea: null,
-                        mentionStart: -1,
-                        selectedIndex: 0,
-                        searchTimer: null,
-                        detectMention() {
-                            const ta = this.textarea;
-                            if (!ta) return;
-                            const caret = ta.selectionStart;
-                            const before = ta.value.slice(0, caret);
-                            const match = before.match(/(?:^|\s)@([a-zA-Z0-9._-]*)$/);
-                            if (!match) { this.close(); return; }
-                            this.mentionStart = caret - match[1].length - 1;
-                            this.selectedIndex = 0;
-                            this.open = true;
-                            clearTimeout(this.searchTimer);
-                            const q = match[1];
-                            this.searchTimer = setTimeout(() => this.$wire.searchMentions(q), 120);
-                        },
-                        close() {
-                            this.open = false;
-                            this.mentionStart = -1;
-                            this.$wire.clearMentions();
-                        },
-                        onKeydown(e) {
-                            if (!this.open || !this.$wire.mentionResults.length) {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    this.$wire.addComment();
-                                }
-                                return;
-                            }
-                            const n = this.$wire.mentionResults.length;
-                            if (e.key === 'ArrowDown') { e.preventDefault(); this.selectedIndex = (this.selectedIndex + 1) % n; }
-                            else if (e.key === 'ArrowUp') { e.preventDefault(); this.selectedIndex = (this.selectedIndex - 1 + n) % n; }
-                            else if (e.key === 'Enter' || e.key === 'Tab') {
-                                e.preventDefault();
-                                this.pick(this.$wire.mentionResults[this.selectedIndex].username);
-                            } else if (e.key === 'Escape') { e.preventDefault(); this.close(); }
-                        },
-                        pick(username) {
-                            const ta = this.textarea;
-                            if (!ta || this.mentionStart < 0) return;
-                            const caret = ta.selectionStart;
-                            const before = ta.value.slice(0, this.mentionStart);
-                            const after = ta.value.slice(caret);
-                            const insert = '@' + username + ' ';
-                            const newVal = before + insert + after;
-                            this.$wire.set('newComment', newVal);
-                            this.close();
-                            this.$nextTick(() => {
-                                const pos = before.length + insert.length;
-                                ta.focus();
-                                ta.setSelectionRange(pos, pos);
-                                ta.style.height = 'auto';
-                                ta.style.height = ta.scrollHeight + 'px';
-                            });
-                        },
-                    }
-                }
-            </script>
-            @endauth
+            </section>
         </div>
-    </div>
-</div>
-@endif
+    @endif
+
+    <style>
+        .post-reader-backdrop { position:fixed; inset:0; z-index:2000; display:grid; place-items:center; padding:24px; background:rgba(16,42,59,.48); }
+        .post-reader-dialog { width:min(760px,100%); max-height:min(820px,calc(100dvh - 48px)); overflow:hidden; background:#FFFFFF; border:1px solid #C9DFEA; border-radius:20px; box-shadow:0 24px 80px rgba(18,59,89,.22); outline:none; }
+        .post-reader-header { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; background:#FFFFFF; border-bottom:1px solid #E7EEF2; }
+        .post-reader-kicker { display:block; color:#61798A; font-size:.7rem; font-weight:750; letter-spacing:.04em; text-transform:uppercase; }
+        .post-reader-header h2 { margin:.15rem 0 0; color:#102A3B; font-size:1rem; }
+        .post-reader-close { display:grid; place-items:center; width:42px; height:42px; border:1px solid #C9DFEA; border-radius:12px; background:transparent; color:#61798A; cursor:pointer; }
+        .post-reader-close:hover { background:#DCECF7; color:#125A96; }
+        .post-reader-close svg { color:inherit !important; }
+        .post-reader-scroll { max-height:calc(min(820px,100dvh - 48px) - 70px); overflow-y:auto; padding:1.25rem; }
+        .post-reader-author { display:flex; align-items:center; gap:.75rem; }
+        .post-reader-author img, .post-reader-composer > img { border-radius:50%; object-fit:cover; }
+        .post-reader-author a { color:#125A96; font-weight:800; text-decoration:none; }
+        .post-reader-meta { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.2rem; color:#61798A; font-size:.75rem; }
+        .post-reader-title { margin:1rem 0 .65rem; color:#102A3B; font-size:clamp(1.3rem,3vw,1.9rem); line-height:1.25; }
+        .post-reader-content { color:#29485B; font-size:1rem; line-height:1.8; }
+        .post-reader-content img { max-width:100%; border-radius:12px; }
+        .post-reader-images { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.6rem; margin-top:1rem; }
+        .post-reader-images img { width:100%; height:220px; object-fit:cover; border-radius:12px; }
+        .post-reader-actions { display:flex; align-items:center; gap:.25rem; margin-top:1.1rem; padding:.55rem 0; border-top:1px solid #C9DFEA; border-bottom:1px solid #C9DFEA; }
+        .post-reader-action { display:inline-flex; align-items:center; gap:.35rem; min-height:42px; padding:.4rem .65rem; border:0; border-radius:10px; background:transparent; color:#61798A; cursor:pointer; }
+        .post-reader-action:hover, .post-reader-action.is-active { background:#DCECF7; color:#1F77BE; }
+        .post-reader-action svg { color:inherit !important; }
+        .post-reader-comments { padding-top:1.2rem; }
+        .post-reader-comments h3 { margin:0 0 .75rem; color:#102A3B; font-size:1rem; }
+        .post-reader-comment { display:flex; gap:.65rem; padding:.75rem 0; }
+        .post-reader-comment > img, .post-reader-reply > img { border-radius:50%; object-fit:cover; flex:0 0 auto; }
+        .post-reader-comment-main { min-width:0; flex:1; }
+        .post-reader-bubble { padding:.65rem .8rem; border-radius:13px; background:#F1F7FA; }
+        .post-reader-bubble strong { display:block; color:#29485B; font-size:.82rem; }
+        .post-reader-bubble p { margin:.2rem 0 0; color:#29485B; font-size:.84rem; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .post-reader-comment-meta { display:flex; gap:.8rem; margin-top:.25rem; padding-left:.3rem; color:#61798A; font-size:.72rem; }
+        .post-reader-comment-meta button, .post-reader-replying button { border:0; background:transparent; color:#125A96; cursor:pointer; font:inherit; font-weight:750; }
+        .post-reader-reply { display:flex; gap:.5rem; margin:.5rem 0 0 1.25rem; }
+        .post-reader-empty { color:#61798A; font-size:.84rem; text-align:center; }
+        .post-reader-replying { margin:.8rem 0 .4rem; color:#61798A; font-size:.78rem; }
+        .post-reader-composer { display:flex; align-items:flex-end; gap:.55rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #EEE9DF; }
+        .post-reader-composer textarea { flex:1; min-height:42px; resize:vertical; border:1px solid #C9DFEA; border-radius:13px; padding:.65rem .75rem; background:#fff; color:#29485B; font:inherit; }
+        .post-reader-composer textarea:focus-visible { outline:3px solid rgba(31,119,190,.22); border-color:#1F77BE; }
+        .post-reader-submit { min-height:42px; padding:.5rem .9rem; border:1px solid #1F77BE; border-radius:11px; background:#1F77BE; color:#fff; font-weight:800; cursor:pointer; }
+        .post-reader-submit:hover { background:#125A96; }
+        .post-reader-error { margin:.35rem 0 0 2.6rem; color:#B42318; font-size:.76rem; }
+        @media (max-width:640px) { .post-reader-backdrop { align-items:end; padding:0; } .post-reader-dialog { width:100%; max-height:calc(100dvh - 12px); border-radius:18px 18px 0 0; } .post-reader-scroll { max-height:calc(100dvh - 82px); padding:1rem; } }
+        @media (prefers-reduced-motion:reduce) { .post-reader-backdrop, .post-reader-dialog { transition:none !important; } }
+    </style>
 </div>

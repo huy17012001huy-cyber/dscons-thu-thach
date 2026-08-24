@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Models\Setting;
 use Carbon\Carbon;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Gate;
@@ -20,7 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(\App\Services\JobDescriptionParser::class, \App\Services\DeterministicJobDescriptionParser::class);
+        $this->app->bind(\App\Services\CandidateMatcher::class, \App\Services\DeterministicCandidateMatcher::class);
     }
 
     /**
@@ -93,20 +93,5 @@ class AppServiceProvider extends ServiceProvider
             return $message;
         });
 
-        // Email đặt lại mật khẩu — nội dung tiếng Việt
-        ResetPassword::toMailUsing(function ($notifiable, string $token): MailMessage {
-            $brandName = app()->bound('brand') ? brand()->name : config('app.name');
-            $url = route('password.reset', ['token' => $token, 'email' => $notifiable->getEmailForPasswordReset()]);
-            $expire = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire', 60);
-
-            return (new MailMessage)
-                ->subject('Đặt lại mật khẩu — ' . $brandName)
-                ->greeting('Chào ' . $notifiable->name . '!')
-                ->line('Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản ' . $brandName . '. Bấm nút bên dưới để chọn mật khẩu mới.')
-                ->action('Đặt lại mật khẩu', $url)
-                ->line('Liên kết này sẽ hết hạn sau ' . $expire . ' phút.')
-                ->line('Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này — mật khẩu của bạn vẫn an toàn.')
-                ->salutation('Thân mến,' . "\n" . 'Đội ngũ ' . $brandName);
-        });
     }
 }

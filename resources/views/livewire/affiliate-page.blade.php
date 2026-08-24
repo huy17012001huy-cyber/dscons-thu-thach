@@ -1,11 +1,20 @@
-<div>
-    <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:0.25rem;">🤝 Affiliate</h1>
+<div class="affiliate-page">
+<style>
+    .affiliate-page { width: min(100%, 880px); margin: 0 auto; }
+    .affiliate-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .affiliate-page .affiliate-stat { box-shadow: none; }
+    .affiliate-page .affiliate-stat:hover { border-color: #A9CAD7; background: #FBFDFE; }
+    .affiliate-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    @media (max-width: 640px) { .affiliate-page .affiliate-link-row { align-items: stretch; } .affiliate-page .affiliate-link-row .btn { justify-content: center; } }
+</style>
+
+    <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:0.25rem;"><x-icon name="user-plus" size="22" /> Affiliate</h1>
     <p style="font-size:0.8rem; color:#5C5C66; margin-bottom:1.5rem;">Giới thiệu bạn bè · Nhận hoa hồng 20%</p>
 
     {{-- Referral link --}}
     <div class="card mb-4">
         <h2 style="font-size:0.9rem; font-weight:700; color:#1A1A1A; margin-bottom:0.75rem;">Link giới thiệu của bạn</h2>
-        <div class="flex gap-2" x-data="{ copied: false }">
+        <div class="affiliate-link-row flex gap-2" x-data="{ copied: false }">
             <input type="text" value="{{ $referralLink }}" readonly class="input" style="font-size:0.8rem; background:#F7F5F3;">
             <button @click="navigator.clipboard.writeText('{{ $referralLink }}'); copied = true; setTimeout(() => copied = false, 2000)"
                 class="btn btn-primary shrink-0" style="font-size:0.8rem; padding:0.4rem 0.875rem;">
@@ -17,15 +26,15 @@
 
     {{-- Stats --}}
     <div class="grid gap-4 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-        <div class="card text-center">
+        <div class="affiliate-stat card text-center">
             <p style="font-size:1.5rem; font-weight:800; color:#1A1A1A;">{{ $referralCount }}</p>
             <p style="font-size:0.8rem; color:#5C5C66;">Người đã giới thiệu</p>
         </div>
-        <div class="card text-center">
+        <div class="affiliate-stat card text-center">
             <p style="font-size:1.5rem; font-weight:800; color:#d17856;">{{ number_format($totalPending) }}đ</p>
             <p style="font-size:0.8rem; color:#5C5C66;">Đang chờ thanh toán</p>
         </div>
-        <div class="card text-center">
+        <div class="affiliate-stat card text-center">
             <p style="font-size:1.5rem; font-weight:800; color:#059669;">{{ number_format($totalEarned) }}đ</p>
             <p style="font-size:0.8rem; color:#5C5C66;">Đã nhận</p>
         </div>
@@ -50,7 +59,7 @@
         </div>
         @empty
         <div class="text-center py-8">
-            <p style="font-size:1.5rem; margin-bottom:0.5rem;">🤝</p>
+            <p style="font-size:1.5rem; margin-bottom:0.5rem;"><x-icon name="user-plus" size="28" /></p>
             <p style="color:#5C5C66; font-size:0.85rem;">Chưa có hoa hồng nào. Chia sẻ link giới thiệu để bắt đầu!</p>
         </div>
         @endforelse

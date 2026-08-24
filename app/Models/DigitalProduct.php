@@ -12,10 +12,10 @@ class DigitalProduct extends Model
     protected $fillable = [
         'title', 'description', 'thumbnail', 'pillar', 'price',
         'delivery_type', 'file_path', 'file_name', 'access_url',
-        'is_published', 'sort_order', 'brand_id',
+        'is_published', 'sort_order', 'brand_id', 'is_featured',
     ];
 
-    protected $casts = ['is_published' => 'boolean'];
+    protected $casts = ['is_published' => 'boolean', 'is_featured' => 'boolean'];
 
     public function purchases(): HasMany
     {

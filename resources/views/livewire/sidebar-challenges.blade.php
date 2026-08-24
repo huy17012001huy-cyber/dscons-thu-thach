@@ -1,4 +1,4 @@
-<div class="card" style="padding:0.875rem;">
+<div class="card sidebar-widget" style="padding:0.875rem;">
     <div class="flex justify-between items-center mb-2">
         <p class="widget-title" style="margin-bottom:0;">★ CHALLENGE MỞ</p>
         <a href="{{ route('challenge') }}" style="font-size:0.7rem; color:#d17856; font-weight:600;">Xem tất cả →</a>

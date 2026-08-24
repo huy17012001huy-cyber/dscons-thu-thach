@@ -1,4 +1,10 @@
-<div>
+<div class="admin-reports-page">
+<style>
+    .admin-reports-page { max-width: 920px; margin: 0 auto; }
+    .admin-reports-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .admin-reports-page .report-preview { background: #F8FCFD !important; border-color: #DDE9EE !important; border-radius: 10px !important; }
+</style>
+
     <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">▲ Báo cáo từ thành viên</h1>
 
     @forelse($reports as $report)
@@ -13,7 +19,7 @@
                 <p style="font-size:0.7rem; color:#5C5C66;">{{ $report->created_at->diffForHumans() }} · {{ $report->reason }}</p>
 
                 @if($report->reportable)
-                <div style="margin-top:0.5rem; padding:0.5rem; background:#F7F5F3; border-radius:0.375rem; border:1px solid #E1E1E1;">
+                <div class="report-preview" style="margin-top:0.5rem; padding:0.5rem; background:#F7F5F3; border-radius:0.375rem; border:1px solid #E1E1E1;">
                     <p style="font-size:0.75rem; color:#2E2E2E; line-height:1.4;">
                         {{ Str::limit($report->reportable->content ?? $report->reportable->body ?? '—', 200) }}
                     </p>

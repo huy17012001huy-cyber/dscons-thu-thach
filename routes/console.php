@@ -8,3 +8,4 @@ Schedule::command('aip:update-challenge')->everyFifteenMinutes();
 Schedule::command('aip:process-challenges')->dailyAt('02:00');
 Schedule::command('aip:reset-streaks')->dailyAt('01:00');
 Schedule::command('aip:watch-logins')->everyFifteenMinutes();
+Schedule::command('recruitment:expire-requests')->dailyAt('03:00');

@@ -1,6 +1,16 @@
-<div>
+<div class="admin-course-builder-page">
+<style>
+    .admin-course-builder-page { max-width: 1100px; margin: 0 auto; }
+    .admin-course-builder-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .admin-course-builder-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    @media (max-width: 640px) {
+        .admin-course-builder-page .flex.items-center.justify-between { align-items: flex-start; flex-wrap: wrap; }
+        .admin-course-builder-page .grid { grid-template-columns: 1fr !important; }
+    }
+</style>
+
     <div class="flex items-center gap-3 mb-4">
-        <a href="{{ route('admin.courses') }}" style="font-size:0.8rem; color:#5C5C66;">← Khóa học</a>
+        <a href="{{ request()->routeIs('community.*') ? community_route('manage.courses') : route('admin.courses') }}" style="font-size:0.8rem; color:#5C5C66;">← Khóa học</a>
         <h1 style="font-size:1.1rem; font-weight:800; color:#1A1A1A;">🔧 {{ $course->title }}</h1>
     </div>
 
@@ -30,7 +40,7 @@
                 </div>
                 <div class="flex gap-1">
                     <button wire:click="$set('addTaskToLesson', {{ $lesson->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.4rem;">+ Task</button>
-                    <button wire:click="deleteLesson({{ $lesson->id }})" wire:confirm="Xóa bài học?" class="btn btn-danger" style="font-size:0.65rem; padding:0.2rem 0.4rem;">×</button>
+                    <button wire:click="deleteLesson({{ $lesson->id }})" wire:confirm="Xóa bài học?" class="btn btn-danger" style="font-size:0.65rem; padding:0.2rem 0.4rem;" aria-label="Xóa bài học">Xóa</button>
                 </div>
             </div>
 
@@ -47,7 +57,7 @@
                         <span style="font-size:0.55rem; color:#991B1B;">*</span>
                         @endif
                     </div>
-                    <button wire:click="deleteTask({{ $task->id }})" class="btn btn-ghost" style="font-size:0.6rem; padding:0.1rem 0.3rem; color:#991B1B;">×</button>
+                    <button wire:click="deleteTask({{ $task->id }})" class="btn btn-ghost" style="font-size:0.6rem; padding:0.1rem 0.3rem; color:#991B1B;" aria-label="Xóa nhiệm vụ">Xóa</button>
                 </div>
                 @endforeach
             </div>

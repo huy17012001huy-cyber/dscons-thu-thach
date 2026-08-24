@@ -23,19 +23,15 @@
             <table style="width: 100%;border-collapse: collapse;font-size: 15px">
                 <tr><td style="padding: 8px 0;color: #666666;width: 35%;vertical-align: top">Trang đăng nhập:</td><td style="padding: 8px 0;color: #111111;font-weight: 500;text-align: right;vertical-align: top"><a href="{{ $loginUrl }}" style="color:#d17856;text-decoration:none">{{ $loginUrl }}</a></td></tr>
                 <tr><td style="padding: 8px 0;color: #666666;width: 35%;vertical-align: top">Email:</td><td style="padding: 8px 0;color: #111111;font-weight: 500;text-align: right;vertical-align: top">{{ $email }}</td></tr>
-                @if($password)
-                <tr><td style="padding: 8px 0;color: #666666;width: 35%;vertical-align: top;border-top: 1px dashed #ccc;padding-top: 10px">Mật khẩu:</td><td style="padding: 8px 0;color: #111111;font-weight: 700;text-align: right;vertical-align: top;border-top: 1px dashed #ccc;padding-top: 10px;font-family:monospace;letter-spacing:0.5px">{{ $password }}</td></tr>
-                @endif
             </table>
         </div>
 
         <div style="text-align: center;margin: 30px 0">
-            <a href="{{ $loginUrl }}" style="display: inline-block;background-color: #d17856;color: #ffffff;text-decoration: none;font-weight: 700;font-size: 16px;padding: 14px 32px;border-radius: 8px">ĐĂNG NHẬP NGAY</a>
+            <a href="{{ $loginUrl }}" style="display: inline-block;background-color: #d17856;color: #ffffff;text-decoration: none;font-weight: 700;font-size: 16px;padding: 14px 32px;border-radius: 8px">ĐĂNG NHẬP BẰNG GOOGLE</a>
         </div>
 
         <p style="color: #666666;font-size: 14px;line-height: 1.6;margin-bottom: 20px">
-            Vì lý do bảo mật, bạn nên đổi mật khẩu sau lần đăng nhập đầu tiên. Muốn đặt mật khẩu mới ngay, hãy
-            <a href="{{ $resetUrl }}" style="color:#d17856;text-decoration:underline">đặt lại mật khẩu tại đây</a>.
+            Để truy cập tài khoản, hãy dùng đúng địa chỉ email này và chọn nút “Đăng nhập bằng Google” tại trang đăng nhập.
         </p>
 
         <div style="margin-top: 40px;border-top: 1px solid #eeeeee;padding-top: 20px;font-size: 14px;color: #666666">

@@ -99,7 +99,8 @@ class EventsPage extends Component
         }
 
         $this->dispatch('toast', message: 'Đăng ký tham gia thành công!', type: 'success');
-        $user->notify(new EventNotification('Đăng ký sự kiện — DSCons', 'Bạn đã đăng ký sự kiện “' . $event->title . '”.', route('events')));
+        $url = app()->bound('brand') ? community_route('events') : route('events');
+        $user->notify(new EventNotification('Đăng ký sự kiện — ' . (app()->bound('brand') ? brand()->name : 'DSCons'), 'Bạn đã đăng ký sự kiện “' . $event->title . '”.', $url));
     }
 
     public function cancelRegistration(int $eventId): void
@@ -152,7 +153,9 @@ class EventsPage extends Component
             ->withCount(['registrations as registered_count' => fn($q) => $q->where('status', 'registered')]);
 
         if (!$isAdmin) {
-            $query->where('status', 'published');
+            // Cancelled/completed events remain visible as history, while drafts
+            // stay private to admins.
+            $query->whereIn('status', ['published', 'cancelled', 'completed']);
         }
 
         if ($this->tab === 'past') {

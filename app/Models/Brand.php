@@ -13,7 +13,7 @@ class Brand extends Model
     protected $fillable = [
         'name', 'slug', 'domain', 'logo_path', 'banner_path', 'tagline', 'description', 'owner_id', 'status', 'verified_at',
         'theme_primary', 'theme_accent', 'theme_bg',
-        'has_expeditions', 'has_academy', 'has_marketplace', 'has_qa',
+        'has_expeditions', 'has_academy', 'has_marketplace', 'has_qa', 'has_cv', 'has_recruitment',
         'is_invite_only', 'registration_mode',
     ];
 
@@ -22,9 +22,26 @@ class Brand extends Model
         'has_academy'     => 'boolean',
         'has_marketplace' => 'boolean',
         'has_qa'          => 'boolean',
+        'has_cv'          => 'boolean',
+        'has_recruitment' => 'boolean',
         'is_invite_only'  => 'boolean',
         'verified_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $brand): void {
+            foreach (array_unique(array_filter([$brand->domain, $brand->getOriginal('domain')])) as $domain) {
+                Cache::forget('brand:domain:' . strtolower($domain));
+            }
+        });
+
+        static::deleted(function (self $brand): void {
+            if ($brand->domain) {
+                Cache::forget('brand:domain:' . strtolower($brand->domain));
+            }
+        });
+    }
 
     public function owner(): BelongsTo
     {
@@ -79,5 +96,38 @@ class Brand extends Model
             '--accent' => $this->theme_accent,
             '--bg-app' => $this->theme_bg,
         ];
+    }
+
+    public function classProfiles(): array
+    {
+        return config('communities.classes.' . ($this->slug ?: 'default'))
+            ?: config('communities.classes.default', []);
+    }
+
+    public function stageLabels(): array
+    {
+        return config('communities.stages.' . ($this->slug ?: 'default'))
+            ?: config('communities.stages.default', []);
+    }
+
+    public function pillarProfiles(): array
+    {
+        return config('communities.pillars.' . ($this->slug ?: 'default'))
+            ?: config('communities.pillars.default', []);
+    }
+
+    public function pillarLabel(?string $pillar): string
+    {
+        return $this->pillarProfiles()[$pillar]['name'] ?? (string) $pillar;
+    }
+
+    public function subjects()
+    {
+        return $this->hasMany(CommunitySubject::class)->active();
+    }
+
+    public function postTypes()
+    {
+        return $this->hasMany(CommunityPostType::class)->active();
     }
 }

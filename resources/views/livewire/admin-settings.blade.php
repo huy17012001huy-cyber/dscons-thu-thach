@@ -1,4 +1,72 @@
-<div>
+<div class="admin-settings-page">
+<style>
+    .admin-settings-page { max-width: 920px; margin: 0 auto; }
+    .admin-settings-page .card { border-radius: 18px; }
+    .admin-settings-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    @media (max-width: 640px) { .admin-settings-page .flex.gap-3 { flex-direction: column; } }
+</style>
+
+    <div class="card mb-4" style="max-width:920px; margin-left:auto; margin-right:auto; border:1px solid #9DC9E2; background:linear-gradient(135deg,#F7FCFF 0%,#EEF8FC 100%);">
+        <div style="margin-bottom:1rem;">
+            <h1 style="font-size:1.2rem; font-weight:800; color:#123B59;">Cấu hình cộng đồng DSCons</h1>
+            <p style="font-size:.78rem; color:#61798A; margin-top:.25rem;">Chỉnh tên membership, danh hiệu theo level, màu badge và kích thước avatar thành viên ở sidebar.</p>
+        </div>
+
+        <form wire:submit="saveCommunityBranding" class="flex flex-col gap-4">
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;">
+                <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.8rem;border:1px solid #CFE3ED;border-radius:12px;background:#fff;cursor:pointer;">
+                    <input wire:model="hasCv" type="checkbox" style="margin-top:.2rem;accent-color:#1F77BE;">
+                    <span><strong style="display:block;color:#123B59;font-size:.85rem;">CV kỹ sư</strong><small style="display:block;color:#61798A;margin-top:.2rem;line-height:1.45;">Hiện mục CV trong Member và cho phép kỹ sư tạo bản CV riêng của cộng đồng này.</small></span>
+                </label>
+                <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.8rem;border:1px solid #CFE3ED;border-radius:12px;background:#fff;cursor:pointer;">
+                    <input wire:model="hasRecruitment" type="checkbox" style="margin-top:.2rem;accent-color:#1F77BE;">
+                    <span><strong style="display:block;color:#123B59;font-size:.85rem;">DSCons Talent</strong><small style="display:block;color:#61798A;margin-top:.2rem;line-height:1.45;">Bật landing page, tìm kiếm ẩn danh, credit và kết nối recruiter cho cộng đồng này.</small></span>
+                </label>
+            </div>
+            <div>
+                <label style="font-size:.75rem;color:#29485B;display:block;margin-bottom:.3rem;font-weight:750;">Tên membership Premium</label>
+                <input wire:model="membershipLabel" type="text" class="input" placeholder="Ví dụ: Kỹ sư VIP">
+                <p style="font-size:.7rem;color:#61798A;margin-top:.3rem;">Tên này hiển thị ở sidebar, trang Membership và badge của người đã đăng ký.</p>
+                @error('membershipLabel') <p style="color:#991B1B;font-size:.7rem;margin-top:.2rem;">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:end;gap:1rem;margin-bottom:.5rem;">
+                    <div>
+                        <label style="font-size:.75rem;color:#29485B;display:block;font-weight:750;">Danh hiệu và màu level</label>
+                        <p style="font-size:.7rem;color:#61798A;margin-top:.2rem;">Mốc level giữ nguyên; admin chỉ thay tên và màu hiển thị.</p>
+                    </div>
+                    <div style="font-size:.68rem;color:#61798A;white-space:nowrap;">5 bậc nghề</div>
+                </div>
+                <div style="display:grid;gap:.55rem;">
+                    @foreach($levelBands as $tone => $bandLabel)
+                        <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 52px;gap:.6rem;align-items:center;padding:.55rem .65rem;border:1px solid #D4E5ED;border-radius:10px;background:#fff;">
+                            <span style="font-size:.72rem;font-weight:750;color:#125A96;">{{ $bandLabel }}</span>
+                            <input wire:model="stageLabels.{{ $tone }}" type="text" class="input" placeholder="Tên danh hiệu">
+                            <input wire:model="badgeColors.{{ $tone }}" type="color" aria-label="Màu badge {{ $bandLabel }}" style="width:42px;height:34px;padding:2px;border:1px solid #C9DFEA;border-radius:8px;background:#fff;cursor:pointer;">
+                        </div>
+                    @endforeach
+                </div>
+                @error('stageLabels.*') <p style="color:#991B1B;font-size:.7rem;margin-top:.2rem;">Tên danh hiệu không hợp lệ.</p> @enderror
+                @error('badgeColors.*') <p style="color:#991B1B;font-size:.7rem;margin-top:.2rem;">Màu badge phải có dạng #RRGGBB.</p> @enderror
+            </div>
+
+            <div style="max-width:300px;">
+                <label style="font-size:.75rem;color:#29485B;display:block;margin-bottom:.3rem;font-weight:750;">Kích thước avatar thành viên bên phải (px)</label>
+                <input wire:model="memberAvatarSize" type="number" min="28" max="56" class="input">
+                <p style="font-size:.7rem;color:#61798A;margin-top:.3rem;">Cho phép từ 28 đến 56px.</p>
+                @error('memberAvatarSize') <p style="color:#991B1B;font-size:.7rem;margin-top:.2rem;">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="saveCommunityBranding">
+                    <span wire:loading.remove wire:target="saveCommunityBranding">Lưu cấu hình cộng đồng</span>
+                    <span wire:loading wire:target="saveCommunityBranding">Đang lưu...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
     {{-- ── Cấu hình xác minh email ─────────────────────────────── --}}
     <div class="card mb-4" style="max-width:720px; margin-left:auto; margin-right:auto;">
         <div class="mb-4">
@@ -40,7 +108,7 @@
                         placeholder="{{ $resendApiKeySet ? '•••••••••••••••• (đã lưu)' : 're_xxxxxxxxxxxxxxxxxxxx' }}">
                     @error('resendApiKey') <p style="color:#991B1B; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
                     <p style="font-size:0.72rem; color:#8A8A94; margin-top:0.35rem;">
-                        Lấy key tại <code style="background:#EDE9FE; padding:0.05rem 0.3rem; border-radius:0.25rem;">resend.com/api-keys</code>.
+                        Lấy key tại <code style="background:#E1F4F7; color:#125A96; padding:0.05rem 0.3rem; border-radius:0.25rem;">resend.com/api-keys</code>.
                         Domain của địa chỉ người gửi ở trên phải được xác minh trong tài khoản Resend thì email mới gửi được.
                     </p>
                 </div>
@@ -55,7 +123,7 @@
                         placeholder="{{ $brevoApiKeySet ? '•••••••••••••••• (đã lưu)' : 'xkeysib-xxxxxxxxxxxxxxxxxxxx' }}">
                     @error('brevoApiKey') <p style="color:#991B1B; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
                     <p style="font-size:0.72rem; color:#8A8A94; margin-top:0.35rem;">
-                        Lấy key tại <code style="background:#EDE9FE; padding:0.05rem 0.3rem; border-radius:0.25rem;">app.brevo.com → SMTP & API → API Keys</code>.
+                        Lấy key tại <code style="background:#E1F4F7; color:#125A96; padding:0.05rem 0.3rem; border-radius:0.25rem;">app.brevo.com → SMTP & API → API Keys</code>.
                         Địa chỉ người gửi ở trên phải là sender đã xác minh trong tài khoản Brevo.
                     </p>
                 </div>
@@ -99,8 +167,8 @@
             <h2 style="font-size:1rem; font-weight:700; color:#1A1A1A;">🔗 Webhook tạo thành viên</h2>
             <p style="font-size:0.78rem; color:#5C5C66; margin-top:0.2rem;">
                 Cho phép hệ thống bên thứ 3 (form bán hàng, bot, automation…) tự tạo tài khoản thành viên.
-                Bên gửi đính kèm secret bên dưới qua header <code style="background:#EDE9FE; padding:0.05rem 0.3rem; border-radius:0.25rem;">Authorization: Bearer &lt;secret&gt;</code>
-                hoặc thêm trường <code style="background:#EDE9FE; padding:0.05rem 0.3rem; border-radius:0.25rem;">secret</code> ngay trong body JSON.
+                Bên gửi đính kèm secret bên dưới qua header <code style="background:#E1F4F7; color:#125A96; padding:0.05rem 0.3rem; border-radius:0.25rem;">Authorization: Bearer &lt;secret&gt;</code>
+                hoặc thêm trường <code style="background:#E1F4F7; color:#125A96; padding:0.05rem 0.3rem; border-radius:0.25rem;">secret</code> ngay trong body JSON.
             </p>
         </div>
 
@@ -213,7 +281,7 @@
             @error('sepayWebhookToken') <p style="color:#991B1B; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
             <p style="font-size:0.72rem; color:#8A8A94; margin-top:0.35rem;">
                 Trong dashboard SePay, cấu hình webhook gửi header
-                <code style="background:#EDE9FE; padding:0.05rem 0.3rem; border-radius:0.25rem;">Authorization: Apikey &lt;key&gt;</code>.
+                <code style="background:#E1F4F7; color:#125A96; padding:0.05rem 0.3rem; border-radius:0.25rem;">Authorization: Apikey &lt;key&gt;</code>.
                 Key này chỉ ghi vào, không bao giờ hiển thị lại.
             </p>
         </div>

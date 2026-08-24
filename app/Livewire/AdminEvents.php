@@ -221,7 +221,11 @@ class AdminEvents extends Component
             : ExpeditionMember::query()->where('expedition_id', $event->expedition_id)->whereIn('status', ['approved', 'paid'])->whereNull('kicked_at')->pluck('user_id');
 
         User::query()->whereIn('id', $userIds->unique())->get()->each(function (User $user) use ($event, $prefix): void {
-            $user->notify(new EventNotification($prefix . ' — DSCons', $prefix . ': ' . $event->title, route('events')));
+            $url = app()->bound('brand')
+                ? community_route('events')
+                : route('events');
+            $name = app()->bound('brand') ? brand()->name : 'DSCons';
+            $user->notify(new EventNotification($prefix . ' — ' . $name, $prefix . ': ' . $event->title, $url));
         });
     }
 

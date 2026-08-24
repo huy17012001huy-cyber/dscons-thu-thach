@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\MembershipPlan;
+use App\Support\CommunityBrandSettings;
 
 class MembershipPricing extends Component
 {
@@ -57,6 +58,7 @@ class MembershipPricing extends Component
         return view('livewire.membership-pricing', [
             'plans' => self::PLANS,
             'membership' => $membership,
+            'membershipLabel' => CommunityBrandSettings::membershipLabel(brand()),
             'communityPlans' => $communityPlans,
             'selectedCommunityPlan' => $selectedCommunityPlan,
         ])->layout('layouts.app', ['title' => 'Gói thành viên — DSCons']);

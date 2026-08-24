@@ -1,3 +1,6 @@
+@php
+    $dsconsPillars = config('communities.pillars.dscons', []);
+@endphp
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,20 +17,20 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --ink: #1a1612;
-    --ink-soft: #4a4038;
-    --ink-mute: #8a7f75;
-    --paper: #faf7f2;
-    --paper-warm: #f2ece0;
-    --paper-deep: #ebe3d3;
-    --rule: #d6cdbc;
-    --accent: #c8441f;
-    --accent-soft: #fce4dc;
-    --gold: #b8882d;
-    --gold-soft: #f8ecd0;
-    --sage: #5c6b4d;
-    --sage-soft: #e8ede0;
-    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+    --ink: #102A3B;
+    --ink-soft: #29485B;
+    --ink-mute: #61798A;
+    --paper: #F7FAFC;
+    --paper-warm: #E1F4F7;
+    --paper-deep: #DCECF7;
+    --rule: #D4E1E8;
+    --accent: #1F77BE;
+    --accent-soft: #E1F4F7;
+    --gold: #C97700;
+    --gold-soft: #FFF1D6;
+    --sage: #147F96;
+    --sage-soft: #E6F6F8;
+    --shadow: 0 1px 2px rgba(18,59,89,0.05), 0 10px 26px rgba(18,59,89,0.08);
 }
 
 html { scroll-behavior: smooth; background: var(--paper); }
@@ -123,7 +126,7 @@ section .lead {
 .feature {
     background: white;
     padding: 22px 24px;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--rule);
     box-shadow: var(--shadow);
 }
@@ -174,8 +177,8 @@ section .lead {
     line-height: 1;
 }
 .feature.hi {
-    background: linear-gradient(135deg, var(--gold-soft) 0%, #faf2e0 100%);
-    border-color: rgba(184, 136, 45, 0.4);
+    background: var(--gold-soft);
+    border-color: rgba(201, 119, 0, 0.32);
 }
 .feature.hi .label { color: var(--gold); }
 .feature.hi h3 { color: var(--gold); }
@@ -188,7 +191,7 @@ section .lead {
 
 .tldr {
     background: var(--paper-warm);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 24px 28px;
     border-left: 4px solid var(--accent);
     margin-bottom: 56px;
@@ -236,7 +239,7 @@ footer a:hover { text-decoration: underline; }
 <header class="hero">
     <div class="tag">All-features overview</div>
     <h1>Toàn bộ tính năng của DSCons</h1>
-    <p>DSCons — cộng đồng thực chiến dành cho kỹ sư Cơ Điện muốn phát triển năng lực nghề nghiệp qua học tập, thử thách và phản hồi thực tế. AI, BIM và Vibe Coding là những hướng nội dung trong hệ sinh thái này.</p>
+    <p>DSCons là cộng đồng thực chiến dành cho kỹ sư Cơ Điện và BIM, tập trung vào học tập, thử thách và phản hồi từ công việc thực tế. Các chủ đề AI và Business sẽ được tách thành community riêng.</p>
     <div class="meta">Cập nhật {{ date('d/m/Y') }} · Internal use</div>
 </header>
 
@@ -314,9 +317,9 @@ footer a:hover { text-decoration: underline; }
             <p>Admin dán JSON bộ câu hỏi vào task (`quiz_json`) — số câu tuỳ ý, mỗi câu đúng +2 XP. Render inline ngay trong trang nhiệm vụ với palette warm-paper.</p>
         </div>
         <div class="feature">
-            <span class="label">Hỏi AI</span>
+            <span class="label">Gợi ý kỹ thuật</span>
             <h3>Nút copy prompt cho mỗi câu</h3>
-            <p>Mỗi câu có nút <strong>"Hỏi AI"</strong> — bấm copy prompt tình huống vào clipboard. Member dán vào Cursor/Antigravity/Claude Code, agent giải thích, hiểu sâu rồi mới chọn đáp án.</p>
+            <p>Mỗi câu có phần gợi ý tình huống và quy tắc chọn một lần. Thành viên đọc kỹ, đối chiếu với quy trình rồi mới chốt đáp án.</p>
         </div>
         <div class="feature">
             <span class="label">Click-to-commit</span>
@@ -364,7 +367,7 @@ footer a:hover { text-decoration: underline; }
         <div class="feature">
             <span class="label">5 Class</span>
             <h3>Định danh archetype</h3>
-            <p><strong>Offer Architect</strong> · <strong>Traffic Mage</strong> · <strong>Conversion Ranger</strong> · <strong>Delivery Assassin</strong> · <strong>Continuity Captain</strong>. Mỗi class có emoji + màu badge + thiên hướng task.</p>
+            <p><strong>BIM Coordinator</strong> · <strong>MEP Design Engineer</strong> · <strong>BIM Automation Specialist</strong> · <strong>Project Delivery Lead</strong> · <strong>Digital Construction Lead</strong>. Mỗi vai trò có hướng phát triển và nhóm nhiệm vụ riêng.</p>
         </div>
         <div class="feature">
             <span class="label">AIP currency</span>
@@ -379,7 +382,7 @@ footer a:hover { text-decoration: underline; }
         <div class="feature">
             <span class="label">Power Symbols</span>
             <h3>Mảnh quyền năng theo trụ cột</h3>
-            <p>Mỗi pillar (offer/traffic/conversion/delivery/continuity) có power symbol. Comment/like content thuộc pillar nào → nhặt fragment pillar đó. Đủ → upgrade.</p>
+            <p>Mỗi trụ cột ({{ collect($dsconsPillars)->pluck('name')->join(', ') }}) có power symbol. Comment/like content thuộc trụ cột nào → nhặt fragment trụ cột đó. Đủ → upgrade.</p>
         </div>
     </div>
 </section>
@@ -392,7 +395,7 @@ footer a:hover { text-decoration: underline; }
         <div class="feature">
             <span class="label">5 trụ cột</span>
             <h3>Pillar system</h3>
-            <p>Mỗi post thuộc 1 trụ cột: <strong>Offer</strong>, <strong>Traffic</strong>, <strong>Conversion</strong>, <strong>Delivery</strong>, <strong>Continuity</strong>. Filter feed theo pillar. Mỗi tuần 1 pillar được "Burning Zone" +50% EXP.</p>
+            <p>Mỗi post thuộc một trụ cột: <strong>{{ collect($dsconsPillars)->pluck('name')->join('</strong>, <strong>') }}</strong>. Lọc feed theo trụ cột. Mỗi tuần một trụ cột được "Burning Zone" +50% EXP.</p>
         </div>
         <div class="feature">
             <span class="label">Topics</span>

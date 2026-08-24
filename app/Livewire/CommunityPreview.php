@@ -24,10 +24,6 @@ class CommunityPreview extends Component
 
         $user = Auth::user();
         $user->brandRoles()->syncWithoutDetaching([$this->community->id => ['role' => 'member']]);
-        \App\Models\Membership::withoutGlobalScopes()->updateOrCreate(
-            ['brand_id' => $this->community->id, 'user_id' => $user->id],
-            ['status' => 'active', 'tier' => 'free', 'starts_at' => now(), 'expires_at' => now()->addYears(10)]
-        );
 
         $this->redirect(route('community.feed', ['community' => $this->community->slug]), navigate: true);
     }
@@ -36,32 +32,28 @@ class CommunityPreview extends Component
     {
         $coursesQuery = Course::withoutGlobalScopes()->where('brand_id', $this->community->id)->where('is_published', true);
         $challengesQuery = Expedition::withoutGlobalScopes()->where('brand_id', $this->community->id)->whereIn('status', ['open', 'active']);
-        $courses = (clone $coursesQuery)->latest()->limit(3)->get();
+        $courses = (clone $coursesQuery)->withCount('modules')->latest()->limit(3)->get();
         $challenges = (clone $challengesQuery)->latest()->limit(3)->get();
         $memberCount = $this->community->users()->count();
         $adminCount = $this->community->users()->wherePivotIn('role', ['owner', 'admin'])->count();
         $courseCount = (clone $coursesQuery)->count();
         $challengeCount = (clone $challengesQuery)->count();
         $eventCount = \App\Models\Event::withoutGlobalScopes()->where('brand_id', $this->community->id)->whereIn('status', ['published', 'completed'])->count();
+        $creator = $this->community->owner;
+        if (!$creator) {
+            $creator = $this->community->users()->wherePivot('role', 'owner')->first();
+        }
+        if (!$creator) {
+            $creator = $this->community->users()->wherePivot('role', 'admin')->first();
+        }
         $isMember = false;
+        $canManage = Auth::check() && Auth::user()->isBrandAdmin($this->community->id);
 
         if (Auth::check()) {
-            $isMember = Auth::user()->isBrandAdmin($this->community->id)
-                || Auth::user()->memberships()->withoutGlobalScopes()
-                    ->where('brand_id', $this->community->id)
-                    ->where(function ($membership) {
-                        $membership
-                            ->where(function ($active) {
-                                $active->where('status', 'active')
-                                    ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now()));
-                            })
-                            ->orWhere(function ($trial) {
-                                $trial->where('status', 'trial')->where('trial_ends_at', '>', now());
-                            });
-                    })->exists();
+            $isMember = Auth::user()->isCommunityParticipant($this->community->id);
         }
 
-        return view('livewire.community-preview', compact('courses', 'challenges', 'memberCount', 'adminCount', 'courseCount', 'challengeCount', 'eventCount', 'isMember'))
+        return view('livewire.community-preview', compact('courses', 'challenges', 'memberCount', 'adminCount', 'courseCount', 'challengeCount', 'eventCount', 'creator', 'isMember', 'canManage'))
             ->layout('layouts.app', ['title' => $this->community->name]);
     }
 }

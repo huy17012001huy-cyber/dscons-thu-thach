@@ -13,20 +13,20 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-    --ink: #1a1612;
-    --ink-soft: #4a4038;
-    --ink-mute: #8a7f75;
-    --paper: #faf7f2;
-    --paper-warm: #f2ece0;
-    --paper-deep: #ebe3d3;
-    --rule: #d6cdbc;
-    --accent: #c8441f;
-    --accent-soft: #fce4dc;
-    --gold: #b8882d;
-    --gold-soft: #f8ecd0;
-    --sage: #5c6b4d;
-    --sage-soft: #e8ede0;
-    --shadow: 0 1px 2px rgba(26,22,18,0.04), 0 8px 24px rgba(26,22,18,0.06);
+    --ink: #102A3B;
+    --ink-soft: #29485B;
+    --ink-mute: #61798A;
+    --paper: #F7FAFC;
+    --paper-warm: #E1F4F7;
+    --paper-deep: #DCECF7;
+    --rule: #D4E1E8;
+    --accent: #1F77BE;
+    --accent-soft: #E1F4F7;
+    --gold: #C97700;
+    --gold-soft: #FFF1D6;
+    --sage: #147F96;
+    --sage-soft: #E6F6F8;
+    --shadow: 0 1px 2px rgba(18,59,89,0.05), 0 10px 26px rgba(18,59,89,0.08);
 }
 html { background: var(--paper); }
 body {
@@ -80,16 +80,18 @@ main { max-width: 880px; margin: 0 auto; padding: 60px 32px 80px; }
     background: white;
     padding: 24px 28px;
     margin-bottom: 14px;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--rule);
     box-shadow: var(--shadow);
-    transition: border-color 0.15s;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     text-decoration: none;
     color: inherit;
     display: block;
 }
 .post:hover {
     border-color: var(--accent);
+    box-shadow: 0 12px 28px rgba(18,59,89,.10);
+    transform: translateY(-1px);
 }
 .post .meta {
     display: flex; align-items: center; gap: 12px;

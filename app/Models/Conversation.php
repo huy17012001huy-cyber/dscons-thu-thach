@@ -11,13 +11,14 @@ use App\Models\Concerns\HasBrand;
 class Conversation extends Model
 {
     use HasBrand;
-    protected $fillable = ['user_one_id', 'user_two_id', 'last_message_at', 'brand_id'];
+    protected $fillable = ['user_one_id', 'user_two_id', 'last_message_at', 'brand_id', 'conversation_type', 'contact_request_id'];
     protected $casts = ['last_message_at' => 'datetime'];
 
     public function userOne(): BelongsTo { return $this->belongsTo(User::class, 'user_one_id'); }
     public function userTwo(): BelongsTo { return $this->belongsTo(User::class, 'user_two_id'); }
     public function messages(): HasMany { return $this->hasMany(DirectMessage::class); }
     public function lastMessage(): HasOne { return $this->hasOne(DirectMessage::class)->latestOfMany(); }
+    public function contactRequest(): BelongsTo { return $this->belongsTo(RecruitmentContactRequest::class, 'contact_request_id'); }
 
     public function getOtherUser(int $myId): User
     {

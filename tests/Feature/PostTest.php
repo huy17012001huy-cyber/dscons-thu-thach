@@ -37,6 +37,26 @@ class PostTest extends TestCase
         ]);
     }
 
+    public function test_post_detail_has_a_unique_community_url_and_canonical_link(): void
+    {
+        $user = User::factory()->create();
+        Membership::factory()->active()->create(['user_id' => $user->id]);
+        $user->brandRoles()->attach(brand()->id, ['role' => 'member']);
+        $post = Post::factory()->create([
+            'brand_id' => brand()->id,
+            'user_id' => $user->id,
+            'title' => 'Bài viết có đường dẫn riêng',
+            'slug' => 'bai-viet-co-duong-dan-rieng-123',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/c/dscons/bai-viet/'.$post->slug)
+            ->assertOk()
+            ->assertSee('Bài viết có đường dẫn riêng')
+            ->assertSee('rel="canonical"', false)
+            ->assertSee('/c/dscons/bai-viet/'.$post->slug, false);
+    }
+
     /**
      * Test creating post awards XP
      */
@@ -175,21 +195,15 @@ class PostTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $pillars = [
-            'offer' => 'Offer',
-            'traffic' => 'Thu hút',
-            'conversion' => 'Chuyển đổi',
-            'delivery' => 'Cung ứng',
-            'continuity' => 'Continuity',
-        ];
+        $pillars = brand()->pillarProfiles();
 
-        foreach ($pillars as $pillar => $label) {
+        foreach ($pillars as $pillar => $profile) {
             $post = Post::factory()->create([
                 'user_id' => $user->id,
                 'pillar' => $pillar,
             ]);
 
-            $this->assertEquals($label, $post->pillar_label);
+            $this->assertEquals($profile['name'], $post->pillar_label);
         }
     }
 

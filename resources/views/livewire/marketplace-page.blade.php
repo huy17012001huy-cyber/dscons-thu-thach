@@ -1,112 +1,53 @@
-<div>
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">▤ Marketplace</h1>
-            <p style="font-size:0.8rem; color:#5C5C66;">Tài liệu, template và công cụ cho marketer</p>
-        </div>
+<div class="marketplace-page ds-learning-page">
+    <style>
+        .marketplace-page { --market-blue:#1F77BE; --market-ink:#123B59; --market-muted:#61798A; max-width:1120px; margin:0 auto; }
+        .marketplace-page .page-heading { margin-bottom:18px; }
+        .marketplace-page .page-heading h1 { display:flex; align-items:center; gap:8px; margin:0; color:var(--market-ink); font-size:clamp(1.45rem,2vw,1.85rem); line-height:1.15; letter-spacing:-.035em; }
+        .marketplace-page .page-heading p { margin:.45rem 0 0; color:var(--market-muted); font-size:.86rem; line-height:1.55; }
+        .marketplace-section { margin-bottom:30px; }
+        .marketplace-section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:11px; }
+        .marketplace-section-head h2 { display:inline-flex; align-items:center; gap:7px; margin:0; color:var(--market-ink); font-size:1.08rem; letter-spacing:-.02em; }
+        .marketplace-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+        .marketplace-item { display:flex; min-width:0; flex-direction:column; overflow:hidden; border:1px solid #D7E5EE; border-radius:16px; background:#fff; box-shadow:0 3px 10px rgba(18,59,89,.04); transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease; }
+        .marketplace-item:hover { transform:translateY(-3px); border-color:#8FB9CB; box-shadow:0 13px 26px rgba(18,59,89,.1); }
+        .marketplace-item-cover { position:relative; display:block; aspect-ratio:16/9; overflow:hidden; background:linear-gradient(135deg,#E1F4F7,#D6E9F4); text-decoration:none; }
+        .marketplace-item-cover img { width:100%; height:100%; object-fit:cover; transition:transform .35s ease; }
+        .marketplace-item:hover .marketplace-item-cover img { transform:scale(1.035); }
+        .marketplace-item-fallback { display:grid; place-items:center; width:100%; height:100%; color:#125A96; font-size:1.15rem; font-weight:850; letter-spacing:.15em; }
+        .marketplace-kind,.marketplace-featured { position:absolute; top:10px; padding:5px 7px; border-radius:999px; color:#fff; background:rgba(18,59,89,.78); font-size:.62rem; font-weight:800; backdrop-filter:blur(6px); }
+        .marketplace-kind { left:10px; }.marketplace-featured { right:10px; color:#fff; background:#F39402; }
+        .marketplace-item-body { display:flex; flex:1; flex-direction:column; padding:13px; }
+        .marketplace-item-tags { display:flex; min-height:25px; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+        .marketplace-tag { display:inline-flex; min-height:23px; align-items:center; gap:4px; padding:0 7px; border:1px solid #D7E5EE; border-radius:999px; color:#456477; background:#F7FAFC; font-size:.62rem; font-weight:750; }
+        .marketplace-tag.is-blue { color:#125A96; border-color:#B8D7E6; background:#EAF5FB; }.marketplace-tag.is-owned { color:#125A96; border-color:#B8D7E6; background:#E1F4F7; }.marketplace-tag.is-pending { color:#9A5B00; border-color:#F3D596; background:#FFF5DF; }.marketplace-tag.is-difficulty-normal { color:#18794E; border-color:#A7D8BE; background:#EAF8F0; }.marketplace-tag.is-difficulty-hard { color:#9A5B00; border-color:#F3D596; background:#FFF5DF; }.marketplace-tag.is-difficulty-chaos { color:#9B3D31; border-color:#F0C0B8; background:#FFF0EE; }
+        .marketplace-item h3 { margin:0; color:var(--market-ink); font-size:.94rem; line-height:1.35; }
+        .marketplace-item p { min-height:38px; margin:7px 0 10px; color:var(--market-muted); font-size:.74rem; line-height:1.5; }
+        .marketplace-item-meta { display:flex; justify-content:space-between; gap:8px; padding:9px 0; border-top:1px solid #E7EEF1; color:var(--market-muted); font-size:.66rem; }.marketplace-item-meta span,.marketplace-kind,.marketplace-featured,.marketplace-price,.marketplace-state { display:inline-flex; align-items:center; gap:4px; }
+        .marketplace-item-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:10px; }
+        .marketplace-price { color:#F39402; font-size:.85rem; font-weight:850; }.marketplace-price.is-free { color:#125A96; font-size:.75rem; }
+        .marketplace-cta { display:inline-flex; min-height:38px; align-items:center; justify-content:center; padding:0 10px; border:1px solid #1F77BE; border-radius:9px; color:#fff; background:#1F77BE; font-size:.68rem; font-weight:800; text-decoration:none; white-space:nowrap; cursor:pointer; }
+        .marketplace-cta:hover { color:#fff; background:#125A96; }.marketplace-state { font-size:.68rem; font-weight:800; }.marketplace-state.is-owned { color:#125A96; }.marketplace-state.is-pending { color:#9A5B00; }
+        .marketplace-empty { padding:32px; border:1px dashed #B8D7E6; border-radius:14px; color:var(--market-muted); background:#F7FCFD; text-align:center; }
+        @media (max-width:640px) { .marketplace-grid { grid-template-columns:1fr; }.marketplace-section-head { align-items:flex-start; flex-direction:column; gap:3px; } }
+        @media (prefers-reduced-motion:reduce) { .marketplace-item,.marketplace-item-cover img { transition:none; } }
+    </style>
+
+    <div class="page-heading">
+        <h1><x-icon name="shopping-cart" size="25" />Marketplace</h1>
+        <p>Challenge, khóa học và tài nguyên được chọn lọc cho hành trình phát triển năng lực.</p>
     </div>
 
-    {{-- Pillar filter --}}
-    <div class="flex flex-wrap gap-1 mb-4">
-        @foreach(['offer'=>'🔥 Offer','traffic'=>'✨ Traffic','conversion'=>'🎯 Conversion','delivery'=>'⚙️ Delivery','continuity'=>'🔗 Continuity'] as $key => $label)
-        <button wire:click="setPillar('{{ $key }}')" class="badge {{ $pillar === $key ? 'badge-pillar-'.$key : '' }}" style="cursor:pointer; padding:0.25rem 0.625rem; font-size:0.75rem; {{ $pillar === $key ? '' : 'background:#EEECE9; color:#5C5C66;' }}">{{ $label }}</button>
-        @endforeach
-    </div>
+    @foreach([
+        ['items' => $challengeItems, 'title' => 'Thử thách hot', 'icon' => 'target'],
+        ['items' => $courseItems, 'title' => 'Khóa học', 'icon' => 'graduation'],
+        ['items' => $resourceItems, 'title' => 'Nổi bật & trending tuần này', 'icon' => 'spark'],
+    ] as $section)
+        @if($section['items']->isNotEmpty())
+            <section class="marketplace-section"><div class="marketplace-section-head"><h2><x-icon name="{{ $section['icon'] }}" size="19" />{{ $section['title'] }}</h2></div><div class="marketplace-grid">@foreach($section['items'] as $item) @include('livewire.partials.marketplace-item', ['item' => $item]) @endforeach</div></section>
+        @endif
+    @endforeach
 
-    {{-- Product grid --}}
-    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
-        @forelse($products as $product)
-        <div class="card" style="display:flex; flex-direction:column;">
-            {{-- Thumbnail --}}
-            @if($product->thumbnail)
-            <div style="height:140px; background:#EEECE9; border-radius:0.5rem; margin-bottom:0.75rem; overflow:hidden;">
-                <img src="{{ asset('storage/' . $product->thumbnail) }}" alt="" style="width:100%; height:100%; object-fit:cover;">
-            </div>
-            @else
-            <div style="height:100px; background:#F0EDE8; border-radius:0.5rem; margin-bottom:0.75rem; display:flex; align-items:center; justify-content:center;">
-                <span style="font-size:2rem;">▣</span>
-            </div>
-            @endif
-
-            {{-- Info --}}
-            @if($product->pillar)
-            <span class="badge badge-pillar-{{ $product->pillar }}" style="font-size:0.65rem; width:fit-content; margin-bottom:0.375rem;">{{ ucfirst($product->pillar) }}</span>
-            @endif
-
-            <h3 style="font-size:0.9rem; font-weight:700; color:#1A1A1A; margin-bottom:0.25rem; line-height:1.3;">{{ $product->title }}</h3>
-
-            @if($product->description)
-            <p style="font-size:0.8rem; color:#5C5C66; margin-bottom:0.75rem; line-height:1.4; flex:1;">{{ Str::limit($product->description, 120) }}</p>
-            @else
-            <div style="flex:1;"></div>
-            @endif
-
-            {{-- Delivery type badge --}}
-            <div class="flex items-center gap-2 mb-3">
-                @if(in_array($product->delivery_type, ['file', 'both']))
-                <span style="font-size:0.65rem; color:#5C5C66; background:#F7F5F3; padding:0.15rem 0.375rem; border-radius:4px;">▫ File</span>
-                @endif
-                @if(in_array($product->delivery_type, ['link', 'both']))
-                <span style="font-size:0.65rem; color:#5C5C66; background:#F7F5F3; padding:0.15rem 0.375rem; border-radius:4px;">◎ Link</span>
-                @endif
-            </div>
-
-            {{-- Purchase area --}}
-            @if(in_array($product->id, $purchasedIds))
-                {{-- Already purchased — show access --}}
-                <div style="background:#D1FAE5; border:1px solid #A7F3D0; border-radius:0.5rem; padding:0.5rem;">
-                    <p style="font-size:0.75rem; font-weight:600; color:#065F46; margin-bottom:0.375rem;">✓ Đã mua</p>
-                    <div class="flex gap-2">
-                        @if($product->file_path)
-                        <a href="{{ asset('storage/' . $product->file_path) }}" download="{{ $product->file_name }}" class="btn btn-primary" style="font-size:0.7rem; padding:0.25rem 0.5rem;">📥 Tải file</a>
-                        @endif
-                        @if($product->access_url)
-                        <a href="{{ $product->access_url }}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.7rem; padding:0.25rem 0.5rem;">◎ Mở link</a>
-                        @endif
-                    </div>
-                </div>
-            @elseif(in_array($product->id, $pendingIds))
-                {{-- Pending payment --}}
-                @php
-                    $prodTransferCode = 'PROD' . $product->id . 'U' . auth()->id();
-                    $prodBankAccount = config('services.sepay.bank_account');
-                    $prodBankName = config('services.sepay.bank_name');
-                    $prodQrUrl = $prodBankAccount
-                        ? 'https://qr.sepay.vn/img?' . http_build_query(['acc' => $prodBankAccount, 'bank' => $prodBankName, 'amount' => $product->price, 'des' => $prodTransferCode, 'template' => 'compact'])
-                        : null;
-                @endphp
-                <div wire:poll.5s style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:0.5rem; padding:0.5rem;">
-                    <p style="font-size:0.75rem; font-weight:600; color:#92400E;">⏳ Chờ thanh toán</p>
-                    @if($prodQrUrl)
-                    <div class="text-center" style="margin:0.5rem 0;">
-                        <img src="{{ $prodQrUrl }}" alt="QR" style="max-width:180px; margin:0 auto; border-radius:0.5rem;">
-                    </div>
-                    @endif
-                    <div style="background:#FFF; border:1px solid #E1E1E1; border-radius:0.375rem; padding:0.5rem; margin-top:0.375rem;">
-                        <p style="font-size:0.7rem; color:#5C5C66;">Nội dung CK: <strong style="color:#d17856;">{{ $prodTransferCode }}</strong></p>
-                        <p style="font-size:0.7rem; color:#5C5C66;">Số tiền: <strong>{{ number_format($product->price, 0, ',', '.') }}đ</strong></p>
-                    </div>
-                    <p style="font-size:0.65rem; color:#059669; font-weight:500; margin-top:0.375rem;">⚡ Tự cập nhật khi nhận tiền</p>
-                </div>
-            @else
-                {{-- Not purchased --}}
-                <div class="flex items-center justify-between">
-                    @if($product->price > 0)
-                    <p style="font-size:1rem; font-weight:800; color:#d17856;">{{ number_format($product->price, 0, ',', '.') }}đ</p>
-                    @else
-                    <p style="font-size:0.85rem; font-weight:600; color:#059669;">Miễn phí</p>
-                    @endif
-                    <button wire:click="purchase({{ $product->id }})" wire:loading.attr="disabled" wire:loading.class="opacity-50" wire:target="purchase({{ $product->id }})" class="btn btn-primary" style="font-size:0.8rem; padding:0.4rem 0.75rem;">
-                        {{ $product->price > 0 ? 'Mua ngay' : 'Nhận miễn phí' }}
-                    </button>
-                </div>
-            @endif
-        </div>
-        @empty
-        <div class="card empty-state" style="grid-column:1/-1;">
-            <p style="font-size:2rem; margin-bottom:0.5rem;">▤</p>
-            <p style="color:#5C5C66;">Chưa có sản phẩm nào{{ $pillar ? ' cho trụ cột này' : '' }}</p>
-        </div>
-        @endforelse
-    </div>
+    @if($items->isEmpty())
+        <div class="marketplace-empty">Chưa có nội dung để hiển thị.</div>
+    @endif
 </div>

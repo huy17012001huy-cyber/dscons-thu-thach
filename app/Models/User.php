@@ -17,7 +17,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'username', 'password', 'avatar', 'bio',
+        'name', 'email', 'google_id', 'username', 'password', 'avatar', 'bio', 'account_type',
         'class', 'level', 'xp', 'aip', 'streak', 'last_active_at',
         'referred_by', 'class_changed_at', 'source',
     ];
@@ -119,6 +119,31 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(AffiliateEarning::class, 'referrer_id');
     }
 
+    public function recruiterProfile(): HasOne
+    {
+        return $this->hasOne(RecruiterProfile::class);
+    }
+
+    public function engineerProfile(): HasOne
+    {
+        return $this->hasOne(EngineerProfile::class);
+    }
+
+    public function engineerCv(): HasOne
+    {
+        return $this->hasOne(EngineerCv::class, 'user_id');
+    }
+
+    public function isRecruiter(): bool
+    {
+        return ! $this->is_admin && $this->account_type === 'recruiter';
+    }
+
+    public function isEngineer(): bool
+    {
+        return ! $this->is_admin && $this->account_type !== 'recruiter';
+    }
+
     public function eventRegistrations(): HasMany
     {
         return $this->hasMany(EventRegistration::class);
@@ -159,53 +184,79 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getJobStageAttribute(): string
     {
-        return match(true) {
-            $this->level <= 10  => 'Tân binh',
-            $this->level <= 30  => 'Freelancer',
-            $this->level <= 60  => 'Growing',
-            $this->level <= 100 => 'Chuyên gia',
-            $this->level <= 200 => 'Business Owner',
-            default             => 'Empire Builder',
-        };
+        $brand = app()->bound('brand')
+            ? brand()
+            : new \App\Models\Brand(['slug' => 'default']);
+        $stages = app(\App\Support\CommunityBrandSettings::class)->stageLabels($brand);
+
+        return $stages[$this->levelBadgeTone()] ?? 'Người mới vào nghề';
     }
 
     public function getClassLabelAttribute(): string
     {
         if ($this->level < 10) return 'Beginner';
-        return match($this->class) {
-            'offer_architect'    => 'Offer Architect',
-            'traffic_mage'       => 'Traffic Mage',
-            'conversion_ranger'  => 'Conversion Ranger',
-            'delivery_assassin'  => 'Delivery Assassin',
-            'continuity_captain' => 'Continuity Captain',
-            default              => 'Beginner',
-        };
+        return $this->communityClassProfile()['name'] ?? 'Beginner';
     }
 
     public function getClassColorAttribute(): string
     {
         if ($this->level < 10) return 'gray';
-        return match($this->class) {
-            'offer_architect'    => 'amber',
-            'traffic_mage'       => 'purple',
-            'conversion_ranger'  => 'emerald',
-            'delivery_assassin'  => 'blue',
-            'continuity_captain' => 'red',
-            default              => 'gray',
-        };
+        return $this->communityClassProfile()['color_token'] ?? 'blue';
     }
 
     public function getClassEmojiAttribute(): string
     {
-        if ($this->level < 10) return '🐔';
-        return match($this->class) {
-            'offer_architect'    => '🔥',
-            'traffic_mage'       => '✨',
-            'conversion_ranger'  => '🎯',
-            'delivery_assassin'  => '⚙️',
-            'continuity_captain' => '🔗',
-            default              => '🐔',
+        return $this->level < 10 ? '•' : '•';
+    }
+
+    public function getClassIconAttribute(): string
+    {
+        return $this->communityClassProfile()['icon'] ?? 'layers';
+    }
+
+    public function levelBadgeTone(): string
+    {
+        return match (true) {
+            $this->level <= 10 => 'newcomer',
+            $this->level <= 30 => 'practitioner',
+            $this->level <= 60 => 'core',
+            $this->level <= 100 => 'expert',
+            default => 'mentor',
         };
+    }
+
+    public function levelBadgeColor(): string
+    {
+        $brand = app()->bound('brand')
+            ? brand()
+            : new \App\Models\Brand(['slug' => 'default']);
+
+        return app(\App\Support\CommunityBrandSettings::class)->badgeColors($brand)[$this->levelBadgeTone()]
+            ?? '#1F77BE';
+    }
+
+    public function communityClassProfile(): array
+    {
+        $profiles = app()->bound('brand')
+            ? brand()->classProfiles()
+            : config('communities.classes.default', []);
+
+        $profile = $profiles[$this->class] ?? null;
+        if (!$profile) {
+            return [];
+        }
+
+        $profile['color_token'] ??= app()->bound('brand') && brand()->slug === 'dscons'
+            ? 'blue'
+            : match ($this->class) {
+                'offer_architect' => 'amber',
+                'traffic_mage' => 'purple',
+                'conversion_ranger' => 'emerald',
+                'delivery_assassin' => 'blue',
+                'continuity_captain' => 'red',
+                default => 'gray',
+            };
+        return $profile;
     }
 
     public function getDaCountAttribute(): int
@@ -216,6 +267,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getAvatarUrlAttribute(): string
     {
         if ($this->avatar) {
+            if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
+                return $this->avatar;
+            }
+
             return asset('storage/' . $this->avatar);
         }
         $initials = collect(explode(' ', $this->name))
@@ -243,5 +298,20 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where(function ($query) {
                 $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })->exists();
+    }
+
+    /** Community participation is tracked by the brand_user pivot. */
+    public function isCommunityParticipant(?int $brandId = null): bool
+    {
+        $brandId ??= app()->bound('brand') ? brand()->id : null;
+        if (!$brandId) return false;
+        if ($this->is_admin) return true;
+
+        $hasCommunityRole = $this->brandRoles()
+            ->where('brand_id', $brandId)
+            ->whereIn('role', ['member', 'moderator', 'admin', 'owner'])
+            ->exists();
+
+        return $hasCommunityRole;
     }
 }

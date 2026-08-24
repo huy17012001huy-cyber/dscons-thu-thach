@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Concerns\HasBrand;
 
 class UserBadge extends Model
 {
+    use HasBrand;
     public $timestamps = false;
 
-    protected $fillable = ['user_id', 'badge_id', 'earned_at'];
+    protected $fillable = ['user_id', 'badge_id', 'earned_at', 'brand_id'];
 
     protected $casts = ['earned_at' => 'datetime'];
 

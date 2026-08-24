@@ -1,7 +1,19 @@
-<div>
+<div class="admin-users-page">
+<style>
+    .admin-users-page { max-width: 1180px; margin: 0 auto; }
+    .admin-users-page .admin-table-scroll { overflow-x: auto; padding: 0; }
+    .admin-users-page .admin-users-table { min-width: 820px; }
+    .admin-users-page .admin-users-table th { background: #F7FAFC; }
+    .admin-users-page .admin-users-table th:first-child { border-top-left-radius: 15px; }
+    .admin-users-page .admin-users-table th:last-child { border-top-right-radius: 15px; }
+    .admin-users-page .admin-users-table tr:hover td { background: #FBFDFE; }
+    .admin-users-page .admin-users-table .btn { min-height: 32px; }
+    @media (max-width: 640px) { .admin-users-page .admin-toolbar .input { max-width: none !important; } }
+</style>
+
     <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">■ Quản lý người dùng</h1>
 
-    <div class="flex gap-2 flex-wrap mb-4">
+    <div class="admin-toolbar flex gap-2 flex-wrap mb-4">
         <input wire:model.live.debounce.300ms="search" type="search" class="input" placeholder="Tìm theo tên, email, username..." style="max-width:400px;">
         <button type="button" wire:click="openCreateModal" class="btn btn-primary">
             + Tạo thành viên
@@ -13,36 +25,31 @@
 
     {{-- ─── Modal tạo thành viên mới ─────────────────────────── --}}
     @if($showCreateModal)
-    <div style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem;"
+    <div class="admin-modal-backdrop" x-data x-on:keydown.escape.window="$wire.set('showCreateModal', false)" role="presentation" style="position:fixed; inset:0; background:rgba(16,42,59,.52); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem;"
          wire:click.self="$set('showCreateModal', false)">
-        <div class="card" style="background:#fff; max-width:440px; width:100%; max-height:90vh; overflow-y:auto;" wire:click.stop>
-            <h2 style="font-size:1.05rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">Tạo thành viên mới</h2>
+        <div class="card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="create-member-title" style="background:#fff; max-width:440px; width:100%; max-height:90vh; overflow-y:auto;" wire:click.stop>
+            <h2 id="create-member-title" style="font-size:1.05rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">Tạo thành viên mới</h2>
 
             <form wire:submit="createUser" style="display:flex; flex-direction:column; gap:0.85rem;">
                 <div>
-                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Họ tên</label>
-                    <input wire:model="newName" type="text" class="input" style="width:100%;" placeholder="Nguyễn Văn A">
+                    <label for="new-member-name" style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Họ tên</label>
+                    <input id="new-member-name" wire:model="newName" type="text" class="input" style="width:100%;" placeholder="Nguyễn Văn A">
                     @error('newName')<p style="color:#DC2626; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Email</label>
-                    <input wire:model="newEmail" type="email" class="input" style="width:100%;" placeholder="email@example.com">
+                    <label for="new-member-email" style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Email</label>
+                    <input id="new-member-email" wire:model="newEmail" type="email" class="input" style="width:100%;" placeholder="email@example.com">
                     @error('newEmail')<p style="color:#DC2626; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p>@enderror
                 </div>
 
-                <div>
-                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Mật khẩu</label>
-                    <div class="flex gap-2">
-                        <input wire:model="newPassword" type="text" class="input" style="flex:1; font-family:monospace;" placeholder="Tối thiểu 8 ký tự">
-                        <button type="button" wire:click="generatePassword" class="btn btn-ghost" style="white-space:nowrap;" title="Tạo mật khẩu ngẫu nhiên an toàn">🎲 Tạo</button>
-                    </div>
-                    @error('newPassword')<p style="color:#DC2626; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p>@enderror
-                </div>
+                <p style="margin:0; padding:0.75rem; border-radius:0.75rem; background:#EFF6FF; color:#1E40AF; font-size:0.78rem; line-height:1.5;">
+                    Thành viên sẽ nhận hướng dẫn và đăng nhập bằng Google theo email này. Không tạo hoặc gửi mật khẩu.
+                </p>
 
                 <div>
-                    <label style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Vai trò</label>
-                    <select wire:model="newRole" class="input" style="width:100%;">
+                    <label for="new-member-role" style="display:block; font-size:0.75rem; font-weight:600; color:#5C5C66; margin-bottom:0.3rem;">Vai trò</label>
+                    <select id="new-member-role" wire:model="newRole" class="input" style="width:100%;">
                         <option value="member">Thành viên</option>
                         <option value="mod">Moderator</option>
                         <option value="admin">Admin</option>
@@ -62,8 +69,8 @@
     </div>
     @endif
 
-    <div class="card">
-        <table style="width:100%; font-size:0.8rem;">
+    <div class="admin-table-scroll card">
+        <table class="admin-users-table" style="width:100%; font-size:0.8rem;">
             <thead>
                 <tr style="border-bottom:1px solid #E1E1E1; text-align:left;">
                     <th style="padding:0.5rem; color:#5C5C66; font-weight:600;">Người dùng</th>
@@ -83,11 +90,11 @@
                             <div>
                                 <div class="flex items-center gap-1">
                                     <p style="font-weight:600; color:#1A1A1A;">{{ $user->name }}</p>
-                                    <span class="badge badge-class-{{ $user->class_color }}" style="font-size:0.6rem;">{{ $user->class_emoji }}</span>
+                                    <span class="badge badge-class-{{ $user->class_color }}" style="font-size:0.6rem;"><x-icon name="{{ $user->class_icon }}" size="12" /></span>
                                 </div>
                                 <p style="font-size:0.7rem; color:#5C5C66;">{{ $user->email }}</p>
                                 @if($user->source)
-                                <span class="badge" style="background:#EDE9FE; color:#5B21B6; font-size:0.6rem;" title="Nguồn tạo tài khoản">↳ {{ $user->source }}</span>
+                                <span class="badge" style="background:#E1F4F7; color:#125A96; font-size:0.6rem;" title="Nguồn tạo tài khoản">↳ {{ $user->source }}</span>
                                 @endif
                             </div>
                         </div>

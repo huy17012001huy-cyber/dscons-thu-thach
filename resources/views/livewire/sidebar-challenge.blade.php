@@ -1,4 +1,4 @@
-<div class="card" style="padding:0.875rem;">
+<div class="card sidebar-widget" style="padding:0.875rem;">
     <p class="widget-title">★ COMMUNITY CHALLENGE</p>
     @if($challenge)
     <p style="font-size:0.8rem; font-weight:600; color:#1A1A1A; margin-bottom:0.25rem;">{{ $challenge->title }}</p>

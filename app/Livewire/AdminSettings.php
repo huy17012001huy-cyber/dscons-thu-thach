@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Setting;
+use App\Support\CommunityBrandSettings;
+use App\Models\EngineerProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -51,6 +53,28 @@ class AdminSettings extends Component
     // Secret hiển thị dạng plaintext cho admin copy đi cấu hình bên thứ 3.
     public string $webhookSecret = '';
 
+    #[Rule('required|string|max:80')]
+    public string $membershipLabel = '';
+
+    /** @var array<string, string> */
+    public array $stageLabels = [];
+
+    /** @var array<string, string> */
+    public array $badgeColors = [];
+
+    #[Rule('required|integer|min:28|max:56')]
+    public int $memberAvatarSize = 30;
+    public bool $hasCv = false;
+    public bool $hasRecruitment = false;
+
+    public array $levelBands = [
+        'newcomer' => 'Level 1–10',
+        'practitioner' => 'Level 11–30',
+        'core' => 'Level 31–60',
+        'expert' => 'Level 61–100',
+        'mentor' => 'Level 101+',
+    ];
+
     public function mount(): void
     {
         $driver = Setting::get('mail_driver', config('mail.default'));
@@ -64,11 +88,50 @@ class AdminSettings extends Component
         $this->sepayBankAccount     = Setting::get('sepay_bank_account', config('services.sepay.bank_account')) ?? '';
         $this->sepayBankName        = Setting::get('sepay_bank_name', config('services.sepay.bank_name')) ?? '';
         $this->sepayWebhookTokenSet = filled(Setting::get('sepay_webhook_token')) || filled(config('services.sepay.webhook_token'));
+
+        $this->membershipLabel = CommunityBrandSettings::membershipLabel(brand());
+        $this->stageLabels = CommunityBrandSettings::stageLabels(brand());
+        $this->badgeColors = CommunityBrandSettings::badgeColors(brand());
+        $this->memberAvatarSize = CommunityBrandSettings::memberAvatarSize(brand());
+        $this->hasCv = (bool) brand()->has_cv;
+        $this->hasRecruitment = (bool) brand()->has_recruitment;
+    }
+
+    public function saveCommunityBranding(): void
+    {
+        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+
+        $this->validate([
+            'membershipLabel' => 'required|string|max:80',
+            'stageLabels' => 'required|array',
+            'stageLabels.*' => 'required|string|max:80',
+            'badgeColors' => 'required|array',
+            'badgeColors.*' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'memberAvatarSize' => 'required|integer|min:28|max:56',
+        ]);
+
+        CommunityBrandSettings::save(
+            brand(),
+            $this->membershipLabel,
+            $this->stageLabels,
+            $this->badgeColors,
+            $this->memberAvatarSize,
+        );
+
+        brand()->update([
+            'has_cv' => $this->hasCv,
+            'has_recruitment' => $this->hasRecruitment,
+        ]);
+        if (! $this->hasCv || ! $this->hasRecruitment) {
+            EngineerProfile::query()->update(['is_searchable' => false]);
+        }
+
+        $this->dispatch('toast', message: 'Đã lưu cấu hình cộng đồng, level và membership.', type: 'success');
     }
 
     public function save(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
         $this->validate();
 
         // Xác minh email đã được gỡ bỏ — luôn tắt để thành viên vào thẳng.
@@ -99,7 +162,7 @@ class AdminSettings extends Component
 
     public function sendTest(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
 
         $this->validate(
             ['testEmail' => 'required|email'],
@@ -136,7 +199,7 @@ class AdminSettings extends Component
     // ─── SePay ────────────────────────────────────────────────
     public function saveSepay(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
 
         $this->validate([
             'sepayBankAccount'  => 'nullable|max:50',
@@ -160,14 +223,14 @@ class AdminSettings extends Component
     // ─── Webhook ──────────────────────────────────────────────
     public function generateWebhookSecret(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
         // Sinh tại chỗ để admin xem trước; phải bấm "Lưu webhook" mới có hiệu lực.
         $this->webhookSecret = 'whk_' . Str::random(48);
     }
 
     public function saveWebhook(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
 
         $this->validate(
             ['webhookSecret' => 'required|string|min:16|max:200'],
@@ -186,6 +249,7 @@ class AdminSettings extends Component
         return view('livewire.admin-settings', [
             'webhookUrl'      => url('/webhook/register'),
             'sepayWebhookUrl' => url('/webhook/sepay'),
+            'levelBands'      => $this->levelBands,
         ])->layout('layouts.app');
     }
 }

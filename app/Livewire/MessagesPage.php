@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Conversation;
 use App\Models\DirectMessage;
+use App\Models\RecruitmentContactRequest;
+use App\Models\User;
 use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,8 +25,15 @@ class MessagesPage extends Component
     {
         $userId = request()->query('user');
         if ($userId && (int)$userId !== Auth::id()) {
-            $conv = Conversation::findOrCreateBetween(Auth::id(), (int)$userId);
-            $this->activeConversationId = $conv->id;
+            $target = User::find((int) $userId);
+            if ($target?->isRecruiter()) {
+                $request = $this->acceptedRecruitmentRequest((int) $userId);
+                $conv = $request ? Conversation::where('contact_request_id', $request->id)->first() : null;
+                $this->activeConversationId = $conv?->id;
+            } else {
+                $conv = Conversation::findOrCreateBetween(Auth::id(), (int)$userId);
+                $this->activeConversationId = $conv->id;
+            }
         } elseif ($conversation) {
             // Verify current user is a participant
             $conv = Conversation::find($conversation);
@@ -37,7 +46,7 @@ class MessagesPage extends Component
     public function openConversation(int $id): void
     {
         $conv = Conversation::findOrFail($id);
-        if ($conv->user_one_id !== Auth::id() && $conv->user_two_id !== Auth::id()) return;
+        if (($conv->user_one_id !== Auth::id() && $conv->user_two_id !== Auth::id()) || ! $this->canUseConversation($conv)) return;
         $this->activeConversationId = $id;
         $this->markAsRead($id);
     }
@@ -61,7 +70,7 @@ class MessagesPage extends Component
         $user = Auth::user();
 
         // Verify user is participant
-        if ($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) return;
+        if (($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) || ! $this->canUseConversation($conv)) return;
 
         DirectMessage::create([
             'conversation_id' => $conv->id,
@@ -93,8 +102,12 @@ class MessagesPage extends Component
     {
         $userId = Auth::id();
 
-        $conversations = Conversation::where('user_one_id', $userId)
-            ->orWhere('user_two_id', $userId)
+        $conversations = Conversation::where(function ($query) use ($userId) {
+            $query->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+        })->where(function ($query) {
+            $query->where('conversation_type', 'community')
+                ->orWhereHas('contactRequest', fn ($request) => $request->where('status', 'accepted'));
+        })
             ->with(['userOne', 'userTwo', 'lastMessage'])
             ->orderByDesc('last_message_at')
             ->get();
@@ -119,5 +132,19 @@ class MessagesPage extends Component
             'messages' => $messages,
             'otherUser' => $otherUser,
         ])->layout('layouts.app', ['title' => 'Tin nhắn — DSCons']);
+    }
+
+    private function acceptedRecruitmentRequest(int $otherUserId): ?RecruitmentContactRequest
+    {
+        return RecruitmentContactRequest::query()->where('status', 'accepted')->where(function ($query) use ($otherUserId) {
+            $query->where('recruiter_id', Auth::id())->where('engineer_id', $otherUserId)
+                ->orWhere('recruiter_id', $otherUserId)->where('engineer_id', Auth::id());
+        })->latest()->first();
+    }
+
+    private function canUseConversation(Conversation $conversation): bool
+    {
+        if ($conversation->conversation_type !== 'recruitment') return true;
+        return $conversation->contactRequest?->status === 'accepted';
     }
 }

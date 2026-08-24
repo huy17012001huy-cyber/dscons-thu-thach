@@ -42,7 +42,7 @@ class AdminCourseBuilder extends Component
 
     public function addModule(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->validate(['moduleName' => 'required|min:3|max:100']);
         $maxOrder = $this->course->modules()->max('order_index') ?? -1;
         Module::create([
@@ -56,14 +56,14 @@ class AdminCourseBuilder extends Component
 
     public function deleteModule(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         Module::where('id', $id)->where('course_id', $this->course->id)->delete();
         $this->course->refresh();
     }
 
     public function addLesson(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->validate(['lessonTitle' => 'required|min:3|max:150']);
         if (!$this->addLessonToModule) return;
 
@@ -85,14 +85,14 @@ class AdminCourseBuilder extends Component
 
     public function deleteLesson(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         Lesson::findOrFail($id)->delete();
         $this->course->refresh();
     }
 
     public function addTask(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         $this->validate(['taskTitle' => 'required|min:3|max:200']);
         if (!$this->addTaskToLesson) return;
 
@@ -113,7 +113,7 @@ class AdminCourseBuilder extends Component
 
     public function deleteTask(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (!Auth::user()?->isBrandAdmin()) return;
         LessonTask::findOrFail($id)->delete();
         $this->course->refresh();
     }

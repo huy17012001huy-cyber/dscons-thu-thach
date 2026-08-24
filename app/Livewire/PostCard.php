@@ -13,6 +13,7 @@ use App\Support\PostContentRenderer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class PostCard extends Component
@@ -427,12 +428,12 @@ class PostCard extends Component
 
     public function renderContent(bool $showFull): string
     {
-        return app(PostContentRenderer::class)->render($this->post->content, !$showFull, 500);
+        return app(PostContentRenderer::class)->renderPost($this->post, !$showFull, 500);
     }
 
     public function contentPreview(): string
     {
-        return app(PostContentRenderer::class)->excerpt($this->post->content, 180);
+        return Str::limit(trim(strip_tags(app(PostContentRenderer::class)->renderPost($this->post))), 180);
     }
 
     public function render()

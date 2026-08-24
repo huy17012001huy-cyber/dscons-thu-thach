@@ -12,7 +12,7 @@ class DaKhongCucService
     public function award(User $user, int $delta, string $reason, ?User $awardedBy = null): void
     {
         $record = DaKhongCuc::firstOrCreate(
-            ['user_id' => $user->id],
+            ['user_id' => $user->id, 'brand_id' => app()->bound('brand') ? brand()->id : null],
             ['total_count' => 0]
         );
 

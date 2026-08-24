@@ -1,8 +1,28 @@
-<div>
-    <div class="flex items-center justify-between mb-4">
+<div class="qa-page">
+<style>
+    .qa-page { width: min(100%, 960px); margin: 0 auto; }
+    .qa-page .qa-heading { padding-bottom: 14px; border-bottom: 1px solid #DDE9EE; }
+    .qa-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .qa-page .question-trigger { transition: background-color .16s ease; }
+    .qa-page .question-trigger:hover { background: #F8FCFD; }
+    .qa-page .question-trigger:focus-visible { outline: 3px solid rgba(31,119,190,.25); outline-offset: -3px; }
+    .qa-loading-state { display:flex; align-items:center; gap:8px; min-height:42px; margin:12px 0; padding:10px 12px; border:1px solid #D7E5EA; border-radius:12px; background:#F8FCFD; color:#61798A; font-size:.78rem; }
+    .qa-empty-cta { display:inline-flex; min-height:40px; align-items:center; margin-top:.55rem; padding:.55rem .8rem; border:1px solid #B8D7E6; border-radius:10px; color:#125A96; font-size:.78rem; font-weight:750; text-decoration:none; background:#EAF7FA; }
+    .qa-empty-cta:hover { border-color:#1F77BE; background:#D9F0F5; }
+    .qa-page .tab-nav { padding: 4px; border: 1px solid #D7E5EA; border-radius: 14px; background: #fff; }
+    .qa-page .tab-item { min-height: 40px; border-radius: 10px; }
+    .qa-page .tab-item.active { background: #E1F4F7; }
+    @media (max-width: 640px) {
+        .qa-page .qa-heading { align-items: stretch; }
+        .qa-page .qa-heading .btn { width: 100%; justify-content: center; }
+    }
+</style>
+@php $pillars = brand()->pillarProfiles(); @endphp
+
+    <div class="qa-heading flex items-center justify-between mb-4">
         <div>
             <h1 style="font-size:1.25rem; font-weight:800; color:#0F3D5E;">Hỏi đáp kỹ thuật</h1>
-            <p style="font-size:0.8rem; color:#61798A; margin-top:0.15rem;">Cùng tháo gỡ bài toán MEP, BIM, AI và Vibe Coding.</p>
+            <p style="font-size:0.8rem; color:#61798A; margin-top:0.15rem;">Cùng tháo gỡ bài toán thiết kế, phối hợp và triển khai MEP/BIM.</p>
         </div>
         @auth
         <button wire:click="$toggle('showAsk')" aria-pressed="{{ $showAsk ? 'true' : 'false' }}" class="btn btn-primary" style="font-size:0.875rem;">
@@ -29,8 +49,8 @@
             </div>
             <div class="flex flex-wrap gap-3 items-center">
                 <div class="flex gap-1">
-                    @foreach(['offer'=>'🔥','traffic'=>'✨','conversion'=>'🎯','delivery'=>'⚙️','continuity'=>'🔗'] as $p => $e)
-                    <button wire:click="$set('pillar','{{ $p }}')" class="badge badge-pillar-{{ $p }}" style="cursor:pointer; padding:0.25rem 0.5rem; {{ $pillar === $p ? '' : 'opacity:0.4;' }}">{{ $e }}</button>
+                    @foreach($pillars as $p => $pillarData)
+                    <button type="button" wire:click="$set('pillar','{{ $p }}')" aria-pressed="{{ $pillar === $p ? 'true' : 'false' }}" class="badge badge-pillar-{{ $p }}" style="cursor:pointer; padding:0.25rem 0.5rem; {{ $pillar === $p ? '' : 'opacity:0.4;' }}"><x-icon name="{{ $pillarData['icon'] }}" size="14" color="{{ $pillarData['color'] }}" /> {{ $pillarData['name'] }}</button>
                     @endforeach
                 </div>
                 <label class="flex items-center gap-1.5" style="font-size:0.8rem; color:#2E2E2E; cursor:pointer;">
@@ -53,11 +73,15 @@
         @auth <button wire:click="setFilter('mine')" class="tab-item {{ $filter === 'mine' ? 'active' : '' }}">Của tôi</button> @endauth
     </div>
 
+    <div wire:loading.flex wire:target="setFilter,toggleQuestion,submitQuestion,submitAnswer,updateQuestion,updateAnswer" class="qa-loading-state" role="status" aria-live="polite">
+        <span class="loading-dot" aria-hidden="true"></span> Đang cập nhật câu hỏi...
+    </div>
+
     <div class="flex flex-col gap-3">
         @forelse($questions as $q)
         <div class="card" style="padding:0; overflow:hidden;">
             {{-- Question header --}}
-            <button wire:click="toggleQuestion({{ $q->id }})" class="w-full text-left" style="padding:1rem; cursor:pointer;">
+            <button wire:click="toggleQuestion({{ $q->id }})" aria-expanded="{{ $openQuestionId === $q->id ? 'true' : 'false' }}" aria-controls="question-body-{{ $q->id }}" class="question-trigger w-full text-left" style="padding:1rem; cursor:pointer;">
                 <div class="flex items-start gap-3">
                     @if($q->is_anonymous)
                     <div style="width:36px; height:36px; border-radius:50%; background:#EEECE9; display:flex; align-items:center; justify-content:center; font-size:0.875rem; flex-shrink:0;">❓</div>
@@ -69,7 +93,7 @@
                         <div class="flex flex-wrap items-center gap-2 mt-1">
                             <span style="font-size:0.75rem; color:#5C5C66;">{{ $q->is_anonymous ? 'Ẩn danh' : $q->user->name }}</span>
                             @if($q->pillar)
-                            <span class="badge badge-pillar-{{ $q->pillar }}" style="font-size:0.65rem;">{{ match($q->pillar){'offer'=>'Offer','traffic'=>'Thu hút','conversion'=>'Chuyển đổi','delivery'=>'Cung ứng','continuity'=>'Continuity'} }}</span>
+                            <span class="badge badge-pillar-{{ $q->pillar }}" style="font-size:0.65rem;">{{ $pillars[$q->pillar]['name'] ?? $q->pillar }}</span>
                             @endif
                             <span style="font-size:0.7rem; color:#5C5C66;">{{ $q->created_at->diffForHumans() }}</span>
                         </div>
@@ -90,12 +114,12 @@
 
             {{-- Expanded: full body + answers + reply form --}}
             @if($openQuestionId === $q->id)
-            <div style="border-top:1px solid #E1E1E1; padding:1rem;">
+            <div id="question-body-{{ $q->id }}" style="border-top:1px solid #E1E1E1; padding:1rem;">
                 @auth
                 @if(auth()->user()->is_admin && $editingQuestionId !== $q->id)
                 <div class="flex justify-end" style="margin-bottom:0.5rem;">
                     <div x-data="{ open: false }" style="position:relative;">
-                        <button @click.stop="open = !open" style="background:none; border:none; cursor:pointer; padding:2px 6px; font-size:1rem; color:#9ca3af; line-height:1;">⋯</button>
+                        <button type="button" aria-label="Tùy chọn câu hỏi" @click.stop="open = !open" style="background:none; border:none; cursor:pointer; padding:6px 8px; border-radius:8px; font-size:1rem; color:#9ca3af; line-height:1;">⋯</button>
                         <div x-show="open" @click.away="open = false" x-transition x-cloak
                              style="position:absolute; right:0; top:calc(100% + 4px); z-index:50; background:#fff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); min-width:120px; overflow:hidden;">
                             <button @click.stop="open = false; $wire.editQuestion({{ $q->id }})" style="display:block; width:100%; text-align:left; padding:8px 14px; font-size:0.8rem; color:#2E2E2E; background:none; border:none; cursor:pointer;" onmouseover="this.style.background='#f5f4f2'" onmouseout="this.style.background='none'">Sửa câu hỏi</button>
@@ -139,7 +163,7 @@
                             @auth
                             @if($a->user_id === auth()->id() || auth()->user()->is_admin)
                             <div x-data="{ open: false }" style="position:relative; margin-left:auto;">
-                                <button @click.stop="open = !open" style="background:none; border:none; cursor:pointer; padding:2px 4px; font-size:1rem; color:#9ca3af; line-height:1;">⋯</button>
+                                <button type="button" aria-label="Tùy chọn câu trả lời" @click.stop="open = !open" style="background:none; border:none; cursor:pointer; padding:6px 8px; border-radius:8px; font-size:1rem; color:#9ca3af; line-height:1;">⋯</button>
                                 <div x-show="open" @click.away="open = false" x-transition x-cloak
                                      style="position:absolute; right:0; top:calc(100% + 4px); z-index:50; background:#fff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); min-width:120px; overflow:hidden;">
                                     <button @click.stop="open = false; $wire.editAnswer({{ $a->id }})" style="display:block; width:100%; text-align:left; padding:8px 14px; font-size:0.8rem; color:#2E2E2E; background:none; border:none; cursor:pointer;" onmouseover="this.style.background='#f5f4f2'" onmouseout="this.style.background='none'">Sửa</button>
@@ -191,6 +215,9 @@
         <div class="card empty-state">
             <p style="font-size:2rem; margin-bottom:0.5rem;">💬</p>
             <p style="color:#5C5C66;">Chưa có câu hỏi nào</p>
+            @auth
+            <button type="button" wire:click="$set('showAsk', true)" class="qa-empty-cta">Đặt câu hỏi đầu tiên</button>
+            @endauth
         </div>
         @endforelse
     </div>

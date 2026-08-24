@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Post;
 use Illuminate\Support\Str;
 
 class PostContentRenderer
@@ -16,9 +17,9 @@ class PostContentRenderer
         $prepared = preg_replace_callback(
             '#https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})(?:[^\s<]*)#i',
             function (array $match) use (&$embeds): string {
-                $token = '__DSCONS_YOUTUBE_'.count($embeds).'__';
-                $embeds[$token] = $this->youtubeEmbed($match[1]);
-                return "\n\n{$token}\n\n";
+                $placeholder = 'DSCONSYouTubeToken'.count($embeds);
+                $embeds[$placeholder] = $this->youtubeEmbed($match[1]);
+                return "\n\n{$placeholder}\n\n";
             },
             $content
         ) ?? $content;
@@ -46,6 +47,16 @@ class PostContentRenderer
         $html = str_replace('&amp;amp;', '&amp;', $html);
 
         return $html;
+    }
+
+    public function renderPost(Post $post, bool $truncate = false, int $limit = 500): string
+    {
+        if ($post->content_format === 'html' && filled($post->content_html)) {
+            $html = app(PostHtmlSanitizer::class)->sanitize($post->content_html);
+            return $truncate ? Str::limit(strip_tags($html), $limit) : $html;
+        }
+
+        return $this->render($post->content, $truncate, $limit);
     }
 
     public function excerpt(string $content, int $limit = 180): string

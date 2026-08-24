@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+@stack('head')
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @livewireStyles
 <style>
@@ -38,10 +39,10 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 
 :root {
     /* Type scale — 4 steps only */
-    --fs-xs:   12px;   /* uppercase labels, badge counts */
-    --fs-sm:   14px;   /* captions, meta, secondary */
-    --fs-base: 16px;   /* body, names, panel text */
-    --fs-md:   16px;   /* nav items, titles, headings */
+    --fs-xs:   11px;   /* uppercase labels, badge counts */
+    --fs-sm:   13px;   /* captions, meta, secondary */
+    --fs-base: 15px;   /* body, names, panel text */
+    --fs-md:   15px;   /* nav items, titles, headings */
 
     /* Colors */
     --green:        {{ $__brandPrimary }};
@@ -66,12 +67,12 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     --motion-base: 220ms;
 
     /* Layout dimensions */
-    --guild-w:      72px;
-    --sidebar-w:    276px;
-    --topbar-h:     48px;
+    --guild-w:      64px;
+    --sidebar-w:    228px;
+    --topbar-h:     54px;
     --user-h:       52px;
-    --rp-w:         300px;
-    --mob-nav-h:    60px;
+    --rp-w:         264px;
+    --mob-nav-h:    64px;
 }
 
 /* ── Community title bar ── */
@@ -136,9 +137,9 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 .guild-item.active:hover::before { height: 40px; }
 
 .guild-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
     background: #e8e5e0;
     display: flex;
     align-items: center;
@@ -154,8 +155,8 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     overflow: hidden;
     text-decoration: none;
 }
-.guild-item:hover .guild-icon  { border-radius: 16px; }
-.guild-item.active .guild-icon { border-radius: 16px; background: var(--green); color: #fff; }
+.guild-item:hover .guild-icon  { border-radius: 16px; background: var(--bg-hover); }
+.guild-item.active .guild-icon { border-radius: 16px; background: var(--green); color: #fff; box-shadow: 0 5px 14px rgba(31,119,190,.18); }
 .guild-icon img { width: 100%; height: 100%; object-fit: cover; }
 
 .guild-sep { width: 32px; height: 1px; background: rgba(0,0,0,0.1); flex-shrink: 0; }
@@ -164,7 +165,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 #channel-sidebar {
     width: var(--sidebar-w);
     min-width: var(--sidebar-w);
-    background: #FBFCFD;
+    background: #F9FCFD;
     display: flex;
     flex-direction: column;
     border-right: 1px solid var(--border);
@@ -177,7 +178,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 #community-banner {
     width: 100%;
     height: 78px;
-    background: linear-gradient(135deg, #E9F8FB, #DDF0F6);
+    background: #E1F4F7;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -209,7 +210,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 }
 
 #sidebar-header {
-    min-height: 58px;
+    min-height: 68px;
     margin: 8px 8px 6px;
     padding: 0;
     display: flex;
@@ -220,17 +221,20 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     background: transparent;
     box-shadow: none;
 }
-.community-switcher-main { display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; min-height: 58px; padding: 4px; border: 1px solid var(--border); border-radius: 14px; background: #fff; box-shadow: 0 4px 14px rgba(18,59,89,.06); transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.community-switcher-main { display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; min-height: 66px; padding: 5px; border: 1px solid var(--border); border-radius: 15px; background: #fff; box-shadow: 0 4px 14px rgba(18,59,89,.06); transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
 #sidebar-header.is-open .community-switcher-main { border-color: #B9D7E2; background: #EEF7F9; box-shadow: 0 6px 16px rgba(18,59,89,.08); }
 .community-switcher-chevron, .community-switcher-bell {
-    width: 30px; height: 34px; flex: 0 0 auto; border: 0; border-radius: 8px;
+    width: 38px; height: 40px; flex: 0 0 auto; border: 0; border-radius: 10px;
     display: grid; place-items: center; background: transparent; color: var(--text-muted);
     cursor: pointer;
 }
 .community-switcher-chevron:hover, .community-switcher-bell:hover { background: var(--bg-hover); color: var(--text); }
-.community-switcher-chevron svg { width: 14px; height: 14px; }
+.community-switcher-chevron:focus-visible, .community-switcher-button:focus-visible, .community-switcher-bell:focus-visible { outline: 3px solid rgba(31,119,190,.22); outline-offset: 1px; }
+.community-switcher-chevron svg { width: 15px; height: 15px; }
 .community-switcher-bell { margin-left: auto; }
-.community-switcher-bell svg { width: 17px; height: 17px; }
+.community-switcher-bell svg { width: 18px; height: 18px; }
+.community-switcher-main > .notification-bell { margin-left: auto; flex: 0 0 auto; }
+.community-switcher-main > .notification-bell > button { width: 38px; height: 38px; color: var(--text-muted) !important; }
 #sidebar-header h2 {
     font-size: var(--fs-md);
     font-weight: 600;
@@ -240,7 +244,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     text-overflow: ellipsis;
 }
 .community-switcher-button {
-    width: auto; flex: 1 1 auto; min-width: 0; min-height: 40px; padding: 5px 6px; border: 0; border-radius: 10px;
+    width: auto; flex: 1 1 auto; min-width: 0; min-height: 52px; padding: 5px 7px; border: 0; border-radius: 11px;
     background: transparent; color: var(--text); display: flex; align-items: center; gap: 9px;
     text-align: left; cursor: pointer; font: inherit;
 }
@@ -256,7 +260,11 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     gap: 9px; color: var(--text); text-decoration: none; font-size: 13px; font-weight: 650;
 }
 .community-switcher-item:hover, .community-switcher-item.active { background: var(--bg-active); }
-.community-switcher-logo { width: 30px; height: 30px; border-radius: 9px; object-fit: cover; flex: 0 0 auto; background: #E1F4F7; }
+.community-switcher-logo { width: 38px; height: 38px; border-radius: 11px; object-fit: cover; flex: 0 0 auto; background: #E1F4F7; }
+.community-switcher-discovery-icon { display: grid; place-items: center; color: var(--green); }
+.community-switcher-discovery-icon svg { width: 17px; height: 17px; }
+.community-switcher-discovery-label { font-size: 13px !important; letter-spacing: -.025em; }
+.community-stat-grid span { display: block; color: var(--text-muted); font-size: 10px; line-height: 1.2; white-space: nowrap; }
 .community-switcher-footer { display: grid; grid-template-columns: 1fr; gap: 6px; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border); }
 .community-switcher-footer a { min-height: 40px; display: flex; align-items: center; padding: 0 11px; border-radius: 9px; background: #F4F8FA; color: var(--text); text-decoration: none; font-size: 12px; font-weight: 700; }
 .community-switcher-footer a:hover { background: var(--bg-active); color: var(--green); }
@@ -283,15 +291,15 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     align-items: center;
     gap: 4px;
 }
-.ch-category svg { width: 12px; height: 12px; transition: transform .15s; }
+.ch-category svg { width: 12px; height: 12px; color: var(--text-muted); stroke: currentColor; transition: transform .15s; }
 
 .ch-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 40px;
+    min-height: 42px;
     padding: 8px 10px;
-    border-radius: var(--radius-sm);
+    border-radius: 10px;
     color: var(--text-ch);
     font-size: var(--fs-md);
     font-weight: 500;
@@ -299,11 +307,11 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     cursor: pointer;
     margin-bottom: 1px;
     text-decoration: none;
-    transition: background .1s, color .1s;
+    transition: background-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
-.ch-item:hover   { background: var(--bg-hover); color: #1A1A1A; transform: translateX(2px); }
+.ch-item:hover   { background: var(--bg-hover); color: var(--text); }
 .ch-item.active  { background: var(--bg-active); color: var(--green); font-weight: 650; box-shadow: inset 3px 0 0 var(--green); }
-.ch-item svg     { width: 18px; height: 18px; flex-shrink: 0; opacity: .5; }
+.ch-item svg     { width: 18px; height: 18px; flex-shrink: 0; color: var(--green, #1F77BE); opacity: .82; stroke-width: 1.8; }
 .ch-item.active svg, .ch-item:hover svg { opacity: 1; }
 .ch-item.active svg { color: var(--green); }
 .ch-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -327,7 +335,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 /* User panel — darker bg like Discord */
 #user-panel {
     height: 52px;
-    background: var(--bg-app);
+    background: #F2F8FA;
     display: flex;
     align-items: center;
     padding: 0 8px;
@@ -362,10 +370,10 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 .user-name  { font-size: var(--fs-sm); font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-stage { font-size: var(--fs-xs); color: var(--green); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .panel-btn  {
-    width: 26px; height: 26px;
-    border-radius: 6px; background: transparent; border: none;
+    width: 40px; height: 40px;
+    border-radius: 10px; background: transparent; border: none;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted); transition: background .1s;
+    color: var(--text-muted); transition: background-color .16s ease, color .16s ease;
 }
 .panel-btn:hover { background: var(--bg-hover); color: var(--text); }
 .panel-btn svg { width: 14px; height: 14px; }
@@ -375,7 +383,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: var(--bg-card);
+    background: var(--bg-content);
     overflow: hidden;
     min-width: 0;
 }
@@ -387,7 +395,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    padding: 0 14px;
+    padding: 0 18px;
     gap: 10px;
     flex-shrink: 0;
 }
@@ -399,14 +407,14 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     font-weight: 600;
     color: var(--text);
 }
-.topbar-title svg { color: var(--text-cat); width: 17px; height: 17px; }
+.topbar-title svg { color: var(--green); width: 17px; height: 17px; stroke: currentColor; }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .topbar-search {
     display: flex; align-items: center; gap: 5px;
     background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    min-height: 36px;
+    border-radius: 10px;
+    min-height: 40px;
     padding: 6px 10px;
     font-size: var(--fs-sm);
     color: #1A1A1A;
@@ -415,8 +423,8 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 }
 .topbar-search svg { width: 12px; height: 12px; }
 .topbar-btn {
-    width: 36px; height: 36px;
-    border-radius: 6px; background: transparent; border: none;
+    width: 40px; height: 40px;
+    border-radius: 10px; background: transparent; border: none;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     color: var(--text-muted); transition: background .1s;
 }
@@ -449,7 +457,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 1.75rem;
+    padding: 1.5rem clamp(1rem, 2.5vw, 2rem);
     scrollbar-width: thin;
     scrollbar-color: rgba(0,0,0,0.08) transparent;
     min-width: 0;
@@ -457,11 +465,32 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 #content-area::-webkit-scrollbar { width: 4px; }
 #content-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 2px; }
 
+/* Admin uses the same visual language as the learning product, with denser data
+   surfaces and stronger separation between tools and content. */
+body.is-admin-area #content-area { background: #F7FAFC; }
+body.is-admin-area .card { border-radius: 16px; border-color: #D7E5EA; }
+body.is-admin-area .page-heading { padding-bottom: 14px; border-bottom: 1px solid #DDE9EE; }
+body.is-admin-area .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+body.is-admin-area table { border-collapse: separate; border-spacing: 0; }
+body.is-admin-area th { color: var(--text-muted); font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+body.is-admin-area td { color: var(--text-secondary); }
+body.is-admin-area .admin-table-scroll { border: 1px solid #D7E5EA; border-radius: 16px; box-shadow: 0 2px 8px rgba(18,59,89,.035); }
+body.is-admin-area .admin-table-scroll thead th { position: sticky; top: 0; z-index: 2; background: #F7FAFC; border-bottom: 1px solid #D7E5EA; }
+body.is-admin-area .admin-table-scroll tbody tr:last-child td { border-bottom: 0 !important; }
+body.is-admin-area .admin-table-scroll tbody tr:hover td { background: #FBFDFE; }
+body.is-admin-area .admin-modal-card { border-radius: 18px; box-shadow: 0 24px 72px rgba(18,59,89,.22); }
+body.is-admin-area .admin-modal-backdrop :where(input, select, textarea):focus { position: relative; z-index: 1; }
+@media (max-width: 640px) {
+    body.is-admin-area #content-area { padding: 1rem .75rem calc(var(--mob-nav-h) + 1rem); }
+    body.is-admin-area .admin-modal-backdrop { align-items: flex-end !important; padding: .75rem !important; }
+    body.is-admin-area .admin-modal-card { max-height: calc(100dvh - 1.5rem) !important; border-radius: 18px !important; }
+}
+
 /* ══ 4. RIGHT PANEL ═════════════════════════════ */
 #right-panel {
     width: var(--rp-w);
     min-width: var(--rp-w);
-    background: #F8FBFC;
+    background: #F4FAFC;
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -482,13 +511,17 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 #right-panel-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 2px; }
 
 /* Right panel cards */
-.rp-card { background: var(--bg-card); border: 1px solid #D9E6EC; border-radius: 14px; padding: 15px; box-shadow: none; }
+.rp-card { background: var(--bg-card); border: 1px solid #D9E6EC; border-radius: 16px; padding: 15px; box-shadow: 0 2px 8px rgba(18,59,89,.035); }
+.rp-hero-fallback { position:absolute; inset:0; display:grid; place-items:center; color:rgba(255,255,255,.9); background:#125A96; }
+.rp-hero-fallback-inner { display:grid; justify-items:center; gap:6px; text-align:center; padding:16px; }
+.rp-hero-fallback-inner svg { width:30px; height:30px; }
+.rp-hero-fallback-inner strong { font-size:12px; letter-spacing:.02em; }
 .rp-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .rp-card-title { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .rp-see-all { font-size: var(--fs-xs); font-weight: 600; color: var(--green); text-decoration: none; }
 .rp-see-all:hover { text-decoration: underline; }
 .rp-empty { font-size: var(--fs-sm); color: var(--text-cat); text-align: center; padding: 6px 0; }
-.membership-cta { display: flex !important; align-items: center; justify-content: center; gap: 7px; border: 1px solid #1F77BE !important; border-radius: 12px !important; background: #1F77BE !important; color: #fff !important; font-weight: 750 !important; box-shadow: 0 5px 12px rgba(31,119,190,.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+.membership-cta { display: flex !important; align-items: center; justify-content: center; gap: 6px; border: 1px solid #1F77BE !important; border-radius: 12px !important; background: #1F77BE !important; color: #fff !important; font-size: .78rem !important; line-height: 1.2; white-space: nowrap; font-weight: 750 !important; box-shadow: 0 5px 12px rgba(31,119,190,.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
 .membership-cta.is-active { border-color: #0E527F !important; background: #0E527F !important; }
 .membership-cta:hover { background: #125A96 !important; color: #fff !important; box-shadow: 0 8px 16px rgba(18,90,150,.26); transform: translateY(-1px); }
 .membership-cta:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(18,90,150,.2); }
@@ -605,8 +638,9 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     #mobile-topbar { display: flex; }
     #mobile-nav    { display: flex; }
 
-    #main-area { padding-bottom: var(--mob-nav-h); height: 100dvh; }
+    #main-area { padding-bottom: calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 0px)); height: 100dvh; scroll-padding-bottom: calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 0px)); }
     #content-area { padding: .75rem; }
+    .mob-nav-btn { min-width: 56px; padding-left: 8px; padding-right: 8px; }
 
     #impersonation-banner { font-size: 11px; }
 }
@@ -625,10 +659,71 @@ button, a, input, select, textarea { touch-action: manipulation; }
         transition-duration: .01ms !important;
     }
 }
+
+/* DSCons feed direction: clear, spacious BIM/MEP community workspace. */
+body.dscons-shell {
+    --green: #1F77BE;
+    --green-pale: #DCECF7;
+    --bg-app: #EEF7FB;
+    --bg-content: #EEF7FB;
+    --bg-hover: #E7F2F8;
+    --bg-active: #DCECF7;
+    --border: #C9DFEA;
+    --dscons-sand: #EEF7FB;
+    --dscons-surface: #FFFFFF;
+    --dscons-ink: #102A3B;
+    --dscons-muted: #61798A;
+    --dscons-brand: #1F77BE;
+    --dscons-brand-soft: #DCECF7;
+    --dscons-border: #C9DFEA;
+    --sidebar-w: 304px;
+    --rp-w: 314px;
+    background: var(--dscons-sand);
+}
+body.dscons-shell #app,
+body.dscons-shell #main-area,
+body.dscons-shell #content-row { background: var(--dscons-sand); }
+body.dscons-shell #channel-sidebar {
+    background: #F7FBFD;
+    border-right-color: var(--dscons-border);
+}
+body.dscons-shell #content-area {
+    padding: 1.25rem clamp(1rem, 2vw, 2rem) 3rem;
+    background: var(--dscons-sand);
+}
+body.dscons-shell #right-panel {
+    background: #F7FBFD;
+    border-left-color: var(--dscons-border);
+}
+body.dscons-shell #right-panel-scroll { padding: 12px 14px; gap: 10px; }
+body.dscons-shell .rp-card,
+body.dscons-shell .card {
+    background: var(--dscons-surface);
+    border-color: var(--dscons-border);
+    box-shadow: 0 2px 8px rgba(18, 59, 89, .04);
+}
+body.dscons-shell .ch-item { color: var(--dscons-ink); }
+body.dscons-shell .ch-item:hover { background: #E7F2F8; color: #102A3B; }
+body.dscons-shell .ch-item.active { background: #DCECF7; color: #102A3B; }
+body.dscons-shell .ch-item.active { box-shadow: inset 3px 0 0 var(--dscons-brand); }
+body.dscons-shell .topbar-title { color: var(--dscons-ink); }
+body.dscons-shell .topbar-title svg,
+body.dscons-shell .ch-item svg { color: var(--dscons-brand); }
+body.dscons-shell .membership-cta {
+    background: #1F77BE !important;
+    border-color: #1F77BE !important;
+}
+body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
+@media (max-width: 1200px) {
+    body.dscons-shell { --sidebar-w: 260px; }
+}
+@media (max-width: 768px) {
+    body.dscons-shell #content-area { padding: .75rem .65rem calc(var(--mob-nav-h) + 1rem); }
+}
 </style>
 </head>
 
-<body @if(session('impersonator_id')) class="is-impersonating" @endif>
+<body class="@if(session('impersonator_id')) is-impersonating @endif @if(request()->routeIs('admin.*')) is-admin-area @endif @if(($brand->slug ?? null) === 'dscons') dscons-shell @endif">
 {{-- Skip link cho keyboard / screen reader --}}
 <a href="#content-area" style="position:absolute; left:-9999px; top:0; padding:0.5rem 1rem; background:#fff; color:#123B59; font-size:0.85rem; font-weight:600; z-index:10000; border:2px solid #F39402; border-radius:0.375rem;" onfocus="this.style.left='0.5rem'; this.style.top='0.5rem';" onblur="this.style.left='-9999px';">Bỏ qua điều hướng</a>
 
@@ -696,7 +791,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     @auth
     <div class="guild-item">
         <a href="{{ route('messages') }}" class="guild-icon" title="Tin nhắn" aria-label="Mở tin nhắn" style="background:var(--bg-card);">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--text-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <x-icon name="chat" size="20" color="var(--ds-text-muted)" />
         </a>
     </div>
     <div class="guild-sep"></div>
@@ -723,9 +818,29 @@ button, a, input, select, textarea { touch-action: manipulation; }
 {{-- 2. CHANNEL SIDEBAR ──────────────────────── --}}
 <div id="channel-sidebar">
     @php
-        $__sidebarMemberships = auth()->check()
-            ? auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active', 'trial'])->get()->filter(fn ($membership) => $membership->brand)
-            : collect();
+        $__shell = \App\Support\CommunityShellData::make($brand, auth()->user(), request()->routeIs('communities'));
+        $__sidebarMemberships = $__shell['sidebarMemberships'];
+        $__isDiscoveryContext = $__shell['isDiscoveryContext'];
+        $__discoveryMemberships = $__shell['discoveryMemberships'];
+        $__currentMembership = $__shell['currentMembership'];
+        $__featuredUpgrade = $__shell['featuredUpgrade'];
+        $__communityMembers = $__shell['communityMembers'];
+        $__communityMemberCount = $__shell['communityMemberCount'];
+        $__communityActiveCount = $__shell['communityActiveCount'];
+        $__communityAdminCount = $__shell['communityAdminCount'];
+        $__isPremiumMember = $__shell['isPremiumMember'];
+        $__isCommunityParticipant = $__shell['isCommunityParticipant'];
+        $__membershipLabel = $__shell['membershipLabel'];
+        $__memberAvatarSize = $__shell['memberAvatarSize'];
+        $__freezeExp = $__shell['freezeExpedition'];
+        $__membershipDisplayLabel = mb_strtoupper($__membershipLabel, 'UTF-8');
+        $__currentUser = auth()->user();
+        $__activityLabel = ! $__currentUser ? 'Khám phá cộng đồng' : match (true) {
+            $__currentUser->streak >= 30 => 'Học đều 30 ngày',
+            $__currentUser->streak >= 7 => 'Duy trì 7 ngày',
+            $__currentUser->last_active_at?->gte(now()->subDays(7)) => 'Đang hoạt động',
+            default => 'Bắt đầu học',
+        };
     @endphp
     <div id="sidebar-header" x-data="{ open: false }" :class="{ 'is-open': open }" style="position:relative;">
         <div class="community-switcher-main">
@@ -733,17 +848,24 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.25 15.75 12 19.5l3.75-3.75M8.25 8.25 12 4.5l3.75 3.75"/></svg>
             </button>
             <button type="button" class="community-switcher-button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="community-switcher-menu">
-                @if(($brand->slug ?? null) !== 'dscons' && $brand->logo_path)
-                    <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" class="community-switcher-logo">
+                @if($__isDiscoveryContext)
+                    <span class="community-switcher-logo community-switcher-discovery-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                    </span>
+                    <span class="community-switcher-discovery-label" style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;">Khám phá cộng đồng</span>
                 @else
-                    <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">
+                    @if(($brand->slug ?? null) !== 'dscons' && $brand->logo_path)
+                        <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" class="community-switcher-logo">
+                    @else
+                        <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" class="community-switcher-logo" style="object-fit:contain;padding:2px;">
+                    @endif
+                    <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:800;">{{ $brand->name }}</span>
+                    @if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:12px;">✓</span>@endif
                 @endif
-                <span style="min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:800;">{{ $brand->name }}</span>
-                @if($brand->isVerified())<span title="Đã xác minh" style="color:var(--green);font-size:12px;">✓</span>@endif
             </button>
-            <button type="button" class="community-switcher-bell" aria-label="Thông báo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
-            </button>
+            @auth
+                <livewire:notification-bell :key="'sidebar-notifications-'.$brand->id" />
+            @endauth
         </div>
         <div id="community-switcher-menu" class="community-switcher-menu" x-cloak x-show="open" x-transition.origin.top @click.outside="open = false">
             @auth
@@ -772,63 +894,74 @@ button, a, input, select, textarea { touch-action: manipulation; }
     <div id="channel-list">
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Cộng đồng
+            <x-icon name="users" size="14" color="var(--text-muted)" /> Cộng đồng
         </div>
         <a href="{{ community_route('feed') }}" class="ch-item {{ request()->routeIs('feed') || request()->routeIs('community.feed') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <x-icon name="chat" size="18" />
             <span class="ch-name">Bảng tin</span>
         </a>
         <a href="{{ community_route('cot') }}" class="ch-item {{ request()->routeIs('cot') || request()->routeIs('community.cot') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <x-icon name="compass" size="18" />
             <span class="ch-name">Kiến thức cốt lõi</span>
         </a>
-        <a href="{{ community_route('signals') }}" class="ch-item {{ request()->routeIs('signals') || request()->routeIs('community.signals') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span class="ch-name">Tín hiệu công nghệ</span>
-        </a>
         <a href="{{ community_route('qa') }}" class="ch-item {{ request()->routeIs('qa') || request()->routeIs('community.qa') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <x-icon name="question" size="18" />
             <span class="ch-name">Hỏi đáp kỹ thuật</span>
         </a>
 
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Học tập
+            <x-icon name="book" size="14" color="var(--text-muted)" /> Học tập
         </div>
         <a href="{{ community_route('academy') }}" class="ch-item {{ request()->routeIs('academy*') || request()->routeIs('community.academy*') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+            <x-icon name="graduation" size="18" />
             <span class="ch-name">Khóa học</span>
         </a>
         <a href="{{ community_route('challenge') }}" class="ch-item {{ request()->routeIs('challenge*') || request()->routeIs('community.challenge*') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+            <x-icon name="target" size="18" />
             <span class="ch-name">Challenge</span>
         </a>
         <a href="{{ community_route('events') }}" class="ch-item {{ request()->routeIs('events') || request()->routeIs('community.events') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            <x-icon name="calendar" size="18" />
             <span class="ch-name">Sự kiện</span>
         </a>
         <a href="{{ community_route('leaderboard') }}" class="ch-item {{ request()->routeIs('leaderboard') || request()->routeIs('community.leaderboard') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
+            <x-icon name="chart" size="18" />
             <span class="ch-name">Bảng xếp hạng</span>
         </a>
 
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Khác
+            <x-icon name="layers" size="14" color="var(--text-muted)" /> Tài nguyên
         </div>
         <a href="{{ community_route('marketplace') }}" class="ch-item {{ request()->routeIs('marketplace') || request()->routeIs('community.marketplace') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+            <x-icon name="shopping-cart" size="18" />
             <span class="ch-name">Marketplace</span>
         </a>
+        <a href="{{ community_route('orders') }}" class="ch-item {{ request()->routeIs('orders') || request()->routeIs('community.orders') ? 'active' : '' }}">
+            <x-icon name="receipt" size="18" />
+            <span class="ch-name">Gói &amp; Đơn hàng</span>
+        </a>
         <a href="{{ community_route('affiliate') }}" class="ch-item {{ request()->routeIs('affiliate') || request()->routeIs('community.affiliate') ? 'active' : '' }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <x-icon name="user-plus" size="18" />
             <span class="ch-name">Affiliate</span>
         </a>
 
+        @auth
+        @if(auth()->user()->isEngineer() && $brand->has_cv)
+        <div class="ch-category"><x-icon name="file-text" size="14" color="var(--text-muted)" /> Hồ sơ nghề nghiệp</div>
+        <a href="{{ community_route('engineer.cv') }}" class="ch-item {{ request()->routeIs('engineer.cv') || request()->routeIs('community.engineer.cv') ? 'active' : '' }}">
+            <x-icon name="cv" size="18" /><span class="ch-name">CV của tôi</span>
+        </a>
+        <a href="{{ community_route('engineer.recruitment-requests') }}" class="ch-item {{ request()->routeIs('engineer.recruitment-requests') || request()->routeIs('community.engineer.recruitment-requests') ? 'active' : '' }}">
+            <x-icon name="briefcase" size="18" /><span class="ch-name">Yêu cầu tuyển dụng</span>
+        </a>
+        @endif
+        @endauth
         @can('admin')
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            Admin
+            <x-icon name="settings" size="14" color="var(--text-muted)" /> Admin
         </div>
         <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -864,7 +997,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
     {{-- Mobile topbar --}}
     <div id="mobile-topbar">
-        <button class="mob-menu-btn" onclick="openSidebar()" aria-label="Menu">
+        <button id="mobile-menu-trigger" type="button" class="mob-menu-btn" onclick="openSidebar()" aria-label="Mở menu" aria-controls="mob-sidebar" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <span style="flex:1;font-size:var(--fs-md);font-weight:600;color:var(--text)">{{ $title ?? 'Feed' }}</span>
@@ -876,7 +1009,21 @@ button, a, input, select, textarea { touch-action: manipulation; }
     {{-- Desktop topbar --}}
     <div id="topbar">
         <div class="topbar-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            @php
+                $__topbarIcon = match (true) {
+                    request()->routeIs('academy*', 'community.academy*') => 'graduation',
+                    request()->routeIs('challenge*', 'community.challenge*') => 'target',
+                    request()->routeIs('events', 'community.events') => 'calendar',
+                    request()->routeIs('leaderboard', 'community.leaderboard') => 'trophy',
+                    request()->routeIs('marketplace', 'community.marketplace') => 'shopping-cart',
+                    request()->routeIs('orders', 'community.orders') => 'receipt',
+                    request()->routeIs('cot', 'community.cot') => 'compass',
+                    request()->routeIs('qa', 'community.qa') => 'question',
+                    request()->routeIs('affiliate', 'community.affiliate') => 'user-plus',
+                    default => 'chat',
+                };
+            @endphp
+            <x-icon :name="$__topbarIcon" size="17" color="var(--green)" />
             {{ $title ?? 'Feed' }}
         </div>
         <div class="topbar-right">
@@ -896,19 +1043,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
     </div>
 
     {{-- Site-wide holiday/freeze banner --}}
-    @php
-        $__freezeBrandId = $brand->id ?? 0;
-        $__freezeExp = cache()->remember('layout_freeze_banner_b'.$__freezeBrandId.'_v2', 30, function() use ($__freezeBrandId) {
-            $q = \App\Models\Expedition::where('status', 'active')
-                ->whereNotNull('freeze_from_day')
-                ->whereNotNull('freeze_ends_at')
-                ->where('freeze_ends_at', '>', now());
-            if ($__freezeBrandId) {
-                $q->where('brand_id', $__freezeBrandId);
-            }
-            return $q->first();
-        });
-    @endphp
     @if($__freezeExp)
     <div role="region" aria-label="Thông báo nghỉ lễ" style="background:#FEF3C7; border-bottom:1px solid #FDE68A; padding:0.625rem 1rem; flex-shrink:0; display:flex; align-items:baseline; gap:0.5rem; flex-wrap:wrap;">
         <span style="font-size:0.85rem; font-weight:700; color:#92400E; flex-shrink:0;"><span aria-hidden="true">🎉</span> Nghỉ lễ 30/4 - 1/5</span>
@@ -929,20 +1063,19 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 @if(request()->routeIs('communities'))
                 <div class="rp-card" style="padding:16px;">
                     <div style="width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#E1F4F7;color:var(--green);margin-bottom:11px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div>
-                    <div style="font-size:15px;font-weight:800;color:var(--text);">Khám phá community</div>
+                    <div style="font-size:15px;font-weight:800;color:var(--text);">Khám phá cộng đồng</div>
                     <p style="margin:6px 0 14px;color:var(--text-muted);font-size:12px;line-height:1.55;">Tìm nơi phù hợp để học tập, kết nối và cùng phát triển.</p>
-                    <div style="display:grid;gap:8px;color:var(--text-muted);font-size:12px;"><div style="display:flex;gap:8px;"><strong style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E1F4F7;color:var(--green);font-size:11px;">1</strong><span><b style="color:var(--text);">Khám phá</b> community phù hợp</span></div><div style="display:flex;gap:8px;"><strong style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E1F4F7;color:var(--green);font-size:11px;">2</strong><span><b style="color:var(--text);">Tham gia</b> để vào bảng tin</span></div></div>
+                    <div style="display:grid;gap:8px;color:var(--text-muted);font-size:12px;"><div style="display:flex;gap:8px;"><strong style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E1F4F7;color:var(--green);font-size:11px;">1</strong><span><b style="color:var(--text);">Khám phá</b> cộng đồng phù hợp</span></div><div style="display:flex;gap:8px;"><strong style="display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E1F4F7;color:var(--green);font-size:11px;">2</strong><span><b style="color:var(--text);">Tham gia</b> để vào bảng tin</span></div></div>
                     @auth
-                        <a href="{{ route('community.create') }}" class="ds-btn membership-cta" style="margin-top:15px;text-decoration:none;min-height:39px;padding:.5rem;">Tạo community</a>
+                        <a href="{{ route('community.create') }}" class="ds-btn membership-cta" style="margin-top:15px;text-decoration:none;min-height:39px;padding:.5rem;">Tạo cộng đồng</a>
                     @else
                         <a href="{{ route('login') }}" class="ds-btn membership-cta" style="margin-top:15px;text-decoration:none;min-height:39px;padding:.5rem;">Đăng nhập để tham gia</a>
                     @endauth
                 </div>
                 @auth
-                    @php $__discoveryMemberships = auth()->user()->memberships()->withoutGlobalScopes()->with('brand')->whereIn('status', ['active', 'trial'])->get()->filter(fn ($membership) => $membership->brand); @endphp
                     @if($__discoveryMemberships->isNotEmpty())
                     <div class="rp-card" style="padding:14px;">
-                        <div class="rp-card-header"><div class="rp-card-title">Community của bạn</div></div>
+                        <div class="rp-card-header"><div class="rp-card-title">Cộng đồng của bạn</div></div>
                         @foreach($__discoveryMemberships->take(4) as $__discoveryMembership)
                             @php $__discoveryBrand = $__discoveryMembership->brand; @endphp
                             <a href="{{ route('community.feed', ['community' => $__discoveryBrand->slug]) }}" style="display:flex;align-items:center;gap:8px;padding:7px 0;text-decoration:none;color:var(--text);">
@@ -955,46 +1088,57 @@ button, a, input, select, textarea { touch-action: manipulation; }
                 @endauth
                 @else
                 @auth
-                @php
-                    $__currentMembership = auth()->user()->memberships()->where('brand_id', $brand->id)->latest()->first();
-                    $__featuredUpgrade = \App\Models\Course::query()->where('is_published', true)->latest()->first();
-                    $__communityMembers = $brand->users()->limit(6)->get(['users.id','users.name','users.avatar']);
-                    $__communityMemberCount = $brand->users()->count();
-                    $__communityActiveCount = $brand->users()->where('last_active_at', '>=', now()->subMinutes(30))->count();
-                    $__communityAdminCount = $brand->users()->wherePivotIn('role', ['owner','admin'])->count();
-                @endphp
-                {{-- Membership upgrade card --}}
-                <div class="rp-card" style="padding:0;overflow:hidden;">
-                    <div style="height:112px;background:linear-gradient(135deg,#0E527F,#1F77BE);position:relative;overflow:hidden;">
-                        @if($__featuredUpgrade?->thumbnail)
+                {{-- Membership and community information share one right-panel card. --}}
+                <div class="rp-card community-summary-card" style="padding:0;overflow:hidden;flex:0 0 auto;">
+                <div class="community-membership-panel" style="border-bottom:1px solid #D9E6EC;">
+                    <div style="aspect-ratio:16/9;background:#125A96;position:relative;overflow:hidden;">
+                        @if($brand->banner_path)
+                            <img src="{{ asset('storage/'.$brand->banner_path) }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+                        @elseif($__featuredUpgrade?->thumbnail)
                             <img src="{{ asset('storage/'.$__featuredUpgrade->thumbnail) }}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.42;">
+                        @else
+                            <div class="rp-hero-fallback" aria-hidden="true">
+                                <div class="rp-hero-fallback-inner"><x-icon name="layers" size="30" color="#fff" /><strong>{{ $brand->name }}</strong></div>
+                            </div>
                         @endif
-                        <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,39,62,.62),transparent);"></div>
-                        <span style="position:absolute;left:14px;bottom:12px;font-size:10px;color:#fff;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">DSCons membership</span>
+                        <div style="position:absolute;inset:0;background:rgba(6,39,62,.42);"></div>
+                        <span style="position:absolute;left:14px;bottom:12px;font-size:10px;color:#fff;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">THÀNH VIÊN DSCons</span>
                     </div>
                     <div style="padding:14px;">
-                        <div style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--text);">Nâng hạng thành viên</div>
-                        <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:4px 0 12px;">Mở khóa toàn bộ khóa học, challenge và sự kiện.</p>
-                        <a href="{{ community_route('membership') }}" class="ds-btn membership-cta {{ $__currentMembership?->isPremium() ? 'is-active' : '' }}" style="text-align:center;text-decoration:none;min-height:40px;padding:.55rem;">@if($__currentMembership?->isPremium())<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>@endif{{ $__currentMembership?->isPremium() ? 'Đang dùng Premium' : 'Nâng hạng Premium' }}</a>
+                        <div style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--text);">Quyền lợi thành viên</div>
+                        <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:4px 0 12px;">Mở khóa toàn bộ challenge và khóa học trong cộng đồng.</p>
+                        <a href="{{ community_route('membership') }}" class="ds-btn membership-cta" style="text-align:center;text-decoration:none;min-height:40px;padding:.55rem;">@if($__isPremiumMember)<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Đã kích hoạt @else Xem quyền lợi thành viên @endif</a>
                     </div>
                 </div>
-
                 {{-- Current community information --}}
-                <div class="rp-card" style="padding:15px;">
+                <div class="community-info-panel" style="padding:15px;">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                        <div style="width:40px;height:40px;border-radius:12px;overflow:hidden;background:#E1F4F7;display:grid;place-items:center;color:var(--green);font-weight:800;">
-                            @if(($brand->slug ?? null) === 'dscons')<img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:100%;height:100%;object-fit:contain;padding:4px;">@elseif($brand->logo_path)<img src="{{ asset('storage/'.$brand->logo_path) }}" alt="" style="width:100%;height:100%;object-fit:cover;">@else{{ strtoupper(substr($brand->name,0,1)) }}@endif
+                        <div class="community-brand-mark" style="width:48px;height:48px;min-width:48px;max-width:48px;min-height:48px;max-height:48px;flex:0 0 48px;display:grid;place-items:center;overflow:hidden;border-radius:50%;">
+                            @if(($brand->slug ?? null) === 'dscons')<img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="display:block;width:100%;height:100%;max-width:100%;max-height:100%;padding:4px;box-sizing:border-box;border-radius:50%;object-fit:contain;">@elseif($brand->logo_path)<img src="{{ asset('storage/'.$brand->logo_path) }}" alt="{{ $brand->name }}" style="display:block;width:100%;height:100%;max-width:100%;max-height:100%;border-radius:50%;object-fit:cover;">@else{{ strtoupper(substr($brand->name,0,1)) }}@endif
                         </div>
-                        <div style="min-width:0;flex:1;"><div style="display:flex;gap:5px;align-items:center;font-size:15px;font-weight:800;color:var(--text);">{{ $brand->name }} @if($brand->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif</div><div style="font-size:11px;color:var(--text-muted);">/c/{{ $brand->slug }}</div></div>
+                        <div style="min-width:0;flex:1;"><div style="display:flex;gap:5px;align-items:center;font-size:14px;font-weight:800;color:var(--text);">{{ $brand->name }} @if($brand->isVerified())<span style="color:var(--green);font-size:12px;">✓</span>@endif</div><div style="font-size:11px;color:var(--text-muted);">/c/{{ $brand->slug }}</div></div>
                     </div>
                     <p style="font-size:12px;line-height:1.5;color:var(--text-muted);margin:0 0 11px;">{{ $brand->description ?: ($brand->tagline ?: 'Cộng đồng học tập DSCons.') }}</p>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;"><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityMemberCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">thành viên</span></div><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityActiveCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">đang hoạt động</span></div><div><strong style="display:block;font-size:16px;color:var(--text);">{{ number_format($__communityAdminCount) }}</strong><span style="font-size:10px;color:var(--text-muted);">quản trị</span></div></div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;"><div style="display:flex;padding-left:4px;">@foreach($__communityMembers->take(5) as $__member)<img src="{{ $__member->avatar_url }}" alt="" style="width:25px;height:25px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-5px;">@endforeach</div><span style="font-size:11px;padding:4px 7px;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ $__currentMembership?->isPremium() ? 'Premium' : 'Free' }}</span></div>
+                    <div class="community-stat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;"><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityMemberCount) }}</strong><span>thành viên</span></div><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityActiveCount) }}</strong><span>online</span></div><div><strong style="display:block;font-size:15px;color:var(--text);">{{ number_format($__communityAdminCount) }}</strong><span>quản trị</span></div></div>
+                    <div style="display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px;margin-top:11px;min-width:0;overflow:visible;"><div class="community-member-avatars" style="--community-avatar-size:{{ $__memberAvatarSize }}px;display:flex;align-items:center;flex-wrap:nowrap;white-space:nowrap;flex:1 1 auto;min-width:0;min-height:{{ $__memberAvatarSize }}px;padding-left:10px;overflow:visible;">@foreach($__communityMembers->take(5) as $__member)<img src="{{ $__member->avatar_url }}" alt="Ảnh đại diện thành viên {{ $__member->name }}" style="display:block;width:{{ $__memberAvatarSize }}px;height:{{ $__memberAvatarSize }}px;min-width:{{ $__memberAvatarSize }}px;max-width:{{ $__memberAvatarSize }}px;min-height:{{ $__memberAvatarSize }}px;max-height:{{ $__memberAvatarSize }}px;flex:0 0 {{ $__memberAvatarSize }}px;margin-left:calc({{ $__memberAvatarSize }}px / -3.6);border:2px solid #fff;border-radius:50%;object-fit:cover;">@endforeach</div></div>
+                    <div class="community-member-status" style="display:grid;gap:5px;margin-top:10px;padding:7px 9px;border:1px solid #E4B83A;border-radius:10px;background:#FFFDF4;">
+                        @if($__isPremiumMember)
+                            <div class="community-member-status-title" style="display:flex;align-items:center;gap:6px;color:#8A5A00;font-size:11px;line-height:1.35;"><x-icon name="trophy" size="15" color="#A16207" /><span>Thành viên</span><strong style="color:#6F4300;font-size:11px;font-weight:800;letter-spacing:.015em;">{{ $__membershipDisplayLabel }}</strong></div>
+                        @elseif($__isCommunityParticipant)
+                            <div class="community-member-status-title is-community"><span>Thành viên cộng đồng</span></div>
+                        @else
+                            <div class="community-member-status-title is-community"><span>Chưa tham gia</span></div>
+                        @endif
+                        <div class="community-member-status-details" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 8px;padding-top:5px;border-top:1px solid rgba(228,184,58,.32);font-size:10px;line-height:1.3;"><span style="display:inline-flex;align-items:center;gap:4px;min-width:0;"><small style="color:#61798A;font-size:10px;">Điểm học tập</small><strong style="color:#125A96;font-size:10px;font-weight:800;white-space:nowrap;">{{ number_format(auth()->user()->xp) }} EXP</strong></span><span style="display:inline-flex;align-items:center;gap:4px;min-width:0;"><x-icon name="bolt" size="13" color="#1F77BE" /><em style="color:#1F77BE;font-size:10px;font-style:italic;font-weight:700;white-space:nowrap;">{{ $__activityLabel }}</em></span></div>
+                    </div>
                     <button type="button" onclick="copyCommunityLink('{{ route('community.preview', $brand->slug) }}')" class="ds-btn community-invite-button" style="width:100%;margin-top:12px;min-height:39px;padding:.5rem;">Mời bạn bè</button>
+                </div>
+
                 </div>
 
                 {{-- Community leaderboard --}}
                 <livewire:sidebar-leaderboard />
+                <livewire:feedback-button :key="'feedback-desktop-'.$brand->id" />
                 @endauth
                 @endif
             </div>
@@ -1004,50 +1148,91 @@ button, a, input, select, textarea { touch-action: manipulation; }
 </div>
 
 {{-- MOBILE: Overlay + sidebar ───────────────── --}}
-<div id="mob-overlay" onclick="closeSidebar()"></div>
-<div id="mob-sidebar">
+<div id="mob-overlay" onclick="closeSidebar()" aria-hidden="true"></div>
+<aside id="mob-sidebar" role="navigation" aria-label="Điều hướng cộng đồng" aria-hidden="true" inert>
     <div class="mobile-sidebar-header">
-        <span style="display:flex;align-items:center;gap:7px;min-width:0;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $brand->name }}</span>@if($brand->isVerified())<span style="color:var(--green);">✓</span>@endif</span>
+        <span style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+            @if($__isDiscoveryContext)
+                <span aria-hidden="true" style="width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#E1F4F7;color:var(--green);flex:0 0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 1 0 0 18M12 3a14 14 0 1 1 0 18"/></svg></span>
+            @elseif(($brand->slug ?? null) === 'dscons')
+                <img src="{{ asset('1024x1024-da xoa nen.png') }}" alt="DSCons" style="width:32px;height:32px;object-fit:contain;padding:2px;border-radius:9px;background:#E1F4F7;flex:0 0 auto;">
+            @elseif($brand->logo_path)
+                <img src="{{ asset('storage/'.$brand->logo_path) }}" alt="{{ $brand->name }}" style="width:32px;height:32px;object-fit:cover;border-radius:9px;flex:0 0 auto;">
+            @else
+                <span aria-hidden="true" style="width:32px;height:32px;display:grid;place-items:center;border-radius:9px;background:#E1F4F7;color:var(--green);font-size:13px;font-weight:800;flex:0 0 auto;">{{ strtoupper(substr($brand->name,0,1)) }}</span>
+            @endif
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:750;">{{ $__isDiscoveryContext ? 'Khám phá cộng đồng' : $brand->name }}</span>
+            @if(!$__isDiscoveryContext && $brand->isVerified())<span title="Đã xác minh" style="color:var(--green);">✓</span>@endif
+        </span>
         <button type="button" class="panel-btn" onclick="closeSidebar()" aria-label="Đóng menu">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
     </div>
     <div style="padding:10px 12px 4px;display:flex;gap:8px;border-bottom:1px solid var(--border);"><a href="{{ route('communities') }}" style="font-size:12px;color:var(--green);text-decoration:none;">Đổi cộng đồng</a>@auth<a href="{{ route('community.create') }}" style="font-size:12px;color:var(--text-muted);text-decoration:none;">Tạo mới</a>@endauth</div>
+    @auth
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);">
+        <a href="{{ community_route('membership') }}" style="display:grid;justify-items:center;gap:4px;padding:8px 4px;border-radius:9px;background:#EEF7F9;color:var(--text);font-size:10px;font-weight:750;text-decoration:none;">Membership</a>
+        <a href="{{ community_route('leaderboard') }}" style="display:grid;justify-items:center;gap:4px;padding:8px 4px;border-radius:9px;background:#EEF7F9;color:var(--text);font-size:10px;font-weight:750;text-decoration:none;">Xếp hạng</a>
+        <a href="{{ community_route('events') }}" style="display:grid;justify-items:center;gap:4px;padding:8px 4px;border-radius:9px;background:#EEF7F9;color:var(--text);font-size:10px;font-weight:750;text-decoration:none;">Sự kiện</a>
+    </div>
+    @endauth
     <div id="channel-list" style="flex:1;overflow-y:auto;padding:6px;">
-        <div class="ch-category">Cộng đồng DSCons</div>
-        <a href="{{ route('feed') }}" class="ch-item {{ request()->routeIs('feed')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <div class="ch-category"><x-icon name="users" size="14" color="var(--text-muted)" /> {{ $__isDiscoveryContext ? 'Cộng đồng' : $brand->name }}</div>
+        <a href="{{ community_route('feed') }}" class="ch-item {{ request()->routeIs('feed') || request()->routeIs('community.feed')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="chat" size="18" />
             <span class="ch-name">Bảng tin</span>
         </a>
-        <a href="{{ route('cot') }}" class="ch-item {{ request()->routeIs('cot')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <a href="{{ community_route('cot') }}" class="ch-item {{ request()->routeIs('cot') || request()->routeIs('community.cot')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="compass" size="18" />
             <span class="ch-name">Kiến thức cốt lõi</span>
         </a>
-        <a href="{{ route('signals') }}" class="ch-item {{ request()->routeIs('signals')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span class="ch-name">Tín hiệu công nghệ</span>
-        </a>
-        <a href="{{ route('qa') }}" class="ch-item {{ request()->routeIs('qa')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <a href="{{ community_route('qa') }}" class="ch-item {{ request()->routeIs('qa') || request()->routeIs('community.qa')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="question" size="18" />
             <span class="ch-name">Hỏi đáp kỹ thuật</span>
         </a>
-        <div class="ch-category">Học tập</div>
-        <a href="{{ route('academy') }}" class="ch-item {{ request()->routeIs('academy*')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+        <div class="ch-category"><x-icon name="book" size="14" color="var(--text-muted)" /> Học tập</div>
+        <a href="{{ community_route('academy') }}" class="ch-item {{ request()->routeIs('academy*') || request()->routeIs('community.academy*')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="graduation" size="18" />
             <span class="ch-name">Khóa học</span>
         </a>
-        <a href="{{ route('challenge') }}" class="ch-item {{ request()->routeIs('challenge*')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+        <a href="{{ community_route('challenge') }}" class="ch-item {{ request()->routeIs('challenge*') || request()->routeIs('community.challenge*')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="target" size="18" />
             <span class="ch-name">Challenge</span>
         </a>
-        <a href="{{ route('events') }}" class="ch-item {{ request()->routeIs('events')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+        <a href="{{ community_route('events') }}" class="ch-item {{ request()->routeIs('events') || request()->routeIs('community.events')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="calendar" size="18" />
             <span class="ch-name">Sự kiện</span>
         </a>
-        <a href="{{ route('leaderboard') }}" class="ch-item {{ request()->routeIs('leaderboard')?'active':'' }}" onclick="closeSidebar()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>
+        <a href="{{ community_route('leaderboard') }}" class="ch-item {{ request()->routeIs('leaderboard') || request()->routeIs('community.leaderboard')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="chart" size="18" />
             <span class="ch-name">Bảng xếp hạng</span>
         </a>
+        <div class="ch-category"><x-icon name="layers" size="14" color="var(--text-muted)" /> Tài nguyên</div>
+        <a href="{{ community_route('marketplace') }}" class="ch-item {{ request()->routeIs('marketplace') || request()->routeIs('community.marketplace')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="shopping-cart" size="18" />
+            <span class="ch-name">Marketplace</span>
+        </a>
+        <a href="{{ community_route('orders') }}" class="ch-item {{ request()->routeIs('orders') || request()->routeIs('community.orders')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="receipt" size="18" />
+            <span class="ch-name">Gói &amp; Đơn hàng</span>
+        </a>
+        <a href="{{ community_route('affiliate') }}" class="ch-item {{ request()->routeIs('affiliate') || request()->routeIs('community.affiliate')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="user-plus" size="18" />
+            <span class="ch-name">Affiliate</span>
+        </a>
+        @auth
+        @if(auth()->user()->isEngineer() && $brand->has_cv)
+        <div class="ch-category"><x-icon name="file-text" size="14" color="var(--text-muted)" /> Hồ sơ nghề nghiệp</div>
+        <a href="{{ community_route('engineer.cv') }}" class="ch-item {{ request()->routeIs('engineer.cv') || request()->routeIs('community.engineer.cv')?'active':'' }}" onclick="closeSidebar()"><x-icon name="cv" size="18" /><span class="ch-name">CV của tôi</span></a>
+        <a href="{{ community_route('engineer.recruitment-requests') }}" class="ch-item {{ request()->routeIs('engineer.recruitment-requests') || request()->routeIs('community.engineer.recruitment-requests')?'active':'' }}" onclick="closeSidebar()"><x-icon name="briefcase" size="18" /><span class="ch-name">Yêu cầu tuyển dụng</span></a>
+        @endif
+        @endauth
+        @can('admin')
+        <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*')?'active':'' }}" onclick="closeSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 01-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            <span class="ch-name">Admin</span>
+        </a>
+        @endcan
     </div>
     @auth
     <div id="user-panel">
@@ -1060,28 +1245,28 @@ button, a, input, select, textarea { touch-action: manipulation; }
         </div>
     </div>
     @endauth
-</div>
+</aside>
 
 {{-- MOBILE: Bottom nav ───────────────────────── --}}
 @auth
 <nav id="mobile-nav">
-    <a href="{{ route('feed') }}" class="mob-nav-btn {{ request()->routeIs('feed')?'active':'' }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    <a href="{{ community_route('feed') }}" class="mob-nav-btn {{ request()->routeIs('feed') || request()->routeIs('community.feed')?'active':'' }}" aria-current="{{ request()->routeIs('feed') || request()->routeIs('community.feed') ? 'page' : 'false' }}">
+        <x-icon name="home" size="18" />
         Home
     </a>
-    <a href="{{ route('qa') }}" class="mob-nav-btn {{ request()->routeIs('qa')?'active':'' }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <a href="{{ community_route('academy') }}" class="mob-nav-btn {{ request()->routeIs('academy*') || request()->routeIs('community.academy*')?'active':'' }}" aria-current="{{ request()->routeIs('academy*') || request()->routeIs('community.academy*') ? 'page' : 'false' }}">
+        <x-icon name="graduation" size="18" />
+        Học tập
+    </a>
+    <a href="{{ community_route('qa') }}" class="mob-nav-btn {{ request()->routeIs('qa') || request()->routeIs('community.qa')?'active':'' }}" aria-current="{{ request()->routeIs('qa') || request()->routeIs('community.qa') ? 'page' : 'false' }}">
+        <x-icon name="question" size="18" />
         Hỏi đáp
     </a>
-    <a href="{{ route('challenge') }}" class="mob-nav-btn {{ request()->routeIs('challenge*')?'active':'' }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>
+    <a href="{{ community_route('challenge') }}" class="mob-nav-btn {{ request()->routeIs('challenge*') || request()->routeIs('community.challenge*')?'active':'' }}" aria-current="{{ request()->routeIs('challenge*') || request()->routeIs('community.challenge*') ? 'page' : 'false' }}">
+        <x-icon name="target" size="18" />
         Challenge
     </a>
-    <a href="{{ route('events') }}" class="mob-nav-btn {{ request()->routeIs('events')?'active':'' }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-        Sự kiện
-    </a>
-    <a href="{{ route('profile', auth()->user()->username ?? auth()->id()) }}" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}">
+    <a href="{{ route('profile', auth()->user()->username ?? auth()->id()) }}" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}" aria-current="{{ request()->routeIs('profile') ? 'page' : 'false' }}">
         <img src="{{ auth()->user()->avatar_url }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" alt="">
         Tôi
     </a>
@@ -1090,13 +1275,17 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 </div>{{-- /#app --}}
 
-{{-- Feedback FAB (authenticated users only) --}}
+{{-- Mobile feedback stays available without covering the desktop leaderboard. --}}
 @auth
-<livewire:feedback-button />
+<div class="mobile-feedback-host">
+    <livewire:feedback-button :key="'feedback-mobile'" />
+</div>
 @endauth
 
 {{-- Post Modal (global) --}}
+@auth
 <livewire:post-modal />
+@endauth
 
 {{-- Toast Notifications --}}
 <div x-data="{ toasts: [], add(e) { const t = { id: Date.now(), message: e.detail.message, type: e.detail.type || 'info' }; this.toasts.push(t); setTimeout(() => this.toasts = this.toasts.filter(x => x.id !== t.id), 4000); } }"
@@ -1136,13 +1325,40 @@ function copyCommunityLink(url) {
     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Đã sao chép liên kết cộng đồng.', type: 'success' } }));
 }
 function openSidebar()  {
-    document.getElementById('mob-sidebar').classList.add('open');
-    document.getElementById('mob-overlay').classList.add('open');
+    const sidebar = document.getElementById('mob-sidebar');
+    const overlay = document.getElementById('mob-overlay');
+    const trigger = document.getElementById('mobile-menu-trigger');
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.add('open');
+    sidebar.removeAttribute('inert');
+    sidebar.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('open');
+    trigger?.setAttribute('aria-expanded', 'true');
+
+    requestAnimationFrame(() => {
+        sidebar.querySelector('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])')?.focus();
+    });
 }
 function closeSidebar() {
-    document.getElementById('mob-sidebar').classList.remove('open');
-    document.getElementById('mob-overlay').classList.remove('open');
+    const sidebar = document.getElementById('mob-sidebar');
+    const overlay = document.getElementById('mob-overlay');
+    const trigger = document.getElementById('mobile-menu-trigger');
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.remove('open');
+    sidebar.setAttribute('inert', '');
+    sidebar.setAttribute('aria-hidden', 'true');
+    overlay.classList.remove('open');
+    trigger?.setAttribute('aria-expanded', 'false');
+    trigger?.focus();
 }
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && document.getElementById('mob-sidebar')?.classList.contains('open')) {
+        closeSidebar();
+    }
+});
 </script>
 
 @stack('scripts')

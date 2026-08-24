@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\PillarStat;
 use App\Models\Post;
+use App\Models\CommunityPostType;
+use App\Models\CommunitySubject;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
@@ -16,10 +18,16 @@ class Feed extends Component
     use WithPagination;
 
     #[Url]
-    public string $tab = 'latest';   // latest|cot|popular|offer|traffic|conversion|delivery|continuity|signal
+    public string $tab = 'latest';
 
     #[Url]
     public string $pillar = '';
+
+    #[Url]
+    public ?int $subject_id = null;
+
+    #[Url]
+    public ?int $post_type_id = null;
 
     #[Url]
     public ?int $post = null;
@@ -29,8 +37,10 @@ class Feed extends Component
     public function mount(): void
     {
         if ($this->post) {
-            $this->dispatch('open-post', postId: $this->post);
-            $this->post = null;
+            $post = Post::query()->find($this->post);
+            if ($post?->slug) {
+                $this->redirect(community_route('post.show', ['slug' => $post->slug]), navigate: true);
+            }
         }
     }
 
@@ -44,6 +54,8 @@ class Feed extends Component
     {
         $this->tab   = $tab;
         $this->pillar = '';
+        $this->subject_id = null;
+        $this->post_type_id = null;
         $this->resetPage();
     }
 
@@ -54,9 +66,24 @@ class Feed extends Component
         $this->resetPage();
     }
 
+    public function setSubject($subjectId): void
+    {
+        $this->subject_id = filled($subjectId) ? (int) $subjectId : null;
+        $this->tab = 'latest';
+        $this->resetPage();
+    }
+
+    public function setPostType($postTypeId): void
+    {
+        $this->post_type_id = filled($postTypeId) ? (int) $postTypeId : null;
+        $this->tab = 'latest';
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $query = Post::with(['user.daKhongCuc', 'images', 'topic'])
+        $brandId = app()->bound('brand') ? (int) brand()->id : 0;
+        $query = Post::with(['user.daKhongCuc', 'images', 'topic', 'subject', 'postType'])
             ->withCount(['likes', 'allComments'])
             ->withExists(['likes' => fn($q) => $q->where('user_id', Auth::id())])
             ->withExists(['bookmarks' => fn($q) => $q->where('user_id', Auth::id())])
@@ -64,7 +91,6 @@ class Feed extends Component
 
         match($this->tab) {
             'cot'     => $query->where('is_cot', true),
-            'signal'  => $query->where('is_signal', true),
             'pillar'  => $query->where('pillar', $this->pillar),
             'popular' => $query->where('created_at', '>=', now()->subDays(7))
                                ->orderByDesc(
@@ -76,14 +102,21 @@ class Feed extends Component
             default   => null,
         };
 
+        if ($this->subject_id) {
+            $query->where('subject_id', $this->subject_id);
+        }
+        if ($this->post_type_id) {
+            $query->where('post_type_id', $this->post_type_id);
+        }
+
         if ($this->tab !== 'popular') {
             $query->latest();
         }
 
         // Pinned posts always on top — cache base query (60s, hiếm thay đổi),
         // user-specific liked/bookmarked state add fresh per request.
-        $pinnedBase = Cache::remember('feed.pinned_posts.base', 60, function () {
-            return Post::with(['user.daKhongCuc', 'images', 'topic'])
+        $pinnedBase = Cache::remember("feed.pinned_posts.base:{$brandId}", 60, function () {
+            return Post::with(['user.daKhongCuc', 'images', 'topic', 'subject', 'postType'])
                 ->withCount(['likes', 'allComments'])
                 ->where('is_pinned', true)
                 ->whereNull('deleted_at')
@@ -109,7 +142,7 @@ class Feed extends Component
 
         $burningPillar = PillarStat::where('is_burning', true)->first();
 
-        $activeRune = Cache::remember('feed.active_rune', 30, function () {
+        $activeRune = Cache::remember("feed.active_rune:{$brandId}", 30, function () {
             return Post::with('user')
                 ->where('rune_active', true)
                 ->where('rune_expires_at', '>', now())
@@ -122,6 +155,10 @@ class Feed extends Component
             'pinnedPosts'   => $pinned,
             'burningPillar' => $burningPillar,
             'activeRune'    => $activeRune,
-        ])->layout('layouts.app', ['title' => 'Bảng tin — DSCons']);
+            'subjects'      => CommunitySubject::active()
+                ->where('slug', '!=', 'tieu-chuan')
+                ->get(),
+            'postTypes'     => CommunityPostType::active()->get(),
+        ])->layout('layouts.app', ['title' => 'Bảng tin']);
     }
 }

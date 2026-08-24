@@ -1,4 +1,18 @@
-<div>
+<div class="admin-products-page">
+@php
+    $pillars = brand()->pillarProfiles();
+@endphp
+<style>
+    .admin-products-page { max-width: 1120px; margin: 0 auto; }
+    .admin-products-page .admin-table-scroll { overflow-x: auto; padding: 0; }
+    .admin-products-page .admin-products-table { min-width: 760px; }
+    .admin-products-page .admin-products-table th { background: #F7FAFC; }
+    .admin-products-page .admin-products-table th:first-child { border-top-left-radius: 15px; }
+    .admin-products-page .admin-products-table th:last-child { border-top-right-radius: 15px; }
+    .admin-products-page .admin-products-table tr:hover td { background: #FBFDFE; }
+    .admin-products-page .card input:focus, .admin-products-page .card textarea:focus, .admin-products-page .card select:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+</style>
+
     <div class="flex items-center justify-between mb-4">
         <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">▣ Quản lý sản phẩm</h1>
         <button wire:click="create" class="btn btn-primary" style="font-size:0.8rem;">+ Thêm sản phẩm</button>
@@ -34,11 +48,9 @@
                     <label style="font-size:0.75rem; font-weight:600; color:#5C5C66;">Trụ cột</label>
                     <select wire:model="pillar" class="input" style="width:150px;">
                         <option value="">— Không —</option>
-                        <option value="offer">Offer</option>
-                        <option value="traffic">Traffic</option>
-                        <option value="conversion">Conversion</option>
-                        <option value="delivery">Delivery</option>
-                        <option value="continuity">Continuity</option>
+                        @foreach($pillars as $key => $pillarOption)
+                        <option value="{{ $key }}">{{ $pillarOption['name'] }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div>
@@ -71,6 +83,10 @@
                 <input wire:model="isPublished" type="checkbox" id="published">
                 <label for="published" style="font-size:0.8rem; color:#1A1A1A;">Hiển thị trên Marketplace</label>
             </div>
+            <div class="flex items-center gap-2">
+                <input wire:model="isFeatured" type="checkbox" id="featured">
+                <label for="featured" style="font-size:0.8rem; color:#1A1A1A;">Nổi bật trên Marketplace</label>
+            </div>
 
             <div class="flex gap-2">
                 <button wire:click="save" wire:loading.attr="disabled" wire:target="save" class="btn btn-primary" style="font-size:0.8rem;">
@@ -84,8 +100,8 @@
     @endif
 
     {{-- Product list --}}
-    <div class="card">
-        <table style="width:100%; font-size:0.8rem;">
+    <div class="admin-table-scroll card">
+        <table class="admin-products-table" style="width:100%; font-size:0.8rem;">
             <thead>
                 <tr style="border-bottom:1px solid #E1E1E1; text-align:left;">
                     <th style="padding:0.5rem; color:#5C5C66; font-weight:600;">Sản phẩm</th>
@@ -102,7 +118,7 @@
                     <td style="padding:0.5rem;">
                         <p style="font-weight:600; color:#1A1A1A;">{{ $product->title }}</p>
                         @if($product->pillar)
-                        <span class="badge badge-pillar-{{ $product->pillar }}" style="font-size:0.6rem;">{{ ucfirst($product->pillar) }}</span>
+                        <span class="badge badge-pillar-{{ $product->pillar }}" style="font-size:0.6rem;">{{ $pillars[$product->pillar]['name'] ?? ucfirst($product->pillar) }}</span>
                         @endif
                     </td>
                     <td style="padding:0.5rem; font-weight:600; color:#d17856;">

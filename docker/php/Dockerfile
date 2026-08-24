@@ -7,6 +7,11 @@ RUN apt-get update \
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
+# Livewire post images are validated at 5 MB per file. PHP's default
+# upload_max_filesize is only 2 MB, which rejects a valid image before
+# Livewire can validate or show an error to the user.
+COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/99-uploads.ini
+
 WORKDIR /var/www
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts

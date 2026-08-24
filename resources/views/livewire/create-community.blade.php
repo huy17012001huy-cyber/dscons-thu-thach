@@ -1,5 +1,6 @@
+<div class="create-page">
 <style>
-    .create-page { max-width: 1060px; margin: 0 auto; padding: 28px 28px 64px; color: var(--text); }
+    .create-page { max-width: 1120px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 30px) 64px; color: var(--text); }
     .create-hero { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding-bottom: 22px; border-bottom: 1px solid var(--border); }
     .create-kicker { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
     .create-hero h1 { margin: 8px 0 7px; color: var(--text); font-size: clamp(27px, 3vw, 36px); letter-spacing: -.045em; line-height: 1.1; }
@@ -7,6 +8,7 @@
     .create-back { color: var(--green); font-size: 13px; font-weight: 750; text-decoration: none; white-space: nowrap; }
     .create-layout { display: grid; grid-template-columns: minmax(0, 1fr) 278px; gap: 18px; margin-top: 22px; align-items: start; }
     .create-form { overflow: hidden; border: 1px solid #D5E4EA; border-radius: 18px; background: #fff; box-shadow: 0 4px 14px rgba(18,59,89,.05); }
+    .create-form:focus-within { border-color: #A9CAD7; box-shadow: 0 0 0 3px rgba(31,119,190,.09), 0 8px 20px rgba(18,59,89,.07); }
     .create-form-section { padding: 22px 24px; border-bottom: 1px solid #E6EEF1; }
     .create-form-section:last-of-type { border-bottom: 0; }
     .create-section-heading { display: flex; align-items: start; gap: 11px; margin-bottom: 17px; }
@@ -18,10 +20,11 @@
     .create-field { display: grid; gap: 6px; color: var(--text); font-size: 12px; font-weight: 750; }
     .create-field small { color: var(--text-muted); font-size: 11px; font-weight: 500; }
     .create-field .form-control { min-height: 43px; border-radius: 11px; }
+    .create-field .form-control:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
     .create-field textarea.form-control { min-height: 105px; resize: vertical; }
     .create-upload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .create-upload { min-height: 106px; display: grid; align-content: center; gap: 5px; padding: 15px; border: 1px dashed #A9C9D6; border-radius: 13px; background: #F8FCFD; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 750; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
-    .create-upload:hover { border-color: var(--green); background: #EDF8FA; transform: translateY(-1px); }
+    .create-upload:hover, .create-upload:focus-within { border-color: var(--green); background: #EDF8FA; transform: translateY(-1px); }
     .create-upload svg { width: 20px; height: 20px; color: var(--green); }
     .create-upload span { overflow: hidden; color: var(--text-muted); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
     .create-form-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 17px 24px; background: #F8FBFC; }
@@ -41,7 +44,6 @@
     @media (max-width: 650px) { .create-page { padding: 20px 14px 44px; } .create-hero { display: block; } .create-back { display: inline-block; margin-top: 14px; } .create-form-section { padding: 18px 16px; } .create-fields.two, .create-upload-grid, .create-aside { grid-template-columns: 1fr; } .create-form-footer { display: grid; grid-template-columns: 1fr 1fr; padding: 14px 16px; } .create-form-footer .ds-btn { width: 100%; } }
 </style>
 
-<div class="create-page">
     <header class="create-hero">
         <div>
             <div class="create-kicker">Creator application</div>
@@ -86,7 +88,7 @@
                 <div class="create-section-heading"><span class="create-step">4</span><div><h2>Nhận diện community</h2><p>Logo và banner giúp trang giới thiệu có cá tính riêng.</p></div></div>
                 <div class="create-upload-grid">
                     <label class="create-upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Logo community<input wire:model="logo" type="file" accept="image/*" hidden>@if($logo)<span>{{ $logo->getClientOriginalName() }}</span>@else<span>PNG/JPG, tối đa 4MB</span>@endif</label>
-                    <label class="create-upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m3 15 5-5 4 4 3-3 6 6"/></svg>Banner community<input wire:model="banner" type="file" accept="image/*" hidden>@if($banner)<span>{{ $banner->getClientOriginalName() }}</span>@else<span>Ảnh ngang, tối đa 8MB</span>@endif</label>
+                    <label class="create-upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m3 15 5-5 4 4 3-3 6 6"/></svg>Banner community<input wire:model="banner" type="file" accept="image/*" hidden>@if($banner)<span>{{ $banner->getClientOriginalName() }}</span>@else<span>Khuyến nghị 16:9, tối đa 8MB</span>@endif</label>
                 </div>
             </section>
 

@@ -42,31 +42,31 @@
             })();
         "></div>
 
-        <form wire:submit="register" class="flex flex-col gap-4">
+        <form wire:submit="register" class="flex flex-col gap-4" novalidate>
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#2E2E2E; margin-bottom:0.375rem;">Họ và tên</label>
-                <input wire:model="name" type="text" class="input" placeholder="Nguyễn Văn A" autofocus>
-                @error('name') <p style="color:#991B1B; font-size:0.75rem; margin-top:0.25rem;">{{ $message }}</p> @enderror
+                <label for="register-name" class="auth-label">Họ và tên</label>
+                <input id="register-name" wire:model="name" type="text" class="input" placeholder="Nguyễn Văn A" autocomplete="name" autofocus @error('name') aria-invalid="true" aria-describedby="register-name-error" @enderror>
+                @error('name') <p id="register-name-error" class="auth-error" role="alert">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#2E2E2E; margin-bottom:0.375rem;">Email</label>
-                <input wire:model="email" type="email" class="input" placeholder="ban@email.com">
-                @error('email') <p style="color:#991B1B; font-size:0.75rem; margin-top:0.25rem;">{{ $message }}</p> @enderror
+                <label for="register-email" class="auth-label">Email</label>
+                <input id="register-email" wire:model="email" type="email" class="input" placeholder="ban@email.com" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="register-email-error" @enderror>
+                @error('email') <p id="register-email-error" class="auth-error" role="alert">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#2E2E2E; margin-bottom:0.375rem;">Mật khẩu</label>
-                <input wire:model="password" type="password" class="input" placeholder="Tối thiểu 8 ký tự">
-                @error('password') <p style="color:#991B1B; font-size:0.75rem; margin-top:0.25rem;">{{ $message }}</p> @enderror
+                <label for="register-password" class="auth-label">Mật khẩu</label>
+                <input id="register-password" wire:model="password" type="password" class="input" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" @error('password') aria-invalid="true" aria-describedby="register-password-error" @enderror>
+                @error('password') <p id="register-password-error" class="auth-error" role="alert">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#2E2E2E; margin-bottom:0.375rem;">Xác nhận mật khẩu</label>
-                <input wire:model="password_confirmation" type="password" class="input" placeholder="Nhập lại mật khẩu">
+                <label for="register-password-confirmation" class="auth-label">Xác nhận mật khẩu</label>
+                <input id="register-password-confirmation" wire:model="password_confirmation" type="password" class="input" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
             </div>
 
-            <button type="submit" class="btn btn-primary w-full justify-center" wire:loading.attr="disabled">
+            <button type="submit" class="btn btn-primary w-full justify-center" wire:loading.attr="disabled" wire:target="register">
                 <span wire:loading.remove>Bắt đầu dùng thử miễn phí</span>
                 <span wire:loading>Đang tạo tài khoản...</span>
             </button>

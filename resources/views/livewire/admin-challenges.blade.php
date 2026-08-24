@@ -1,6 +1,14 @@
-<div>
+<div class="admin-challenges-page">
+<style>
+    .admin-challenges-page { max-width: 1180px; margin: 0 auto; }
+    .admin-challenges-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .admin-challenges-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+    .admin-challenges-page [x-cloak] { display: none !important; }
+    @media (max-width: 640px) { .admin-challenges-page .flex.items-center.justify-between { align-items: flex-start; flex-wrap: wrap; } }
+</style>
+
     <div class="flex items-center justify-between mb-4">
-        <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">■ Quản lý Challenge</h1>
+        <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A;">Quản lý Challenge</h1>
         <button wire:click="openCreateExpedition" class="btn btn-primary" style="font-size:0.8rem;">+ Tạo Challenge</button>
     </div>
 
@@ -22,18 +30,18 @@
                 </div>
                 <div class="flex gap-1 shrink-0">
                     <button wire:click="toggleManageTasks({{ $exp->id }})" class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem; {{ $managingExpeditionId === $exp->id ? 'background:#DCFCE7; color:#166534;' : '' }}">
-                        📋 Tasks
+                        Tasks
                     </button>
-                    <button wire:click="openFreezeModal({{ $exp->id }})" class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem; {{ $exp->freeze_from_day ? 'background:#FEF3C7; color:#92400E;' : '' }}">⏸ Tạm dừng</button>
-                    <button wire:click="openEditExpedition({{ $exp->id }})" class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem;">✏️ Sửa</button>
-                    <button wire:click="deleteExpedition({{ $exp->id }})" wire:confirm="Xóa challenge này? Toàn bộ tasks và dữ liệu sẽ bị xóa." class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem; color:#DC2626;">🗑 Xóa</button>
+                    <button wire:click="openFreezeModal({{ $exp->id }})" class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem; {{ $exp->freeze_from_day ? 'background:#FEF3C7; color:#92400E;' : '' }}">Tạm dừng</button>
+                    <button wire:click="openEditExpedition({{ $exp->id }})" class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem;">Sửa</button>
+                    <button wire:click="deleteExpedition({{ $exp->id }})" wire:confirm="Xóa challenge này? Toàn bộ tasks và dữ liệu sẽ bị xóa." class="btn btn-ghost" style="font-size:0.7rem; padding:0.2rem 0.5rem; color:#DC2626;">Xóa</button>
                 </div>
             </div>
 
             {{-- Freeze status strip --}}
             @if($exp->freeze_from_day && $exp->freeze_ends_at && now()->lessThan($exp->freeze_ends_at))
             <div style="margin-top:0.5rem; background:#FEF3C7; border:1px solid #FDE68A; border-radius:0.375rem; padding:0.4rem 0.6rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; font-size:0.72rem;">
-                <span style="color:#92400E; font-weight:600;">⏸ Đang đóng băng từ ngày {{ $exp->freeze_from_day }} — tiếp tục {{ $exp->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y') }}</span>
+                <span style="color:#92400E; font-weight:600;">Đang tạm dừng từ ngày {{ $exp->freeze_from_day }} — tiếp tục {{ $exp->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y') }}</span>
                 <button wire:click="clearFreeze({{ $exp->id }})" wire:confirm="Bỏ đóng băng challenge này?" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem; color:#DC2626;">Bỏ đóng băng</button>
             </div>
             @endif
@@ -59,17 +67,17 @@
                         <span style="font-size:0.65rem; color:#2563EB;">▶ video</span>
                         @endif
                         @if($task->meeting_at)
-                        <span style="font-size:0.65rem; color:#7C3AED;">📅 meeting</span>
+                        <span style="font-size:0.65rem; color:#125A96;">Meeting</span>
                         @endif
                         @if(!empty($task->quiz_json))
-                        <span style="font-size:0.65rem; color:#C2410C;">📝 quiz · {{ count($task->quiz_json) }} câu</span>
+                        <span style="font-size:0.65rem; color:#C2410C;">Quiz · {{ count($task->quiz_json) }} câu</span>
                         @endif
                         <div class="flex gap-1">
                             @if(!empty($task->quiz_json))
-                            <button wire:click="toggleQuizReport({{ $task->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem; {{ $quizReportTaskId === $task->id ? 'background:#FCE4DC; color:#C2410C;' : '' }}" title="Báo cáo quiz">📊</button>
+                            <button wire:click="toggleQuizReport({{ $task->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem; {{ $quizReportTaskId === $task->id ? 'background:#FCE4DC; color:#C2410C;' : '' }}" title="Báo cáo quiz" aria-label="Mở báo cáo quiz">Báo cáo</button>
                             @endif
-                            <button wire:click="openEditTask({{ $task->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem;">✏️</button>
-                            <button wire:click="deleteTask({{ $task->id }})" wire:confirm="Xóa task ngày {{ $task->day_number }}?" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem; color:#DC2626;">🗑</button>
+                            <button wire:click="openEditTask({{ $task->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem;">Sửa</button>
+                            <button wire:click="deleteTask({{ $task->id }})" wire:confirm="Xóa task ngày {{ $task->day_number }}?" class="btn btn-ghost" style="font-size:0.65rem; padding:0.15rem 0.4rem; color:#DC2626;">Xóa</button>
                         </div>
                     </div>
 
@@ -78,7 +86,7 @@
                     @php $report = $this->getQuizReportData($task); @endphp
                     <div style="background:#FFF; border:1px solid #FDE68A; border-radius:0.5rem; padding:1rem; margin-top:-0.25rem;">
                         <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
-                            <h3 style="font-size:0.85rem; font-weight:700; color:#1A1A1A;">📊 Quiz Report — Ngày {{ $task->day_number }}</h3>
+                            <h3 style="font-size:0.85rem; font-weight:700; color:#1A1A1A;">Quiz Report — Ngày {{ $task->day_number }}</h3>
                             <span style="font-size:0.7rem; color:#5C5C66;">{{ $report['total_users'] }} người đã làm · {{ $report['total_questions'] }} câu</span>
                         </div>
 
@@ -103,7 +111,7 @@
                                     </div>
                                     <span style="min-width:80px; text-align:right; color:{{ $isLow ? '#DC2626' : '#1A1A1A' }}; font-weight:{{ $isLow ? 700 : 500 }};">{{ $stat['correct'] }}/{{ $stat['total'] }} · {{ $pct }}%</span>
                                     @if($isLow)
-                                    <span style="font-size:0.65rem; color:#DC2626; font-weight:600;">⚠ cần dạy lại</span>
+                                    <span style="font-size:0.65rem; color:#DC2626; font-weight:600;">Cần dạy lại</span>
                                     @endif
                                 </div>
                                 @endforeach
@@ -118,7 +126,7 @@
                                 <span style="font-weight:600; color:#5C5C66; font-size:0.68rem;">Tiến độ</span>
                                 <span style="font-weight:600; color:#5C5C66; font-size:0.68rem; text-align:right;">Score</span>
                                 @foreach($report['users'] as $u)
-                                <a href="{{ route('profile', $u['username'] ?: $u['id']) }}" style="color:#1A73E8; text-decoration:none;">{{ $u['name'] }}</a>
+                                <a href="{{ route('profile', $u['username'] ?: $u['id']) }}" style="color:#1F77BE; text-decoration:none;">{{ $u['name'] }}</a>
                                 <span style="color:#5C5C66;">{{ $u['answered'] }}/{{ $report['total_questions'] }} ({{ round($u['completion'] * 100) }}%)</span>
                                 <span style="text-align:right; font-weight:600; color:{{ $u['score'] === $report['total_questions'] ? '#16A34A' : ($u['score'] >= ceil($report['total_questions'] * 0.7) ? '#1A1A1A' : '#92400E') }};">{{ $u['score'] }}/{{ $report['total_questions'] }}</span>
                                 @endforeach
@@ -151,14 +159,14 @@
                 {{-- Title --}}
                 <div>
                     <label style="font-size:0.8rem; font-weight:600; color:#5C5C66; display:block; margin-bottom:0.25rem;">Tên challenge <span style="color:#DC2626;">*</span></label>
-                    <input wire:model="expTitle" type="text" class="input" style="width:100%;" placeholder="VD: AI Agent Challenge 21 Day">
+                        <input wire:model="expTitle" type="text" class="input" style="width:100%;" placeholder="VD: MEP Coordination Challenge 21 ngày">
                     @error('expTitle') <p style="color:#DC2626; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Slug --}}
                 <div>
                     <label style="font-size:0.8rem; font-weight:600; color:#5C5C66; display:block; margin-bottom:0.25rem;">Slug (URL) <span style="font-weight:400; color:#9CA3AF;">— để trống tự generate</span></label>
-                    <input wire:model="expSlug" type="text" class="input" style="width:100%; font-family:monospace;" placeholder="ai-agent-challenge-21-day">
+                        <input wire:model="expSlug" type="text" class="input" style="width:100%; font-family:monospace;" placeholder="mep-coordination-challenge-21-day">
                 </div>
 
                 {{-- Boss name --}}
@@ -186,6 +194,18 @@
                     <textarea wire:model="expDescription" class="input" rows="3" style="width:100%; resize:vertical;" placeholder="Mô tả ngắn về challenge..."></textarea>
                 </div>
 
+                <div>
+                    <label style="font-size:0.8rem; font-weight:600; color:#5C5C66; display:block; margin-bottom:0.25rem;">Ảnh bìa Challenge <span style="font-weight:400; color:#9CA3AF;">— khuyến nghị 16:9</span></label>
+                    <input wire:model="expCover" type="file" accept="image/*" class="input" style="width:100%; padding:.45rem;">
+                    @error('expCover') <p style="color:#DC2626; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
+                    @if($existingExpCover)
+                        <div style="display:flex;align-items:center;gap:.6rem;margin-top:.45rem;padding:.5rem;border:1px solid #D7E5EA;border-radius:.5rem;background:#F8FCFD;">
+                            <img src="{{ asset('storage/'.$existingExpCover) }}" alt="Ảnh bìa hiện tại" style="width:52px;height:34px;object-fit:cover;border-radius:.3rem;">
+                            <label style="display:flex;align-items:center;gap:.35rem;color:#A43C35;font-size:.72rem;font-weight:600;cursor:pointer;"><input wire:model="removeExpCover" type="checkbox"> Gỡ ảnh khi lưu</label>
+                        </div>
+                    @endif
+                </div>
+
                 {{-- Difficulty + Status --}}
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div>
@@ -206,6 +226,10 @@
                         </select>
                     </div>
                 </div>
+
+                <label style="display:flex;align-items:center;gap:.45rem;margin-top:.8rem;color:#29485B;font-size:.8rem;font-weight:700;">
+                    <input wire:model="expFeatured" type="checkbox"> Nổi bật trên Marketplace
+                </label>
 
                 {{-- Days + Members --}}
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
@@ -297,6 +321,13 @@
                     <textarea wire:model="taskSopContent" class="input" rows="4" style="width:100%; resize:vertical;" placeholder="Viết hướng dẫn chi tiết..." x-data @paste="window.pasteAsMarkdown($event)"></textarea>
                 </div>
 
+                <div style="padding:0.75rem; border:1px solid #B8D7E6; border-radius:10px; background:#F7FBFE;">
+                    <label style="font-size:0.8rem; font-weight:700; color:#125A96; display:block; margin-bottom:0.25rem;">Nội dung bài học có cấu trúc (JSON)</label>
+                    <p style="font-size:0.7rem; color:#61798A; line-height:1.45; margin-bottom:0.4rem;">Dùng cho chương trình 21 ngày: mục tiêu, SOP, checklist, homework, rubric, lỗi thường gặp, điểm đạt và nhánh. Bài cũ có thể để trống để dùng fallback legacy.</p>
+                    <textarea wire:model="taskInstructionJson" rows="8" class="input" style="width:100%; font-family:monospace; font-size:0.7rem; line-height:1.45; resize:vertical;" placeholder='{"modality":"video","learning_objectives":[],"sop_steps":[],"verification_checklist":[],"homework":{},"rubric":[],"common_errors":[],"pass_score":70,"track":"common"}'></textarea>
+                    @error('taskInstructionJson') <p style="color:#B42318; font-size:0.7rem; margin-top:0.25rem;">{{ $message }}</p> @enderror
+                </div>
+
                 {{-- Video URL --}}
                 <div>
                     <label style="font-size:0.8rem; font-weight:600; color:#5C5C66; display:block; margin-bottom:0.25rem;">Video / Meeting URLs <span style="font-weight:400; color:#9CA3AF;">— mỗi dòng 1 link</span></label>
@@ -377,7 +408,7 @@
                 {{-- Reward file (tải về sau khi hoàn thành) --}}
                 <div style="padding:0.75rem; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px;">
                     <label style="font-size:0.85rem; font-weight:600; color:#1E40AF; display:block; margin-bottom:0.25rem;">
-                        📥 Tài liệu thưởng <span style="font-weight:400; color:#6B7280;">— hiện cho user sau khi bài được duyệt</span>
+                        Tài liệu thưởng <span style="font-weight:400; color:#6B7280;">— hiện cho user sau khi bài được duyệt</span>
                     </label>
                     @if($existingRewardFile)
                     <div style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem; background:#DBEAFE; border-radius:6px; margin-bottom:0.5rem;">
@@ -397,10 +428,10 @@
                 {{-- Quiz JSON editor --}}
                 <div>
                     <label style="font-size:0.8rem; font-weight:600; color:#5C5C66; display:block; margin-bottom:0.25rem;">
-                        📝 Quiz (JSON) <span style="font-weight:400; color:#9CA3AF;">— để trống nếu task không có quiz</span>
+                        Quiz (JSON) <span style="font-weight:400; color:#9CA3AF;">— để trống nếu task không có quiz</span>
                     </label>
                     <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:0.375rem; padding:0.5rem 0.625rem; margin-bottom:0.375rem; font-size:0.7rem; color:#78716C; line-height:1.5;">
-                        Mỗi phần tử cần: <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">q</code> (câu hỏi), <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">options{A,B,C,D}</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">correct</code> (A/B/C/D), <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">explanation</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">ai_prompt</code>. Markdown <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">**bold**</code> hoạt động trong q + explanation. Mỗi câu đúng = +2 XP cho user.
+                        Mỗi phần tử cần: <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">q</code> (câu hỏi), <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">options{A,B,C,D}</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">correct</code> (A/B/C/D), <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">explanation</code>, <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">ai_prompt</code> (giữ key cũ để tương thích). Với DSCons, hãy dùng field này cho gợi ý đối chiếu quy trình kỹ thuật. Markdown <code style="background:#FEF3C7; padding:0.05rem 0.25rem; border-radius:3px;">**bold**</code> hoạt động trong q + explanation. Mỗi câu đúng = +2 XP cho user.
                     </div>
                     <textarea wire:model="taskQuizJson" rows="10" class="input" style="width:100%; font-family:monospace; font-size:0.72rem; line-height:1.5; resize:vertical; min-height:140px;" placeholder='[
   {
@@ -408,7 +439,7 @@
     "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
     "correct": "A",
     "explanation": "Giải thích...",
-    "ai_prompt": "Prompt copy cho user..."
+    "ai_prompt": "Gợi ý đối chiếu quy trình kỹ thuật..."
   }
 ]'></textarea>
                     @error('taskQuizJson') <p style="color:#DC2626; font-size:0.7rem; margin-top:0.2rem;">{{ $message }}</p> @enderror
@@ -432,7 +463,7 @@
     @if($showFreezeModal)
     <div style="position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem;" wire:click.self="$set('showFreezeModal', false)">
         <div class="card" style="width:100%; max-width:460px; padding:1.5rem;">
-            <h2 style="font-size:1rem; font-weight:700; color:#1A1A1A; margin-bottom:0.5rem;">⏸ Tạm dừng Challenge</h2>
+            <h2 style="font-size:1rem; font-weight:700; color:#1A1A1A; margin-bottom:0.5rem;">Tạm dừng Challenge</h2>
             <p style="font-size:0.78rem; color:#5C5C66; margin-bottom:1rem; line-height:1.5;">
                 Member đang ở ngày này trở đi sẽ được đóng băng timer — không tính trễ. Member chưa tới sẽ chạy bình thường cho đến khi gặp ngày đóng băng.
             </p>

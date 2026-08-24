@@ -1,4 +1,5 @@
-<div class="card" style="padding:0.875rem;">
+<div class="card sidebar-widget" style="padding:0.875rem;">
+    @php $pillars = brand()->pillarProfiles(); @endphp
     <p class="widget-title">TRỤ CỘT</p>
     @if($burning)
     <div class="burning-indicator mb-2">
@@ -7,7 +8,8 @@
     </div>
     @endif
     <div class="flex flex-col gap-1.5">
-        @foreach(['offer'=>['label'=>'Offer','color'=>'#D97706'],'traffic'=>['label'=>'Thu hút','color'=>'#d17856'],'conversion'=>['label'=>'Chuyển đổi','color'=>'#059669'],'delivery'=>['label'=>'Cung ứng','color'=>'#2563EB'],'continuity'=>['label'=>'Continuity','color'=>'#DC2626']] as $key => $data)
+        @foreach($pillars as $key => $pillarData)
+        @php $data = ['label' => $pillarData['name'], 'color' => $pillarData['color']]; @endphp
         @php $stat = $stats->get($key); $pct = $stat?->post_pct ?? 20; @endphp
         <div>
             <div class="flex justify-between mb-0.5">

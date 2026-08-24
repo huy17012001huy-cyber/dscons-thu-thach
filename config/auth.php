@@ -6,6 +6,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public authentication mode
+    |--------------------------------------------------------------------------
+    |
+    | Local development keeps the legacy password form available. Staging and
+    | production default to Google-only; set AUTH_MODE explicitly in each
+    | deployment environment so the behavior is never ambiguous.
+    |
+    | Supported values: "password", "google"
+    |
+    */
+
+    'mode' => env('AUTH_MODE', env('APP_ENV') === 'local' ? 'password' : 'google'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |

@@ -1,68 +1,55 @@
-<div class="post-thread-row {{ $post->is_cot ? 'is-cot' : '' }} {{ $post->is_signal ? 'is-signal' : '' }}"
-     id="post-{{ $post->id }}"
-     wire:click="$dispatch('open-post', { postId: {{ $post->id }} })">
-    {{-- Left: Author avatar --}}
-    <img src="{{ $post->user->avatar_url }}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;" alt="">
+@php($postUrl = community_route('post.show', ['slug' => $post->slug]))
 
-    {{-- Middle: Content --}}
-    <div style="flex:1; min-width:0;">
-        {{-- Author line --}}
-        <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px; flex-wrap:wrap;">
-            <span style="font-size:0.875rem; font-weight:600; color:var(--text, #1a1a1a);">{{ $post->user->name }}</span>
-            <span class="badge badge-class-{{ $post->user->class_color }}" style="font-size:0.6rem;">{{ $post->user->class_emoji }}</span>
-            <span class="level-badge">Lv.{{ $post->user->level }}</span>
-            @if($post->is_cot)
-            <span class="cot-badge" style="font-size:0.6rem;">★ CỐT</span>
+<article class="post-thread-row {{ $post->is_cot ? 'is-cot' : '' }}" id="post-{{ $post->id }}" wire:key="post-card-{{ $post->id }}" x-data x-on:click="if (!$event.target.closest('a,button')) Livewire.dispatch('open-post', { postId: {{ $post->id }} })">
+    <div class="post-card-topline">
+        <a href="{{ $postUrl }}" wire:click.prevent="$dispatch('open-post', { postId: {{ $post->id }} })" class="post-card-link" style="flex:1 1 auto;min-width:0;" aria-label="Đọc bài viết{{ $post->title ? ': '.$post->title : ' của '.$post->user->name }}">
+            <header class="post-card-author">
+                <img src="{{ $post->user->avatar_url }}" width="46" height="46" loading="lazy" alt="Ảnh đại diện của {{ $post->user->name }}">
+                <div class="post-card-author-copy">
+                    <div class="post-card-author-name">
+                        <strong>{{ $post->user->name }}</strong>
+                        <span class="level-badge level-{{ $post->user->levelBadgeTone() }}" style="--level-accent:{{ $post->user->levelBadgeColor() }};" title="{{ $post->user->job_stage }}" aria-label="Level {{ $post->user->level }} — {{ $post->user->job_stage }}">Lv.{{ $post->user->level }}</span>
+                    </div>
+                    <time datetime="{{ $post->created_at->toIso8601String() }}">{{ $post->created_at->diffForHumans() }}</time>
+                </div>
+            </header>
+            @if($post->title)
+                <h2 class="post-card-title">{{ $post->title }}</h2>
             @endif
-            <span style="font-size:0.75rem; color:#9ca3af;">{{ $post->created_at->diffForHumans() }}</span>
-        </div>
+        </a>
 
-        {{-- Title --}}
-        @if($post->title)
-        <h3 style="font-size:0.9375rem; font-weight:700; color:var(--text, #1a1a1a); margin-bottom:2px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">{{ $post->title }}</h3>
+        <div class="post-card-taxonomy" style="flex:0 0 48%;width:48%;max-width:48%;margin-top:0;align-self:flex-start;justify-content:flex-end;" aria-label="Chủ đề bài viết">
+            @if($post->subject)
+                <span class="post-topic">{{ $post->subject->slug === 'tieu-chuan' ? 'Thiết kế' : $post->subject->name }}</span>
+            @endif
+        </div>
+    </div>
+
+    <div class="post-card-body" wire:click="$dispatch('open-post', { postId: {{ $post->id }} })" style="cursor:pointer;">
+        <div class="post-card-content prose-post">{!! $this->renderContent(false) !!}</div>
+
+        @if($post->images->count())
+            <div class="post-card-images" aria-label="Ảnh đính kèm bài viết">
+                @foreach($post->images as $image)
+                    <img src="{{ asset('storage/'.$image->path) }}" width="720" height="420" loading="lazy" alt="Ảnh đính kèm bài viết">
+                @endforeach
+            </div>
         @endif
 
-        {{-- Content preview (2 lines max) --}}
-        <p style="font-size:0.8125rem; color:#6b7280; line-height:1.4; margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">{{ $this->contentPreview() }}</p>
-        {{-- Keep a sanitized rich representation available for assistive clients and the post modal. --}}
-        <div aria-hidden="true" style="display:none;">{!! $this->renderContent(false) !!}</div>
-
-        {{-- Bottom: stats + topic --}}
-        <div style="display:flex; align-items:center; gap:10px; font-size:0.75rem; color:#9ca3af;">
-            @if($post->pillar)
-            <span class="badge badge-pillar-{{ $post->pillar }}" style="font-size:0.6rem;">{{ $post->pillar_label }}</span>
-            @endif
-            @if($post->topic)
-            <span>{{ $post->topic->emoji }} {{ $post->topic->name }}</span>
-            @endif
-            <span style="display:flex; align-items:center; gap:3px;">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                {{ $post->likes_count ?? 0 }}
-            </span>
-            <span style="display:flex; align-items:center; gap:3px;">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                {{ $post->all_comments_count ?? $post->allComments->count() }}
-            </span>
-        </div>
     </div>
 
-    {{-- Right: Thumbnail --}}
-    @php
-        $thumbnail = null;
-        $thumbRatio = 'square'; // square or wide
-        // Check for uploaded images
-        if ($post->images->count() > 0) {
-            $thumbnail = asset('storage/' . $post->images->first()->path);
-        }
-        // Check for YouTube URL in content
-        elseif (preg_match('#(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})#i', $post->content, $ytMatch)) {
-            $thumbnail = 'https://img.youtube.com/vi/' . $ytMatch[1] . '/mqdefault.jpg';
-            $thumbRatio = 'wide';
-        }
-    @endphp
-    @if($thumbnail)
-    <div style="flex-shrink:0; width:{{ $thumbRatio === 'wide' ? '120px' : '72px' }}; height:72px; border-radius:8px; overflow:hidden;">
-        <img src="{{ $thumbnail }}" alt="" style="width:100%; height:100%; object-fit:cover;">
-    </div>
-    @endif
-</div>
+    <footer class="post-card-actions" aria-label="Tương tác bài viết">
+        <button type="button" wire:click.stop="toggleLike" class="post-card-action {{ $isLiked ? 'is-active' : '' }}" aria-pressed="{{ $isLiked ? 'true' : 'false' }}" aria-label="{{ $isLiked ? 'Bỏ thích' : 'Thích bài viết' }}">
+            <x-icon name="heart" size="18" /><span class="post-card-action-label">Thích</span><span class="post-card-action-count">{{ $likesCount }}</span>
+        </button>
+        <a href="{{ $postUrl }}#comments-title" wire:click.prevent="$dispatch('open-post', { postId: {{ $post->id }} })" class="post-card-action" aria-label="Mở bình luận">
+            <x-icon name="comment" size="18" /><span class="post-card-action-label">Bình luận</span><span class="post-card-action-count">{{ $post->all_comments_count ?? 0 }}</span>
+        </a>
+        <button type="button" wire:click.stop="toggleBookmark" class="post-card-action {{ $isBookmarked ? 'is-active' : '' }}" aria-pressed="{{ $isBookmarked ? 'true' : 'false' }}" aria-label="{{ $isBookmarked ? 'Bỏ lưu' : 'Lưu bài viết' }}">
+            <x-icon name="bookmark" size="18" /><span class="post-card-action-label">Lưu</span>
+        </button>
+        <button type="button" class="post-card-action" x-data x-on:click="navigator.clipboard?.writeText(@js($postUrl)); $dispatch('toast', { message: 'Đã sao chép liên kết.', type: 'success' })" aria-label="Sao chép liên kết">
+            <x-icon name="link" size="18" /><span class="post-card-action-label">Copy link</span>
+        </button>
+    </footer>
+</article>

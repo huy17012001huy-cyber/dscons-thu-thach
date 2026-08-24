@@ -1,9 +1,9 @@
-<div class="card" style="padding:0.875rem;">
+<div class="card sidebar-widget" style="padding:0.875rem;">
     <div class="flex items-center gap-2 mb-2">
         <img src="{{ $user->avatar_url }}" class="avatar w-8 h-8" alt="">
         <div style="flex:1; min-width:0;">
             <p style="font-size:0.8rem; font-weight:600; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $user->name }}</p>
-            <span class="badge badge-class-{{ $user->class_color }}" style="font-size:0.7rem;">{{ $user->class_emoji }} {{ $user->class_label }}</span>
+            <span class="badge badge-class-{{ $user->class_color }}" style="font-size:0.7rem;"><x-icon name="{{ $user->class_icon }}" size="13" /> {{ $user->class_label }}</span>
         </div>
     </div>
 

@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -25,22 +24,15 @@ class AdminUsers extends Component
     public bool $showCreateModal = false;
     public string $newName = '';
     public string $newEmail = '';
-    public string $newPassword = '';
     public string $newRole = 'member'; // member | mod | admin
 
     public function openCreateModal(): void
     {
         if (!Auth::user()?->is_admin) return;
-        $this->reset(['newName', 'newEmail', 'newPassword']);
+        $this->reset(['newName', 'newEmail']);
         $this->newRole = 'member';
         $this->resetValidation();
         $this->showCreateModal = true;
-    }
-
-    public function generatePassword(): void
-    {
-        // Chuỗi mật khẩu mạnh: chữ hoa/thường, số, ký tự đặc biệt
-        $this->newPassword = Str::password(14);
     }
 
     public function createUser(): void
@@ -50,12 +42,10 @@ class AdminUsers extends Component
         $this->validate([
             'newName'     => 'required|min:2|max:50',
             'newEmail'    => 'required|email|unique:users,email',
-            'newPassword' => 'required|min:8',
             'newRole'     => 'required|in:member,mod,admin',
         ], [], [
             'newName'     => 'họ tên',
             'newEmail'    => 'email',
-            'newPassword' => 'mật khẩu',
             'newRole'     => 'vai trò',
         ]);
 
@@ -75,7 +65,7 @@ class AdminUsers extends Component
             'name'     => $this->newName,
             'email'    => $this->newEmail,
             'username' => $username,
-            'password' => $this->newPassword, // cast 'hashed' tự băm
+            'source'   => 'admin',
             'level'    => 1,
             'xp'       => 0,
             'aip'      => 0,
@@ -96,15 +86,16 @@ class AdminUsers extends Component
             'plan'       => 'lifetime',
             'expires_at' => '2099-12-31',
         ]);
+        $user->brandRoles()->syncWithoutDetaching([
+            brand()->id => ['role' => $user->is_admin ? 'admin' : 'member'],
+        ]);
 
-        // Email chào mừng kèm thông tin đăng nhập (không chặn việc tạo nếu mail lỗi).
+        // Email chào mừng hướng dẫn Google login (không chặn việc tạo nếu mail lỗi).
         try {
             Mail::to($user->email)->send(new WelcomeMemberMail(
                 name:      $user->name,
                 email:     $user->email,
-                password:  $this->newPassword,
                 loginUrl:  route('login'),
-                resetUrl:  route('password.request'),
                 brandName: config('app.name'),
             ));
         } catch (\Throwable $e) {
@@ -112,7 +103,7 @@ class AdminUsers extends Component
         }
 
         $this->showCreateModal = false;
-        $this->reset(['newName', 'newEmail', 'newPassword']);
+        $this->reset(['newName', 'newEmail']);
         $this->resetPage();
         $this->dispatch('toast', message: 'Đã tạo thành viên ' . $user->name, type: 'success');
     }

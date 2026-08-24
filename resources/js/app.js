@@ -1,4 +1,9 @@
 import './bootstrap';
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+
+const richPostEditorInstances = new WeakMap();
 
 /**
  * Convert pasted HTML (from Claude AI, Google Docs, etc.) to Markdown.
@@ -20,6 +25,132 @@ window.pasteAsMarkdown = function (e) {
     el.value = el.value.slice(0, start) + md + el.value.slice(end);
     el.selectionStart = el.selectionEnd = start + md.length;
     el.dispatchEvent(new Event('input', { bubbles: true }));
+};
+
+window.richPostEditor = function () {
+    return {
+        editorElement: null,
+        wireId: null,
+        syncTimer: null,
+        wireRetryTimer: null,
+
+        init(wire, element) {
+            const componentRoot = element?.closest('[wire\\:id]');
+            const componentId = componentRoot?.getAttribute('wire:id');
+            this.wireId = typeof wire === 'string' ? wire : componentId;
+            const component = this.livewireComponent();
+
+            if (!element) return;
+            if (!component || typeof component.get !== 'function' || typeof component.set !== 'function') {
+                clearTimeout(this.wireRetryTimer);
+                this.wireRetryTimer = setTimeout(() => {
+                    this.init(this.wireId, element);
+                }, 50);
+                return;
+            }
+
+            const editor = new Editor({
+                element,
+                extensions: [
+                    StarterKit.configure({
+                        heading: { levels: [2, 3] },
+                        link: { openOnClick: false, protocols: ['http', 'https'] },
+                    }),
+                    Placeholder.configure({ placeholder: 'Chia sẻ điều gì đó với cộng đồng...' }),
+                ],
+                content: component.get('contentHtml') || '',
+                onUpdate: ({ editor }) => this.sync(editor.getHTML()),
+                onSelectionUpdate: () => this.refreshToolbar(),
+            });
+            richPostEditorInstances.set(element, editor);
+            this.editorElement = element;
+        },
+
+        getEditor() {
+            return this.editorElement ? richPostEditorInstances.get(this.editorElement) : null;
+        },
+
+        sync(html) {
+            clearTimeout(this.syncTimer);
+            this.syncTimer = setTimeout(() => {
+                const component = this.livewireComponent();
+                if (!component) return;
+                // Keep editor updates client-side while typing. Sending a Livewire
+                // request for every pause can replace the editor state mid-selection.
+                component.set('contentHtml', html, false);
+                component.set('content', this.getEditor()?.getText() || '', false);
+            }, 250);
+        },
+
+        livewireComponent() {
+            return this.wireId ? window.Livewire?.find(this.wireId) : null;
+        },
+
+        toggle(command) {
+            const editor = this.getEditor();
+            if (!editor) return;
+            const method = `toggle${command.charAt(0).toUpperCase()}${command.slice(1)}`;
+            if (typeof editor.chain().focus()[method] !== 'function') return;
+            editor.chain().focus()[method]().run();
+        },
+
+        toggleList(type) {
+            const editor = this.getEditor();
+            if (!editor) return;
+
+            const chain = editor.chain().focus();
+            if (type === 'ordered') {
+                chain.toggleOrderedList().run();
+                return;
+            }
+
+            chain.toggleBulletList().run();
+        },
+
+        isActive(name) {
+            return this.getEditor()?.isActive(name) || false;
+        },
+
+        insertLink() {
+            const editor = this.getEditor();
+            if (!editor) return;
+            const current = editor.getAttributes('link').href || '';
+            const url = window.prompt('Nhập URL https://', current);
+            if (url === null) return;
+            if (url === '') {
+                editor.chain().focus().unsetLink().run();
+                return;
+            }
+            if (!/^https?:\/\//i.test(url)) return;
+            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+        },
+
+        undo() {
+            const editor = this.getEditor();
+            if (editor) editor.chain().focus().undo().run();
+        },
+
+        redo() {
+            const editor = this.getEditor();
+            if (editor) editor.chain().focus().redo().run();
+        },
+
+        emojiOpen: false,
+
+        insertEmoji(emoji) {
+            const editor = this.getEditor();
+            if (!editor) return;
+
+            editor.chain().focus().insertContent(emoji).run();
+            this.emojiOpen = false;
+        },
+
+        refreshToolbar() {
+            this.$root.querySelectorAll('[data-refresh-toolbar]').forEach((button) => {
+                button.dispatchEvent(new Event('toolbar-refresh'));
+            });
+        },
+    };
 };
 
 function htmlToMd(node) {
@@ -139,8 +270,8 @@ window.postEditor = function () {
         },
 
         insertVideo() {
-            const url = window.prompt('Dán link YouTube hoặc video https://');
-            if (!url || !/^https?:\/\//i.test(url)) return;
+            const url = window.prompt('Dán link YouTube https://');
+            if (!url || !/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)/i.test(url)) return;
             this.replaceSelection('', '', url);
         },
 

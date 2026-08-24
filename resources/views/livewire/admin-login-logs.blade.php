@@ -1,4 +1,11 @@
-<div>
+<div class="admin-login-logs-page">
+<style>
+    .admin-login-logs-page { max-width: 1100px; margin: 0 auto; }
+    .admin-login-logs-page .card { border-radius: 18px; border-color: #D7E5EA; }
+    .admin-login-logs-page table { min-width: 760px; }
+    .admin-login-logs-page .input:focus { border-color: #1F77BE; box-shadow: 0 0 0 3px rgba(31,119,190,.14); }
+</style>
+
     <div class="card" style="max-width:1000px; margin-left:auto; margin-right:auto;">
         <div class="mb-4">
             <h1 style="font-size:1.25rem; font-weight:700; color:#1A1A1A;">🔐 Lịch sử đăng nhập</h1>
@@ -119,7 +126,7 @@
                         <td style="padding:0.5rem 0.6rem;">
                             @if($log->fingerprint_hash)
                                 <button type="button" wire:click="$set('search', '{{ $log->fingerprint_hash }}')"
-                                    style="font-family:monospace; font-size:0.72rem; background:#EDE9FE; color:#5B21B6; border:none; padding:0.1rem 0.4rem; border-radius:4px; cursor:pointer;"
+                                    style="font-family:monospace; font-size:0.72rem; background:#E1F4F7; color:#125A96; border:none; padding:0.1rem 0.4rem; border-radius:4px; cursor:pointer;"
                                     title="Click để xem mọi tài khoản từ vân tay này — full: {{ $log->fingerprint_hash }}">{{ substr($log->fingerprint_hash, 0, 8) }}</button>
                             @else
                                 <span style="color:#C4C4CC;">—</span>

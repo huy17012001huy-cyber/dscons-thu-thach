@@ -4,14 +4,22 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test:e2e": "playwright test"
     },
     "devDependencies": {
+        "@playwright/test": "^1.62.1",
         "@tailwindcss/vite": "^4.2.2",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
         "tailwindcss": "^4.2.2",
         "vite": "^7.0.7"
+    },
+    "dependencies": {
+        "@tiptap/core": "^3.30.2",
+        "@tiptap/extension-link": "^3.30.2",
+        "@tiptap/extension-placeholder": "^3.30.2",
+        "@tiptap/starter-kit": "^3.30.2"
     }
 }

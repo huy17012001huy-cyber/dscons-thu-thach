@@ -15,9 +15,7 @@ class WelcomeMemberMail extends Mailable
     public function __construct(
         public string $name,
         public string $email,
-        public ?string $password,
         public string $loginUrl,
-        public string $resetUrl,
         public string $brandName,
     ) {}
 

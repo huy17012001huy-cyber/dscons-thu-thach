@@ -1,5 +1,11 @@
-<div>
-    <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;">★ Duyệt CỐT</h1>
+<div class="admin-cot-review-page">
+<style>
+    .admin-cot-review-page { max-width: 920px; margin: 0 auto; }
+    .admin-cot-review-page .card { border-radius: 16px; border-color: #D7E5EA; }
+    .admin-cot-review-page .card:hover { border-color: #A9CAD7; box-shadow: 0 7px 16px rgba(18,59,89,.07); }
+</style>
+
+    <h1 style="font-size:1.25rem; font-weight:800; color:#1A1A1A; margin-bottom:1rem;"><x-icon name="compass" size="22" /> Duyệt CỐT</h1>
 
     @forelse($pending as $post)
     <div class="card mb-3">

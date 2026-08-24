@@ -1,11 +1,13 @@
 <div class="events-page">
     <style>
-        .events-hero { background: linear-gradient(135deg,#123b59 0%,#1f77be 100%); color:#fff; border-radius:18px; padding:1.35rem 1.5rem; margin-bottom:1rem; position:relative; overflow:hidden; }
+        .events-hero { background:#125A96; color:#fff; border-radius:18px; padding:1.35rem 1.5rem; margin-bottom:1rem; position:relative; overflow:hidden; }
         .events-hero::after { content:''; position:absolute; width:210px; height:210px; border:1px solid rgba(255,255,255,.2); border-radius:50%; right:-55px; top:-75px; box-shadow:0 0 0 22px rgba(255,255,255,.05),0 0 0 44px rgba(255,255,255,.04); }
         .events-hero h1 { font-size:clamp(1.35rem,2.5vw,1.9rem); font-weight:800; letter-spacing:-.03em; margin:0; }
         .events-hero p { color:rgba(255,255,255,.78); max-width:620px; margin:.4rem 0 0; font-size:.88rem; line-height:1.6; }
         .events-tabs { display:flex; gap:.35rem; border-bottom:1px solid var(--border); margin-bottom:1rem; overflow-x:auto; }
-        .events-tab { border:0; border-bottom:2px solid transparent; background:transparent; padding:.65rem .8rem; color:var(--text-muted); font-size:.84rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+        .events-tab { min-height:42px; border:0; border-bottom:2px solid transparent; border-radius:10px 10px 0 0; background:transparent; padding:.65rem .8rem; color:var(--text-muted); font-size:.84rem; font-weight:700; cursor:pointer; white-space:nowrap; transition:color .16s ease, background-color .16s ease, border-color .16s ease; }
+        .events-tab:hover { background:#EEF7F9; color:#125A96; }
+        .events-tab:focus-visible { outline:3px solid rgba(31,119,190,.20); outline-offset:1px; }
         .events-tab.active { color:var(--green); border-bottom-color:var(--green); }
         .events-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; margin-bottom:1rem; }
         .event-card { display:grid; grid-template-columns:8px minmax(0,1fr) auto; gap:1rem; align-items:stretch; }
@@ -24,6 +26,7 @@
         .event-status-cancelled { background:#fee2e2;color:#991b1b;border:1px solid #fecaca; }
         .event-status-completed { background:#f1f5f9;color:#475569;border:1px solid #cbd5e1; }
         .event-status-draft { background:#fef3c7;color:#92400e;border:1px solid #fde68a; }
+        .events-loading-state { display:flex; align-items:center; gap:8px; min-height:42px; margin:-.35rem 0 1rem; padding:10px 12px; border:1px solid #D7E5EA; border-radius:12px; background:#F8FCFD; color:#61798A; font-size:.78rem; }
         @media (max-width: 760px) {
             .events-hero { padding:1.1rem; border-radius:14px; }
             .events-filters { display:flex; overflow-x:auto; padding-bottom:2px; }
@@ -33,6 +36,7 @@
             .event-actions .btn { width:auto; }
             .event-card-head { display:block; }
         }
+        @media (max-width:420px) { .event-actions { grid-template-columns:1fr; } }
     </style>
 
     <section class="events-hero">
@@ -41,8 +45,8 @@
     </section>
 
     <div class="events-tabs" role="tablist" aria-label="Bộ lọc thời gian sự kiện">
-        <button type="button" class="events-tab {{ $tab === 'upcoming' ? 'active' : '' }}" wire:click="$set('tab', 'upcoming')">Sắp tới</button>
-        <button type="button" class="events-tab {{ $tab === 'past' ? 'active' : '' }}" wire:click="$set('tab', 'past')">Đã kết thúc</button>
+        <button type="button" role="tab" aria-selected="{{ $tab === 'upcoming' ? 'true' : 'false' }}" class="events-tab {{ $tab === 'upcoming' ? 'active' : '' }}" wire:click="$set('tab', 'upcoming')">Sắp tới</button>
+        <button type="button" role="tab" aria-selected="{{ $tab === 'past' ? 'true' : 'false' }}" class="events-tab {{ $tab === 'past' ? 'active' : '' }}" wire:click="$set('tab', 'past')">Đã kết thúc</button>
     </div>
 
     <div class="events-filters" aria-label="Bộ lọc sự kiện">
@@ -63,6 +67,10 @@
             <option value="online">Online</option>
             <option value="offline">Offline</option>
         </select>
+    </div>
+
+    <div wire:loading.flex class="events-loading-state" role="status" aria-live="polite">
+        <span class="loading-dot" aria-hidden="true"></span> Đang cập nhật lịch sự kiện...
     </div>
 
     @if($events->isEmpty())
@@ -100,9 +108,9 @@
                         @if($related)
                             <div class="mb-2">
                                 @if($event->course)
-                                    <a class="event-related" href="{{ route('academy.show', $event->course->id) }}">Khóa học · {{ $event->course->title }}</a>
+                                    <a class="event-related" href="{{ request()->routeIs('community.*') ? community_route('academy.show', ['id' => $event->course->id]) : route('academy.show', $event->course->id) }}">Khóa học · {{ $event->course->title }}</a>
                                 @else
-                                    <a class="event-related" href="{{ route('challenge.show', $event->expedition->slug) }}">Challenge · {{ $event->expedition->title }}</a>
+                                    <a class="event-related" href="{{ request()->routeIs('community.*') ? community_route('challenge.show', ['slug' => $event->expedition->slug]) : route('challenge.show', $event->expedition->slug) }}">Challenge · {{ $event->expedition->title }}</a>
                                 @endif
                             </div>
                         @endif
@@ -129,7 +137,7 @@
                                 <button type="button" class="btn btn-ghost" wire:click="cancelRegistration({{ $event->id }})">Hủy đăng ký</button>
                             @endif
                         @elseif($canRsvp)
-                            <button type="button" class="btn btn-primary" wire:click="registerEvent({{ $event->id }})" wire:loading.attr="disabled" wire:target="registerEvent({{ $event->id }})">Đăng ký tham gia</button>
+                            <button type="button" class="btn btn-primary" wire:click="registerEvent({{ $event->id }})" wire:loading.attr="disabled" wire:target="registerEvent({{ $event->id }})"><span wire:loading.remove wire:target="registerEvent({{ $event->id }})">Đăng ký tham gia</span><span wire:loading wire:target="registerEvent({{ $event->id }})">Đang đăng ký...</span></button>
                         @elseif($isFull)
                             <span class="badge" style="background:#f1f5f9;color:#475569;justify-content:center;padding:.55rem .65rem;">Đã đủ chỗ</span>
                         @elseif($event->status === 'cancelled')
