@@ -86,6 +86,23 @@ class RoleAuthorizationTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_only_owner_can_transfer_community_ownership(): void
+    {
+        $owner = User::factory()->create();
+        brand()->update(['owner_id' => $owner->id]);
+        $owner->brandRoles()->attach(brand()->id, ['role' => 'owner']);
+        $member = User::factory()->create();
+        $member->brandRoles()->attach(brand()->id, ['role' => 'member']);
+
+        Livewire::actingAs($owner)
+            ->test(CommunityMembers::class)
+            ->call('transferOwnership', $member->id);
+
+        $this->assertDatabaseHas('brands', ['id' => brand()->id, 'owner_id' => $member->id]);
+        $this->assertDatabaseHas('brand_user', ['brand_id' => brand()->id, 'user_id' => $owner->id, 'role' => 'admin']);
+        $this->assertDatabaseHas('brand_user', ['brand_id' => brand()->id, 'user_id' => $member->id, 'role' => 'owner']);
+    }
+
     public function test_membership_is_not_changed_when_community_role_changes(): void
     {
         $member = User::factory()->create();

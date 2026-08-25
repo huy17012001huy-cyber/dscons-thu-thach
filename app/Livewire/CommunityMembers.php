@@ -58,6 +58,50 @@ class CommunityMembers extends Component
         $this->dispatch('toast', message: 'Đã cập nhật vai trò thành viên.', type: 'success');
     }
 
+    public function transferOwnership(int $userId): void
+    {
+        abort_unless(Auth::user()?->isCommunityOwner($this->community->id), 403);
+
+        $target = User::query()->findOrFail($userId);
+        abort_if($target->isSuperAdmin(), 403, 'Không thể chuyển quyền cho Super Admin.');
+        abort_if($target->id === Auth::id(), 422, 'Bạn đã là Owner của community này.');
+
+        $currentOwner = Auth::user();
+        DB::transaction(function () use ($target, $currentOwner): void {
+            $this->community->update(['owner_id' => $target->id]);
+            $this->community->users()->syncWithoutDetaching([
+                $currentOwner->id => ['role' => 'admin'],
+                $target->id => ['role' => 'owner'],
+            ]);
+
+            CommunityRoleAudit::insert([
+                [
+                    'brand_id' => $this->community->id,
+                    'actor_id' => Auth::id(),
+                    'user_id' => $currentOwner->id,
+                    'from_role' => 'owner',
+                    'to_role' => 'admin',
+                    'action' => 'ownership_transferred',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'brand_id' => $this->community->id,
+                    'actor_id' => Auth::id(),
+                    'user_id' => $target->id,
+                    'from_role' => $target->communityRole($this->community->id),
+                    'to_role' => 'owner',
+                    'action' => 'ownership_received',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        });
+
+        $this->community->refresh();
+        $this->dispatch('toast', message: 'Đã chuyển quyền Owner.', type: 'success');
+    }
+
     private function authorizeAdmin(): void
     {
         abort_unless(Auth::user()?->isCommunityAdmin($this->community->id), 403);

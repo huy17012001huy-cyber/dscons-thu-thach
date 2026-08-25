@@ -31,6 +31,7 @@
                             @else
                                 <button type="button" wire:click="changeRole({{ $member->id }}, 'member')" class="btn btn-ghost" style="min-height:34px;padding:5px 9px;font-size:11px;">Thu hồi Admin</button>
                             @endif
+                            <button type="button" wire:click="transferOwnership({{ $member->id }})" wire:confirm="Chuyển quyền Owner cho thành viên này? Bạn sẽ trở thành Admin." class="btn btn-ghost" style="min-height:34px;padding:5px 9px;font-size:11px;">Chuyển Owner</button>
                         @endif
                     </div>
                 @else
