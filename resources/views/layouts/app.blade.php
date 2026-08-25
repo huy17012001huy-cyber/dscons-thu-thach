@@ -1012,7 +1012,7 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         @endif
         @endauth
         @can('community-admin')
-        <a href="{{ community_route('manage') }}" class="ch-item {{ request()->routeIs('community.manage*') ? 'active' : '' }}">
+        <a href="{{ community_route('manage') }}" class="ch-item {{ request()->routeIs('community.manage') ? 'active' : '' }}">
             <x-icon name="settings" size="18" />
             <span class="ch-name">Quản trị community</span>
         </a>
@@ -1305,7 +1305,7 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         @endif
         @endauth
         @can('community-admin')
-        <a href="{{ community_route('manage') }}" class="ch-item {{ request()->routeIs('community.manage*')?'active':'' }}" onclick="closeSidebar()">
+        <a href="{{ community_route('manage') }}" class="ch-item {{ request()->routeIs('community.manage')?'active':'' }}" onclick="closeSidebar()">
             <x-icon name="settings" size="18" />
             <span class="ch-name">Quản trị community</span>
         </a>
