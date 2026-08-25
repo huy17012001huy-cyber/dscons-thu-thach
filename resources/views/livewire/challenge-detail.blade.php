@@ -285,7 +285,7 @@
                  class="py-3 {{ !$loop->last ? 'border-b' : '' }}" style="{{ !$loop->last ? 'border-color:#E1E1E1;' : '' }} position:relative;">
 
                 {{-- Admin edit button (outside opacity wrapper so it stays visible on locked tasks) --}}
-                @can('admin')
+                @can('community-admin')
                 <button wire:click="startEditTask({{ $task->id }})" @click.stop style="position:absolute; top:0.75rem; right:1.5rem; color:#5C5C66; font-size:0.65rem; padding:0.125rem 0.375rem; cursor:pointer; z-index:1;" title="Sửa nhiệm vụ" aria-label="Sửa nhiệm vụ">Sửa</button>
                 @endcan
 
@@ -780,7 +780,7 @@
     {{-- Video feedback moved to header card above --}}
 
     {{-- Admin: Video Feedback Review --}}
-    @can('admin')
+                @can('community-admin')
     @php
         $pendingVideos = $approvedMembers->filter(fn($m) => $m->video_feedback_status === 'pending');
     @endphp
@@ -810,7 +810,7 @@
     @endcan
 
     {{-- Admin: Member Report --}}
-    @can('admin')
+                @can('community-admin')
     @if($memberReport->count() > 0)
     <div class="card mb-4">
         <div class="flex items-center justify-between mb-3">
@@ -896,12 +896,12 @@
     {{-- Submission history --}}
     @if($submissions && ($submissions->count() > 0 || $submissionSearch))
     <div class="card">
-        @can('admin')
+                @can('community-admin')
         <input wire:model.live.debounce.300ms="submissionSearch" type="search" class="input mb-3" placeholder="Tìm theo tên, email, username..." style="font-size:0.8rem; max-width:350px;">
         @endcan
         <div class="flex items-center justify-between mb-3">
             <h2 style="font-size:0.9rem; font-weight:700; color:#1A1A1A;">Lịch sử nộp bài ({{ $submissions->total() }})</h2>
-            @can('admin')
+                @can('community-admin')
             @if($totalPendingSubmissions > 0)
             <button wire:click="approveAllPending" wire:confirm="Duyệt tất cả bài đang chờ?" class="btn btn-primary" style="font-size:0.7rem; padding:0.25rem 0.625rem;">
                 ✓ Duyệt tất cả ({{ $totalPendingSubmissions }})
@@ -1015,7 +1015,7 @@
             @endif
 
             {{-- Admin review buttons --}}
-            @can('admin')
+                @can('community-admin')
             @if($sub->review_status === 'pending')
             <div x-data="{ showReject: false, note: '' }" style="padding-left:2rem; margin-top:0.375rem;">
                 @php

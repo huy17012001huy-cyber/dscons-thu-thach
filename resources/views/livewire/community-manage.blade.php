@@ -109,7 +109,7 @@
                 </a>
             </div>
             <div class="community-manage-command-group is-navigation">
-                @can('admin')
+                @can('community-admin')
                 <a href="{{ community_route('manage.settings') }}" class="community-manage-command is-secondary">
                     <x-icon name="settings" size="16" />
                     <span>Cài đặt community</span>
@@ -121,6 +121,10 @@
                 <a href="{{ community_route('manage.feedbacks') }}" class="community-manage-command is-secondary">
                     <x-icon name="chat" size="16" />
                     <span>Góp ý & khiếu nại</span>
+                </a>
+                <a href="{{ community_route('manage.members') }}" class="community-manage-command is-secondary">
+                    <x-icon name="users" size="16" />
+                    <span>Thành viên & vai trò</span>
                 </a>
                 @endcan
                 <a href="{{ route('community.preview', $community->slug) }}" class="community-manage-command is-secondary">

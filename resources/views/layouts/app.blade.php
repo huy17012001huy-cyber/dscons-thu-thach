@@ -1011,6 +1011,18 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         </a>
         @endif
         @endauth
+        @can('community-admin')
+        <a href="{{ community_route('manage') }}" class="ch-item {{ request()->routeIs('community.manage*') ? 'active' : '' }}">
+            <x-icon name="settings" size="18" />
+            <span class="ch-name">Quản trị community</span>
+        </a>
+        @endcan
+        @can('community-moderator')
+        <a href="{{ community_route('manage.moderation') }}" class="ch-item {{ request()->routeIs('community.manage.moderation') ? 'active' : '' }}">
+            <x-icon name="shield" size="18" />
+            <span class="ch-name">Kiểm duyệt nội dung</span>
+        </a>
+        @endcan
         @can('admin')
         <div class="ch-category">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -1292,6 +1304,18 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         <a href="{{ community_route('engineer.recruitment-requests') }}" class="ch-item {{ request()->routeIs('engineer.recruitment-requests') || request()->routeIs('community.engineer.recruitment-requests')?'active':'' }}" onclick="closeSidebar()"><x-icon name="briefcase" size="18" /><span class="ch-name">Yêu cầu tuyển dụng</span></a>
         @endif
         @endauth
+        @can('community-admin')
+        <a href="{{ community_route('manage') }}" class="ch-item {{ request()->routeIs('community.manage*')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="settings" size="18" />
+            <span class="ch-name">Quản trị community</span>
+        </a>
+        @endcan
+        @can('community-moderator')
+        <a href="{{ community_route('manage.moderation') }}" class="ch-item {{ request()->routeIs('community.manage.moderation')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="shield" size="18" />
+            <span class="ch-name">Kiểm duyệt nội dung</span>
+        </a>
+        @endcan
         @can('admin')
         <a href="{{ route('admin.dashboard') }}" class="ch-item {{ request()->routeIs('admin.*')?'active':'' }}" onclick="closeSidebar()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 01-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>

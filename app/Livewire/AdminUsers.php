@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Mail\WelcomeMemberMail;
 use App\Models\Membership;
+use App\Models\CommunityRoleAudit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -120,8 +121,21 @@ class AdminUsers extends Component
     {
         if (!Auth::user()?->is_admin) return;
         $user = User::findOrFail($id);
-        $user->is_moderator = !$user->is_moderator;
-        $user->save();
+        if ($user->isSuperAdmin()) return;
+
+        $currentRole = $user->communityRole(brand()->id);
+        $nextRole = $currentRole === 'moderator' ? 'member' : 'moderator';
+        $user->brandRoles()->syncWithoutDetaching([
+            brand()->id => ['role' => $nextRole],
+        ]);
+        CommunityRoleAudit::create([
+            'brand_id' => brand()->id,
+            'actor_id' => Auth::id(),
+            'user_id' => $user->id,
+            'from_role' => $currentRole,
+            'to_role' => $nextRole,
+            'action' => 'role_changed_from_global_admin',
+        ]);
     }
 
     public function banUser(int $id): void
@@ -183,6 +197,7 @@ class AdminUsers extends Component
     {
         $query = $this->usersQuery()
             ->with('membership')
+            ->with(['brandRoles' => fn ($query) => $query->where('brands.id', brand()->id)])
             ->withCount('posts');
 
         return view('livewire.admin-users', ['users' => $query->latest()->paginate(20)])

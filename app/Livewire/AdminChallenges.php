@@ -548,7 +548,11 @@ class AdminChallenges extends Component
         $managingTasks = $this->managingExpeditionId
             ? ChallengeTask::where('expedition_id', $this->managingExpeditionId)->orderBy('day_number')->get()
             : collect();
-        $staffUsers = User::where('is_admin', true)->orWhere('is_moderator', true)
+        $staffUsers = User::where('is_admin', true)
+            ->orWhereHas('brandRoles', function ($query): void {
+                $query->where('brands.id', brand()->id)
+                    ->whereIn('brand_user.role', ['owner', 'admin', 'moderator']);
+            })
             ->orderBy('name')->get(['id', 'name', 'username']);
 
         return view('livewire.admin-challenges', compact('expeditions', 'managingTasks', 'staffUsers'))

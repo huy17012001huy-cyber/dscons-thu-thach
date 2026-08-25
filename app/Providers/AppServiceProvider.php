@@ -29,7 +29,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Carbon::setLocale('vi');
-        Gate::define('admin', fn($user) => $user->isBrandAdmin());
+        Gate::define('admin', fn ($user) => $user->isSuperAdmin());
+        Gate::define('super-admin', fn ($user) => $user->isSuperAdmin());
+        Gate::define('community-admin', fn ($user) => $user->isCommunityAdmin());
+        Gate::define('community-owner', fn ($user) => $user->isCommunityOwner());
+        Gate::define('community-moderator', fn ($user) => $user->isCommunityModerator());
+        Gate::define('engineer-account', fn ($user) => $user->isEngineer());
+        Gate::define('recruiter-account', fn ($user) => $user->isRecruiter());
         // Listener RecordLoginLog (app/Listeners) tự được đăng ký qua event auto-discovery
 
         // Cấu hình gửi mail + cổng thanh toán SePay có thể chỉnh ở /admin/settings (lưu trong

@@ -147,15 +147,33 @@ Route::prefix('c/{community:slug}')->name('community.')->group(function () {
         Route::get('/gop-y-khieu-nai/tao', CreateCommunityFeedback::class)->name('feedbacks.create');
         Route::get('/huong-dan-su-dung', CommunityGuidePage::class)->name('guide');
         Route::get('/noi-quy', CommunityRulesPage::class)->name('rules');
+    });
+
+    // Community administration is independent from account type and
+    // membership. A community admin can manage only the active community.
+    Route::middleware([
+        'auth',
+        \App\Http\Middleware\EnsureEmailVerified::class,
+        \App\Http\Middleware\CommunityAdminOnly::class,
+    ])->group(function () {
         Route::get('/manage', CommunityManage::class)->name('manage');
-        // Community owners/admins manage content inside the active brand
-        // context. These routes deliberately reuse the existing Livewire
-        // admin screens so course/challenge/event logic stays in one place.
         Route::get('/manage/courses', AdminCourses::class)->name('manage.courses');
         Route::get('/manage/courses/{id}/build', AdminCourseBuilder::class)->name('manage.courses.build')->whereNumber('id');
         Route::get('/manage/challenges', \App\Livewire\AdminChallenges::class)->name('manage.challenges');
         Route::get('/manage/events', AdminEvents::class)->name('manage.events');
+        Route::get('/manage/settings', \App\Livewire\CommunitySettings::class)->name('manage.settings');
+        Route::get('/manage/recruitment', AdminRecruitment::class)->name('manage.recruitment');
+        Route::get('/manage/feedbacks', AdminFeedbacks::class)->name('manage.feedbacks');
+        Route::get('/manage/members', \App\Livewire\CommunityMembers::class)->name('manage.members');
     });
+
+    Route::get('/manage/moderation', \App\Livewire\AdminReports::class)
+        ->name('manage.moderation')
+        ->middleware([
+            'auth',
+            \App\Http\Middleware\EnsureEmailVerified::class,
+            \App\Http\Middleware\CommunityModeratorOnly::class,
+        ]);
 
     // CV and Talent are independent community features. A community can keep
     // CV editing available while turning recruiter search off.
@@ -187,21 +205,12 @@ Route::prefix('c/{community:slug}')->name('community.')->group(function () {
         });
     });
 
-    Route::get('/manage/settings', AdminSettings::class)
-        ->name('manage.settings')
-        ->middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class, 'can:admin']);
-    Route::get('/manage/recruitment', AdminRecruitment::class)
-        ->name('manage.recruitment')
-        ->middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class, 'can:admin']);
-    Route::get('/manage/feedbacks', AdminFeedbacks::class)
-        ->name('manage.feedbacks')
-        ->middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class, 'can:admin']);
 });
 
 Route::middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class])->group(function () {
     Route::get('/admin/communities', AdminCommunities::class)
         ->name('admin.communities')
-        ->can('admin');
+        ->can('super-admin');
 });
 
 // ─── SePay webhook (no auth, verified by API key) ──────────────────
@@ -327,7 +336,7 @@ Route::middleware('auth')->group(function () {
         ->name('admin.impersonate.start')
         ->whereNumber('user')
         ->middleware('throttle:20,1')
-        ->can('admin');
+        ->can('super-admin');
     Route::post('/admin/impersonate/stop', [ImpersonationController::class, 'stop'])
         ->name('admin.impersonate.stop')
         ->middleware('throttle:20,1');
@@ -361,35 +370,35 @@ Route::middleware('auth')->group(function () {
         // ─── Admin routes ────────────────────────────────────────────
         Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', AdminDashboard::class)->name('dashboard')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/topics', AdminTopics::class)->name('topics')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/courses', AdminCourses::class)->name('courses')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/orders', AdminOrders::class)->name('orders')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/products', \App\Livewire\AdminProducts::class)->name('products')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/courses/{id}/build', AdminCourseBuilder::class)->name('courses.build')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/challenges', AdminChallenges::class)->name('challenges')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/events', AdminEvents::class)->name('events')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/cot-review', AdminCotReview::class)->name('cot')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/reports', AdminReports::class)->name('reports')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/feedbacks', AdminFeedbacks::class)->name('feedbacks')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/users', AdminUsers::class)->name('users')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/settings', AdminSettings::class)->name('settings')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/login-logs', AdminLoginLogs::class)->name('login-logs')
-                ->can('admin');
+        ->can('super-admin');
             Route::get('/recruitment', AdminRecruitment::class)->name('recruitment')
-                ->can('admin');
+                ->can('super-admin');
         });
         Route::get('/@{username}',       ProfilePage::class)->name('profile');
         Route::get('/u/{id}',            function ($id) {

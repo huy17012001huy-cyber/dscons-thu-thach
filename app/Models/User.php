@@ -139,6 +139,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return ! $this->is_admin && $this->account_type === 'recruiter';
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_admin;
+    }
+
     public function isEngineer(): bool
     {
         return ! $this->is_admin && $this->account_type !== 'recruiter';
@@ -172,11 +177,35 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isBrandAdmin(?int $brandId = null): bool
     {
         $brandId ??= app()->bound('brand') ? brand()->id : null;
-        if (!$brandId) return $this->is_admin;
-        return $this->is_admin || $this->brandRoles()
+        return $this->isCommunityAdmin($brandId);
+    }
+
+    public function communityRole(?int $brandId = null): ?string
+    {
+        $brandId ??= app()->bound('brand') ? brand()->id : null;
+        if (! $brandId) {
+            return null;
+        }
+
+        return $this->brandRoles()
             ->where('brand_id', $brandId)
-            ->whereIn('role', ['owner', 'admin'])
-            ->exists();
+            ->first()?->pivot?->role;
+    }
+
+    public function hasCommunityRole(string|array $roles, ?int $brandId = null): bool
+    {
+        $role = $this->communityRole($brandId);
+        return $role !== null && in_array($role, (array) $roles, true);
+    }
+
+    public function isCommunityAdmin(?int $brandId = null): bool
+    {
+        return $this->isSuperAdmin() || $this->hasCommunityRole(['owner', 'admin'], $brandId);
+    }
+
+    public function isCommunityModerator(?int $brandId = null): bool
+    {
+        return $this->isSuperAdmin() || $this->hasCommunityRole(['owner', 'admin', 'moderator'], $brandId);
     }
 
     public function isCommunityOwner(?int $brandId = null): bool
@@ -184,7 +213,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $brandId ??= app()->bound('brand') ? brand()->id : null;
         if (!$brandId) return false;
 
-        return $this->is_admin || $this->brandRoles()
+        return $this->isSuperAdmin() || $this->brandRoles()
             ->where('brand_id', $brandId)
             ->where('role', 'owner')
             ->exists();

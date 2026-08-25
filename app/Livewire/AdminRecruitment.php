@@ -11,20 +11,26 @@ use Livewire\Component;
 
 class AdminRecruitment extends Component
 {
+    public bool $isGlobalAdmin = false;
     public string $planName = '';
     public string $planDescription = '';
     public int $planCredits = 0;
     public ?int $planDuration = null;
     public int $planPrice = 0;
 
+    public function mount(): void
+    {
+        $this->isGlobalAdmin = request()->routeIs('admin.*') && auth()->user()?->isSuperAdmin();
+    }
+
     public function approve(int $profileId): void
     {
-        RecruiterProfile::findOrFail($profileId)->update(['verification_status' => 'verified', 'verified_at' => now(), 'reviewed_by' => auth()->id(), 'review_note' => null]);
+        $this->recruiterProfilesQuery()->findOrFail($profileId)->update(['verification_status' => 'verified', 'verified_at' => now(), 'reviewed_by' => auth()->id(), 'review_note' => null]);
     }
 
     public function reject(int $profileId): void
     {
-        RecruiterProfile::findOrFail($profileId)->update(['verification_status' => 'rejected', 'reviewed_by' => auth()->id()]);
+        $this->recruiterProfilesQuery()->findOrFail($profileId)->update(['verification_status' => 'rejected', 'reviewed_by' => auth()->id()]);
     }
 
     public function savePlan(): void
@@ -42,14 +48,14 @@ class AdminRecruitment extends Component
 
     public function render()
     {
-        $pendingRecruiters = RecruiterProfile::with('user')
+        $pendingRecruiters = $this->recruiterProfilesQuery()->with('user')
             ->where('verification_status', 'pending')
             ->latest()
             ->get();
 
-        $plans = RecruiterPlan::latest()->get();
+        $plans = $this->recruiterPlansQuery()->latest()->get();
 
-        $connections = RecruitmentContactRequest::query()
+        $connections = $this->contactRequestsQuery()
             ->with([
                 'recruiter.recruiterProfile',
                 'engineer.engineerProfile',
@@ -59,16 +65,41 @@ class AdminRecruitment extends Component
             ->latest()
             ->get();
 
-        $engineerCvs = EngineerCv::query()
+        $engineerCvs = $this->engineerCvsQuery()
             ->with('user')
             ->latest('updated_at')
             ->get();
-        $cvProfiles = EngineerProfile::query()
+        $cvProfiles = $this->engineerProfilesQuery()
             ->whereIn('user_id', $engineerCvs->pluck('user_id'))
             ->get()
             ->keyBy('user_id');
 
         return view('livewire.admin-recruitment', compact('pendingRecruiters', 'plans', 'connections', 'engineerCvs', 'cvProfiles'))
             ->layout('layouts.app', ['title' => 'Quản lý tuyển dụng']);
+    }
+
+    private function recruiterProfilesQuery()
+    {
+        return $this->isGlobalAdmin ? RecruiterProfile::withoutGlobalScopes() : RecruiterProfile::query();
+    }
+
+    private function recruiterPlansQuery()
+    {
+        return $this->isGlobalAdmin ? RecruiterPlan::withoutGlobalScopes() : RecruiterPlan::query();
+    }
+
+    private function contactRequestsQuery()
+    {
+        return $this->isGlobalAdmin ? RecruitmentContactRequest::withoutGlobalScopes() : RecruitmentContactRequest::query();
+    }
+
+    private function engineerCvsQuery()
+    {
+        return $this->isGlobalAdmin ? EngineerCv::withoutGlobalScopes() : EngineerCv::query();
+    }
+
+    private function engineerProfilesQuery()
+    {
+        return $this->isGlobalAdmin ? EngineerProfile::withoutGlobalScopes() : EngineerProfile::query();
     }
 }

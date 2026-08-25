@@ -103,14 +103,17 @@
                     <td style="padding:0.5rem; color:#d17856; font-weight:600;">{{ number_format($user->xp) }}</td>
                     <td style="padding:0.5rem;">{{ $user->posts_count }}</td>
                     <td style="padding:0.5rem;">
-                        @if($user->is_admin)<span class="badge" style="background:#FEE2E2; color:#991B1B; font-size:0.6rem;">Admin</span>@endif
-                        @if($user->is_moderator)<span class="badge" style="background:#DBEAFE; color:#1E40AF; font-size:0.6rem;">Mod</span>@endif
+                        @php($communityRole = $user->brandRoles->first()?->pivot?->role)
+                        @if($user->is_admin)<span class="badge" style="background:#FEE2E2; color:#991B1B; font-size:0.6rem;">Super Admin</span>@endif
+                        @if($communityRole === 'owner')<span class="badge" style="background:#FEF3C7; color:#92400E; font-size:0.6rem;">Owner</span>@elseif($communityRole === 'admin')<span class="badge" style="background:#E0F2FE; color:#075985; font-size:0.6rem;">Community Admin</span>@elseif($communityRole === 'moderator')<span class="badge" style="background:#DBEAFE; color:#1E40AF; font-size:0.6rem;">Moderator</span>@endif
                         @if($user->membership?->status === 'banned')<span class="badge" style="background:#FEE2E2; color:#991B1B; font-size:0.6rem;">Banned</span>@endif
                     </td>
                     <td style="padding:0.5rem;">
                         <div class="flex gap-1 flex-wrap">
                             <button wire:click="toggleAdmin({{ $user->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.4rem;">{{ $user->is_admin ? '- Admin' : '+ Admin' }}</button>
-                            <button wire:click="toggleModerator({{ $user->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.4rem;">{{ $user->is_moderator ? '- Mod' : '+ Mod' }}</button>
+                            @if(!$user->is_admin && $communityRole !== 'owner')
+                            <button wire:click="toggleModerator({{ $user->id }})" class="btn btn-ghost" style="font-size:0.65rem; padding:0.2rem 0.4rem;">{{ $communityRole === 'moderator' ? '- Moderator' : '+ Moderator' }}</button>
+                            @endif
                             @if($user->membership?->status === 'banned')
                             <button wire:click="unbanUser({{ $user->id }})" class="btn btn-success" style="font-size:0.65rem; padding:0.2rem 0.4rem;">Unban</button>
                             @else
