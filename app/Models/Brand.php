@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 class Brand extends Model
 {
     protected $fillable = [
-        'name', 'slug', 'domain', 'logo_path', 'banner_path', 'tagline', 'description', 'owner_id', 'status', 'verified_at',
+        'name', 'slug', 'domain', 'logo_path', 'banner_path', 'tagline', 'description', 'guide_content', 'rules_content', 'owner_id', 'status', 'verified_at',
         'theme_primary', 'theme_accent', 'theme_bg',
         'has_expeditions', 'has_academy', 'has_marketplace', 'has_qa', 'has_cv', 'has_recruitment',
         'is_invite_only', 'registration_mode',

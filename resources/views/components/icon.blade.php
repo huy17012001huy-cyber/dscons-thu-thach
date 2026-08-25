@@ -11,6 +11,8 @@
         'users' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
         'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
         'user-plus' => '<path d="M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8" cy="7" r="4"/><path d="M19 8v6M16 11h6"/>',
+        'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+        'plus' => '<path d="M12 5v14M5 12h14"/>',
         'chat' => '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h.01M12 9h.01M16 9h.01"/>',
         'question' => '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 1 1 4.2 2c-.9.7-1.7 1.2-1.7 2.5M12 17h.01"/>',
         'bolt' => '<path d="m13 2-9 12h7l-1 8 9-12h-7Z"/>',
@@ -19,6 +21,7 @@
         'target' => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
         'flag' => '<path d="M5 21V4"/><path d="M5 4c5-3 9 3 14 0v9c-5 3-9-3-14 0"/>',
         'calendar' => '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+        'bell' => '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
         'chart' => '<path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 5-6"/>',
         'shopping-cart' => '<path d="M3 3h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 7H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/>',
         'receipt' => '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
@@ -36,6 +39,7 @@
         'tag' => '<path d="M20 13 13 20 3 10V3h7Z"/><circle cx="7" cy="7" r="1"/>',
         'layers' => '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
         'palette' => '<path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h4.5A4.5 4.5 0 0 0 21 8.5 9 9 0 0 0 12 3Z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="10" cy="6.8" r=".8"/><circle cx="15" cy="7" r=".8"/>',
+        'lightbulb' => '<path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14c-.7.6-1.1 1.3-1.3 2H9.8c-.2-.6-.6-1.1-1.3-1.5Z"/>',
         'clipboard' => '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 9h8M8 13h6M8 17h4"/>',
         'spark' => '<path d="m12 2 1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5Z"/><path d="m19 16 .6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6Z"/>',
         'arrow-right' => '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -77,6 +81,7 @@
         'book' => 'var(--ds-brand, #1F77BE)',
         'graduation' => 'var(--ds-brand, #1F77BE)',
         'calendar' => '#61798A',
+        'bell' => 'var(--ds-brand, #1F77BE)',
         'chart' => 'var(--ds-brand, #1F77BE)',
         'shopping-cart' => 'var(--ds-brand, #1F77BE)',
         'receipt' => 'var(--ds-brand, #1F77BE)',
@@ -94,6 +99,7 @@
         'home' => 'var(--ds-brand, #1F77BE)',
         'grid' => 'var(--ds-brand, #1F77BE)',
         'refresh' => 'var(--ds-brand, #1F77BE)',
+        'logout' => '#C43D3D',
     ];
     $iconColor = $color ?: ($colors[$name] ?? 'var(--ds-brand, #1F77BE)');
     $iconClass = trim('ds-icon '.($attributes->get('class') ?? ''));

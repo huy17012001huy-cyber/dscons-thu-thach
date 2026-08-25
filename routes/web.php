@@ -40,6 +40,8 @@ use App\Livewire\RecruiterPlansPage;
 use App\Livewire\RecruiterMessagesPage;
 use App\Livewire\EngineerCvPage;
 use App\Livewire\EngineerRecruitmentRequestsPage;
+use App\Livewire\AccountSettings;
+use App\Livewire\ProfileEditPage;
 use App\Livewire\QaPage;
 use App\Livewire\SignalsPage;
 use App\Livewire\EventsPage;
@@ -51,6 +53,10 @@ use App\Livewire\CommunitiesPage;
 use App\Livewire\CommunityPreview;
 use App\Livewire\CreateCommunity;
 use App\Livewire\CommunityManage;
+use App\Livewire\CommunityFeedbacks;
+use App\Livewire\CreateCommunityFeedback;
+use App\Livewire\CommunityGuidePage;
+use App\Livewire\CommunityRulesPage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -81,6 +87,8 @@ Route::get('/c/{community:slug}', CommunityPreview::class)->name('community.prev
 Route::view('/tuyen-dung', 'pages.recruitment-landing')->name('recruiter.landing');
 
 Route::middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class])->group(function () {
+    Route::get('/tai-khoan/cai-dat', AccountSettings::class)->name('account.settings');
+    Route::get('/ho-so/chinh-sua', ProfileEditPage::class)->name('profile.edit');
     Route::get('/nha-tuyen-dung/onboarding', RecruiterOnboarding::class)->name('recruiter.onboarding');
     Route::middleware([\App\Http\Middleware\EngineerAccountOnly::class])->group(function () {
         Route::get('/ho-so-cv', fn () => redirect()->to('/c/dscons/ho-so-cv'))->name('engineer.cv');
@@ -128,13 +136,17 @@ Route::prefix('c/{community:slug}')->name('community.')->group(function () {
         Route::get('/feed', Feed::class)->name('feed');
         Route::get('/bai-viet/{slug}', PostPage::class)->name('post.show')->where('slug', '[A-Za-z0-9-]+');
         Route::get('/cot', CotPage::class)->name('cot');
-        Route::redirect('/tin-hieu', '/feed', 301)->name('signals');
+        Route::get('/tin-hieu', SignalsPage::class)->name('signals');
         Route::get('/hoi-dap', QaPage::class)->name('qa');
         Route::get('/leaderboard', LeaderboardPage::class)->name('leaderboard');
         Route::get('/su-kien', EventsPage::class)->name('events');
         Route::get('/affiliate', AffiliatePage::class)->name('affiliate');
         Route::get('/messages/{conversation?}', MessagesPage::class)->name('messages');
         Route::get('/search', SearchResults::class)->name('search');
+        Route::get('/gop-y-khieu-nai', CommunityFeedbacks::class)->name('feedbacks');
+        Route::get('/gop-y-khieu-nai/tao', CreateCommunityFeedback::class)->name('feedbacks.create');
+        Route::get('/huong-dan-su-dung', CommunityGuidePage::class)->name('guide');
+        Route::get('/noi-quy', CommunityRulesPage::class)->name('rules');
         Route::get('/manage', CommunityManage::class)->name('manage');
         // Community owners/admins manage content inside the active brand
         // context. These routes deliberately reuse the existing Livewire
@@ -180,6 +192,9 @@ Route::prefix('c/{community:slug}')->name('community.')->group(function () {
         ->middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class, 'can:admin']);
     Route::get('/manage/recruitment', AdminRecruitment::class)
         ->name('manage.recruitment')
+        ->middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class, 'can:admin']);
+    Route::get('/manage/feedbacks', AdminFeedbacks::class)
+        ->name('manage.feedbacks')
         ->middleware(['auth', \App\Http\Middleware\EnsureEmailVerified::class, 'can:admin']);
 });
 
@@ -327,7 +342,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/feed',              Feed::class)->name('feed');
         Route::get('/bai-viet/{slug}',   PostPage::class)->name('post.show')->where('slug', '[A-Za-z0-9-]+');
         Route::get('/cot',               CotPage::class)->name('cot');
-        Route::redirect('/tin-hieu', '/feed', 301)->name('signals');
+        Route::get('/tin-hieu', SignalsPage::class)->name('signals');
         Route::get('/hoi-dap',           QaPage::class)->name('qa');
         Route::get('/challenge',           ChallengePage::class)->name('challenge');
         Route::get('/challenge/{slug}',  ChallengeDetail::class)->name('challenge.show');

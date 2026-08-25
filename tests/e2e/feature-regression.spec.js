@@ -58,6 +58,26 @@ test.describe('QA member feature regression', () => {
             fullPage: true,
         });
     });
+
+    test('opens the account menu and member account pages', async ({ page }) => {
+        const app = new QaAppPage(page);
+
+        await app.goto('/feed');
+        const trigger = page.locator('#user-panel:visible, #mobile-nav button[aria-label="Mở menu tài khoản"]:visible').first();
+        await trigger.click();
+        const menu = page.locator('.account-menu:visible').last();
+        await expect(menu.getByText('Hồ sơ của bạn')).toBeVisible();
+        await expect(menu.getByText('Cài đặt tài khoản')).toBeVisible();
+        await expect(menu.getByText('Đăng xuất')).toBeVisible();
+
+        await page.goto('/tai-khoan/cai-dat');
+        await expect(page.getByRole('heading', { name: 'Lịch sử đã mua' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Thông tin xuất hóa đơn' })).toBeVisible();
+
+        await page.goto('/ho-so/chinh-sua');
+        await expect(page.getByRole('heading', { name: 'Sửa hồ sơ' })).toBeVisible();
+        await expect(page.getByLabel('Email')).toHaveValue(/@/);
+    });
 });
 
 test.describe('QA admin smoke', () => {

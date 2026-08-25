@@ -10,7 +10,7 @@ class FeedbackButton extends Component
 {
     public bool $showModal = false;
 
-    #[Rule('required|in:khieu_nai,gop_y')]
+    #[Rule('required|in:khieu_nai,gop_y,bao_loi,thanh_toan,khac')]
     public string $type = 'gop_y';
 
     #[Rule('required|max:255')]
@@ -37,6 +37,7 @@ class FeedbackButton extends Component
 
         Feedback::create([
             'user_id' => auth()->id(),
+            'brand_id' => app()->bound('brand') ? brand()->id : null,
             'type' => $this->type,
             'subject' => $this->subject,
             'content' => $this->content,

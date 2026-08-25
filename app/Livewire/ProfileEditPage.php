@@ -1,0 +1,86 @@
+<?php
+
+namespace App\Livewire;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+
+class ProfileEditPage extends Component
+{
+    use WithFileUploads;
+
+    public string $editName = '';
+    public string $editUsername = '';
+    public string $editBio = '';
+    public string $location = '';
+    public $avatarUpload;
+
+    public function mount(): void
+    {
+        abort_unless(Auth::check(), 403);
+        $user = Auth::user();
+        $this->fill([
+            'editName' => $user->name,
+            'editUsername' => $user->username ?: Str::slug($user->name, '-'),
+            'editBio' => $user->bio ?? '',
+            'location' => $user->location ?? '',
+        ]);
+    }
+
+    public function save(): void
+    {
+        $this->validate([
+            'editName' => 'required|string|min:2|max:50',
+            'editUsername' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[a-z0-9_-]+$/', 'unique:users,username,'.Auth::id()],
+            'editBio' => 'nullable|string|max:500',
+            'location' => 'nullable|string|max:160',
+        ], [
+            'editUsername.regex' => 'Handle chỉ gồm chữ thường, số, dấu gạch ngang hoặc gạch dưới.',
+            'editUsername.unique' => 'Handle này đã được sử dụng.',
+        ]);
+
+        $key = 'save-profile:'.Auth::id();
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $this->addError('editName', 'Bạn cập nhật quá nhanh. Vui lòng thử lại sau.');
+            return;
+        }
+
+        Auth::user()->update([
+            'name' => trim($this->editName),
+            'username' => strtolower(trim($this->editUsername)),
+            'bio' => trim($this->editBio) ?: null,
+            'location' => trim($this->location) ?: null,
+        ]);
+        RateLimiter::hit($key, 3600);
+
+        session()->flash('profile_saved', 'Đã cập nhật hồ sơ của bạn.');
+        $this->redirect(route('profile', Auth::user()->username), navigate: true);
+    }
+
+    public function updatedAvatarUpload(): void
+    {
+        $this->validate(['avatarUpload' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048']);
+        $user = Auth::user();
+        $path = $this->avatarUpload->store('avatars', 'public');
+        if ($user->avatar && ! filter_var($user->avatar, FILTER_VALIDATE_URL)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+        $user->update(['avatar' => $path]);
+        $this->dispatch('toast', message: 'Đã cập nhật ảnh đại diện.', type: 'success');
+    }
+
+    public function cancel(): void
+    {
+        $this->redirect(route('profile', Auth::user()->username ?: Auth::id()), navigate: true);
+    }
+
+    public function render()
+    {
+        return view('livewire.profile-edit-page', ['user' => Auth::user()])
+            ->layout('layouts.app', ['title' => 'Sửa hồ sơ · '.brand()->name]);
+    }
+}

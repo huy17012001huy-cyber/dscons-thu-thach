@@ -19,6 +19,9 @@
             <option value="">Tất cả loại</option>
             <option value="gop_y">Góp ý</option>
             <option value="khieu_nai">Khiếu nại</option>
+            <option value="bao_loi">Báo lỗi</option>
+            <option value="thanh_toan">Thanh toán</option>
+            <option value="khac">Khác</option>
         </select>
     </div>
 
@@ -31,8 +34,14 @@
                 <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                     <strong style="font-size:0.8rem; color:var(--color-text-primary);">{{ $fb->user->name }}</strong>
                     <span style="font-size:0.65rem; padding:0.15rem 0.4rem; border-radius:9999px; font-weight:600;
-                        {{ $fb->type === 'khieu_nai' ? 'background:#FEE2E2; color:#991B1B;' : 'background:#DBEAFE; color:#1E40AF;' }}">
-                        {{ $fb->type === 'khieu_nai' ? 'Khiếu nại' : 'Góp ý' }}
+                        {{ match($fb->type) {
+                            'khieu_nai' => 'background:#FEE2E2; color:#991B1B;',
+                            'bao_loi' => 'background:#FFF7E6; color:#9A6700;',
+                            'thanh_toan' => 'background:#EAF4FC; color:#125A96;',
+                            'khac' => 'background:#F1F5F9; color:#475569;',
+                            default => 'background:#DBEAFE; color:#1E40AF;',
+                        } }}">
+                        {{ ['khieu_nai' => 'Khiếu nại', 'bao_loi' => 'Báo lỗi', 'thanh_toan' => 'Thanh toán', 'khac' => 'Khác', 'gop_y' => 'Góp ý'][$fb->type] ?? $fb->type }}
                     </span>
                     <span style="font-size:0.65rem; padding:0.15rem 0.4rem; border-radius:9999px; font-weight:600;
                         {{ $fb->status === 'pending' ? 'background:#FEF3C7; color:#92400E;' : ($fb->status === 'reviewed' ? 'background:#DBEAFE; color:#1E40AF;' : 'background:#D1FAE5; color:#065F46;') }}">
@@ -42,6 +51,20 @@
                 <p style="font-size:0.85rem; font-weight:600; color:var(--color-text-primary); margin:0.35rem 0 0.2rem;">{{ $fb->subject }}</p>
                 <p style="font-size:0.8rem; color:var(--color-text-secondary); line-height:1.5; white-space:pre-line;">{{ $fb->content }}</p>
                 <p style="font-size:0.65rem; color:var(--color-text-muted); margin-top:0.35rem;">{{ $fb->created_at->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') }}</p>
+
+                @if($fb->brand)
+                <p style="font-size:0.68rem; color:#1F77BE; margin-top:0.25rem;">Cộng đồng: {{ $fb->brand->name }}</p>
+                @endif
+
+                @if($fb->attachments)
+                <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem;">
+                    @foreach($fb->attachments as $attachment)
+                    <a href="{{ asset('storage/'.$attachment) }}" target="_blank" rel="noopener" aria-label="Mở ảnh đính kèm">
+                        <img src="{{ asset('storage/'.$attachment) }}" alt="Ảnh đính kèm" style="width:64px;height:48px;object-fit:cover;border:1px solid #D7E5EA;border-radius:6px;">
+                    </a>
+                    @endforeach
+                </div>
+                @endif
 
                 @if($fb->admin_notes)
                 <div style="margin-top:0.5rem; padding:0.5rem; background:#F7F5F3; border-radius:0.375rem; border:1px solid var(--color-border);">

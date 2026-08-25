@@ -118,6 +118,10 @@
                     <x-icon name="briefcase" size="16" />
                     <span>CV & tuyển dụng</span>
                 </a>
+                <a href="{{ community_route('manage.feedbacks') }}" class="community-manage-command is-secondary">
+                    <x-icon name="chat" size="16" />
+                    <span>Góp ý & khiếu nại</span>
+                </a>
                 @endcan
                 <a href="{{ route('community.preview', $community->slug) }}" class="community-manage-command is-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12s3.3-6 9-6 9 6 9 6-3.3 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
@@ -151,6 +155,20 @@
                 <label class="community-manage-field" for="community-description">
                     Mục tiêu / giới thiệu chi tiết
                     <textarea id="community-description" name="description" wire:model="description" class="form-control" rows="6" maxlength="5000" autocomplete="off"></textarea>
+                </label>
+
+                <label class="community-manage-field" for="community-guide-content">
+                    Hướng dẫn sử dụng
+                    <span style="color:var(--text-muted);font-size:11px;font-weight:500;line-height:1.45;">Giải thích các mục trong sidebar và cách thành viên sử dụng cộng đồng. Để trống nếu muốn dùng nội dung mặc định.</span>
+                    <textarea id="community-guide-content" name="guide_content" wire:model="guideContent" class="form-control" rows="12" maxlength="30000" placeholder="Hướng dẫn sử dụng từng khu vực trong cộng đồng..."></textarea>
+                    @error('guideContent')<span class="field-error" role="alert">{{ $message }}</span>@enderror
+                </label>
+
+                <label class="community-manage-field" for="community-rules-content">
+                    Nội quy
+                    <span style="color:var(--text-muted);font-size:11px;font-weight:500;line-height:1.45;">Kim chỉ nam để thành viên cảm thấy được chào đón, tôn trọng và có động lực đóng góp. Để trống nếu muốn dùng nội dung mặc định.</span>
+                    <textarea id="community-rules-content" name="rules_content" wire:model="rulesContent" class="form-control" rows="12" maxlength="30000" placeholder="Nội quy và kim chỉ nam của cộng đồng..."></textarea>
+                    @error('rulesContent')<span class="field-error" role="alert">{{ $message }}</span>@enderror
                 </label>
 
                 <div class="community-manage-upload-grid">

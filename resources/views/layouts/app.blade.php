@@ -377,6 +377,31 @@ body.is-impersonating #app { height: calc(100% - 36px); }
 }
 .panel-btn:hover { background: var(--bg-hover); color: var(--text); }
 .panel-btn svg { width: 14px; height: 14px; }
+.account-panel-wrap { position:relative; flex:0 0 auto; min-width:0; }
+.account-trigger { display:flex; align-items:center; width:100%; min-height:52px; gap:8px; padding:0 8px; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.account-trigger:hover { background:#E7F2F7; }
+.account-trigger:focus-visible { outline:3px solid rgba(31,119,190,.28); outline-offset:-3px; }
+.account-menu { position:absolute; z-index:1200; width:236px; padding:7px; border:1px solid #D7E5EE; border-radius:16px; background:#fff; box-shadow:0 18px 42px rgba(18,59,89,.18); }
+.account-menu-sidebar { left:8px; bottom:calc(100% + 10px); }
+.account-menu-inner { display:grid; gap:7px; }
+.account-menu-head { display:flex; align-items:center; gap:9px; padding:7px 8px 5px; }
+.account-menu-head img { width:38px; height:38px; flex:0 0 auto; border-radius:50%; object-fit:cover; border:2px solid #DCECF7; }
+.account-menu-head strong { display:block; overflow:hidden; color:#123B59; font-size:.83rem; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+.account-menu-head span { display:block; margin-top:2px; overflow:hidden; color:#61798A; font-size:.68rem; text-overflow:ellipsis; white-space:nowrap; }
+.account-membership { display:flex; align-items:center; gap:5px; min-height:28px; padding:0 8px; border-radius:9px; color:#125A96; background:#EAF5FB; font-size:.68rem; font-weight:800; }
+.account-membership svg { color:#F39402; }
+.account-membership span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-membership small { margin-left:auto; color:#147F96; font-size:.59rem; white-space:nowrap; }
+.account-menu-links { display:grid; gap:2px; padding-top:3px; border-top:1px solid #E7EEF1; }
+.account-menu-links a, .account-logout-form button { display:flex; align-items:center; gap:10px; width:100%; min-height:42px; padding:0 9px; border:0; border-radius:9px; color:#183B55; background:transparent; font:inherit; font-size:.78rem; font-weight:700; text-decoration:none; text-align:left; cursor:pointer; }
+.account-menu-links a:hover, .account-menu-links a:focus-visible { color:#125A96; background:#EAF5FB; outline:none; }
+.account-menu-links a svg { color:#125A96; }
+.account-logout-form { padding-top:3px; border-top:1px solid #E7EEF1; }
+.account-logout-form button { color:#C43D3D; }
+.account-logout-form button:hover, .account-logout-form button:focus-visible { background:#FFF0F0; outline:none; }
+.account-logout-form button svg { color:#E55353; }
+.account-menu-mobile { display:none; }
+@media (min-width: 769px) { .account-menu-mobile { display:none !important; } }
 
 /* ══ 3. MAIN AREA ═══════════════════════════════ */
 #main-area {
@@ -642,6 +667,9 @@ body.is-admin-area .admin-modal-backdrop :where(input, select, textarea):focus {
     #content-area { padding: .75rem; }
     .mob-nav-btn { min-width: 56px; padding-left: 8px; padding-right: 8px; }
 
+    .account-menu-sidebar { position:fixed; left:12px; bottom:calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 10px)); width:min(300px, calc(100vw - 24px)); }
+    .account-menu-mobile { position:fixed; right:12px; bottom:calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 10px)); display:block; width:min(300px, calc(100vw - 24px)); }
+
     #impersonation-banner { font-size: 11px; }
 }
 
@@ -783,7 +811,13 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
     <span>{{ $brand->name ?? 'DSCons' }}</span>
 </div>
 
-<div id="app">
+<div id="app" x-data="{ accountOpen: false }" @keydown.escape.window="accountOpen = false" @click.window="if (accountOpen && !$event.target.closest('.account-trigger') && !$event.target.closest('.account-menu')) accountOpen = false">
+
+@auth
+@php
+    $__accountMembership = auth()->user()->memberships()->withoutGlobalScopes()->where('brand_id', $brand->id)->latest()->first();
+@endphp
+@endauth
 
 {{-- 1. GUILD LIST ──────────────────────────── --}}
 <div id="guild-list">
@@ -948,6 +982,25 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         </a>
 
         @auth
+        <div class="ch-category">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            <x-icon name="shield" size="14" color="var(--text-muted)" /> Nội quy và hỗ trợ
+        </div>
+        <a href="{{ community_route('feedbacks') }}" class="ch-item {{ request()->routeIs('community.feedbacks*') ? 'active' : '' }}">
+            <x-icon name="chat" size="18" />
+            <span class="ch-name">Góp ý &amp; Khiếu nại</span>
+        </a>
+        <a href="{{ community_route('guide') }}" class="ch-item {{ request()->routeIs('community.guide') ? 'active' : '' }}">
+            <x-icon name="book" size="18" />
+            <span class="ch-name">Hướng dẫn sử dụng</span>
+        </a>
+        <a href="{{ community_route('rules') }}" class="ch-item {{ request()->routeIs('community.rules') ? 'active' : '' }}">
+            <x-icon name="shield" size="18" />
+            <span class="ch-name">Nội quy</span>
+        </a>
+        @endauth
+
+        @auth
         @if(auth()->user()->isEngineer() && $brand->has_cv)
         <div class="ch-category"><x-icon name="file-text" size="14" color="var(--text-muted)" /> Hồ sơ nghề nghiệp</div>
         <a href="{{ community_route('engineer.cv') }}" class="ch-item {{ request()->routeIs('engineer.cv') || request()->routeIs('community.engineer.cv') ? 'active' : '' }}">
@@ -971,23 +1024,18 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
     </div>
 
     @auth
-    <div id="user-panel">
-        <a href="{{ route('profile', auth()->user()->username ?? auth()->id()) }}" class="user-avatar" style="text-decoration:none;">
-            <img src="{{ auth()->user()->avatar_url }}" alt="">
-            <div class="user-status-dot"></div>
-        </a>
-        <div class="user-info">
-            <div class="user-name">{{ auth()->user()->name }}</div>
-            <div class="user-stage">{{ auth()->user()->class_label }} · {{ auth()->user()->job_stage }}</div>
+    <div class="account-panel-wrap">
+        <button id="user-panel" type="button" class="account-trigger" @click="accountOpen = !accountOpen" :aria-expanded="accountOpen.toString()" aria-haspopup="true" aria-label="Mở menu tài khoản">
+            <span class="user-avatar"><img src="{{ auth()->user()->avatar_url }}" alt=""></span>
+            <span class="user-info">
+                <span class="user-name">{{ auth()->user()->name }}</span>
+                <span class="user-stage">Lv.{{ auth()->user()->level }} · {{ auth()->user()->job_stage }}</span>
+            </span>
+            <x-icon name="arrow-right" size="15" color="var(--text-muted)" class="account-trigger-chevron" />
+        </button>
+        <div class="account-menu account-menu-sidebar" x-cloak x-show="accountOpen" x-transition.origin.bottom.left @click.stop>
+            @include('components.account-menu')
         </div>
-        <form method="POST" action="{{ route('logout') }}" style="display:flex;">
-            @csrf
-            <button type="submit" class="panel-btn" title="Đăng xuất" aria-label="Đăng xuất">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-            </button>
-        </form>
     </div>
     @endauth
 </div>
@@ -1020,6 +1068,9 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
                     request()->routeIs('cot', 'community.cot') => 'compass',
                     request()->routeIs('qa', 'community.qa') => 'question',
                     request()->routeIs('affiliate', 'community.affiliate') => 'user-plus',
+                    request()->routeIs('community.guide') => 'book',
+                    request()->routeIs('community.rules') => 'shield',
+                    request()->routeIs('community.feedbacks*') => 'chat',
                     default => 'chat',
                 };
             @endphp
@@ -1138,7 +1189,6 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
 
                 {{-- Community leaderboard --}}
                 <livewire:sidebar-leaderboard />
-                <livewire:feedback-button :key="'feedback-desktop-'.$brand->id" />
                 @endauth
                 @endif
             </div>
@@ -1221,6 +1271,21 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
             <span class="ch-name">Affiliate</span>
         </a>
         @auth
+        <div class="ch-category"><x-icon name="shield" size="14" color="var(--text-muted)" /> Nội quy và hỗ trợ</div>
+        <a href="{{ community_route('feedbacks') }}" class="ch-item {{ request()->routeIs('community.feedbacks*')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="chat" size="18" />
+            <span class="ch-name">Góp ý &amp; Khiếu nại</span>
+        </a>
+        <a href="{{ community_route('guide') }}" class="ch-item {{ request()->routeIs('community.guide')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="book" size="18" />
+            <span class="ch-name">Hướng dẫn sử dụng</span>
+        </a>
+        <a href="{{ community_route('rules') }}" class="ch-item {{ request()->routeIs('community.rules')?'active':'' }}" onclick="closeSidebar()">
+            <x-icon name="shield" size="18" />
+            <span class="ch-name">Nội quy</span>
+        </a>
+        @endauth
+        @auth
         @if(auth()->user()->isEngineer() && $brand->has_cv)
         <div class="ch-category"><x-icon name="file-text" size="14" color="var(--text-muted)" /> Hồ sơ nghề nghiệp</div>
         <a href="{{ community_route('engineer.cv') }}" class="ch-item {{ request()->routeIs('engineer.cv') || request()->routeIs('community.engineer.cv')?'active':'' }}" onclick="closeSidebar()"><x-icon name="cv" size="18" /><span class="ch-name">CV của tôi</span></a>
@@ -1235,13 +1300,17 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         @endcan
     </div>
     @auth
-    <div id="user-panel">
-        <div class="user-avatar">
-            <img src="{{ auth()->user()->avatar_url }}" alt="">
-        </div>
-        <div class="user-info">
-            <div class="user-name">{{ auth()->user()->name }}</div>
-            <div class="user-stage">{{ auth()->user()->class_label }} · {{ auth()->user()->job_stage }}</div>
+    <div class="account-panel-wrap">
+        <button id="user-panel" type="button" class="account-trigger" @click="accountOpen = !accountOpen" :aria-expanded="accountOpen.toString()" aria-haspopup="true" aria-label="Mở menu tài khoản">
+            <span class="user-avatar"><img src="{{ auth()->user()->avatar_url }}" alt=""></span>
+            <span class="user-info">
+                <span class="user-name">{{ auth()->user()->name }}</span>
+                <span class="user-stage">Lv.{{ auth()->user()->level }} · {{ auth()->user()->job_stage }}</span>
+            </span>
+            <x-icon name="arrow-right" size="15" color="var(--text-muted)" class="account-trigger-chevron" />
+        </button>
+        <div class="account-menu account-menu-sidebar" x-cloak x-show="accountOpen" x-transition.origin.bottom.left @click.stop>
+            @include('components.account-menu')
         </div>
     </div>
     @endauth
@@ -1266,21 +1335,17 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         <x-icon name="target" size="18" />
         Challenge
     </a>
-    <a href="{{ route('profile', auth()->user()->username ?? auth()->id()) }}" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}" aria-current="{{ request()->routeIs('profile') ? 'page' : 'false' }}">
+    <button type="button" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}" @click="accountOpen = !accountOpen" :aria-expanded="accountOpen.toString()" aria-haspopup="true" aria-label="Mở menu tài khoản">
         <img src="{{ auth()->user()->avatar_url }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" alt="">
         Tôi
-    </a>
+    </button>
 </nav>
+<div class="account-menu account-menu-mobile" x-cloak x-show="accountOpen" x-transition.origin.bottom.right @click.stop>
+    @include('components.account-menu')
+</div>
 @endauth
 
 </div>{{-- /#app --}}
-
-{{-- Mobile feedback stays available without covering the desktop leaderboard. --}}
-@auth
-<div class="mobile-feedback-host">
-    <livewire:feedback-button :key="'feedback-mobile'" />
-</div>
-@endauth
 
 {{-- Post Modal (global) --}}
 @auth

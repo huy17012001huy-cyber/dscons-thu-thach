@@ -26,33 +26,33 @@ class AdminFeedbacks extends Component
 
     public function markReviewed(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
-        Feedback::findOrFail($id)->update(['status' => 'reviewed']);
+        $this->authorizeAdmin();
+        $this->feedbackQuery()->findOrFail($id)->update(['status' => 'reviewed']);
     }
 
     public function markResolved(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
-        Feedback::findOrFail($id)->update(['status' => 'resolved']);
+        $this->authorizeAdmin();
+        $this->feedbackQuery()->findOrFail($id)->update(['status' => 'resolved']);
     }
 
     public function saveNotes(int $id, string $notes): void
     {
-        if (!Auth::user()?->is_admin) return;
-        Feedback::findOrFail($id)->update(['admin_notes' => $notes]);
+        $this->authorizeAdmin();
+        $this->feedbackQuery()->findOrFail($id)->update(['admin_notes' => $notes]);
         $this->dispatch('toast', message: 'Đã lưu ghi chú.', type: 'success');
     }
 
     public function deleteFeedback(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
-        Feedback::findOrFail($id)->delete();
+        $this->authorizeAdmin();
+        $this->feedbackQuery()->findOrFail($id)->delete();
         $this->dispatch('toast', message: 'Đã xóa.', type: 'success');
     }
 
     public function render()
     {
-        $feedbacks = Feedback::with('user')
+        $feedbacks = $this->feedbackQuery()
             ->when($this->filterType, fn ($q) => $q->where('type', $this->filterType))
             ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))
             ->latest()
@@ -60,5 +60,16 @@ class AdminFeedbacks extends Component
 
         return view('livewire.admin-feedbacks', ['feedbacks' => $feedbacks])
             ->layout('layouts.app', ['title' => 'Góp ý & Khiếu nại — Admin']);
+    }
+
+    private function authorizeAdmin(): void
+    {
+        abort_unless(Auth::user()?->isBrandAdmin(app()->bound('brand') ? brand()->id : null), 403);
+    }
+
+    private function feedbackQuery()
+    {
+        return Feedback::with(['user', 'brand'])
+            ->when(app()->bound('brand'), fn ($query) => $query->where('brand_id', brand()->id));
     }
 }

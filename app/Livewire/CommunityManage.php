@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Brand;
+use App\Support\CommunityContentDefaults;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -16,6 +17,8 @@ class CommunityManage extends Component
     public string $name = '';
     public string $tagline = '';
     public string $description = '';
+    public string $guideContent = '';
+    public string $rulesContent = '';
     public $logo;
     public $banner;
     public bool $removeLogo = false;
@@ -28,6 +31,8 @@ class CommunityManage extends Component
         $this->name = $this->community->name;
         $this->tagline = $this->community->tagline ?? '';
         $this->description = $this->community->description ?? '';
+        $this->guideContent = $this->community->guide_content ?: CommunityContentDefaults::guide();
+        $this->rulesContent = $this->community->rules_content ?: CommunityContentDefaults::rules();
     }
 
     public function save(): void
@@ -37,6 +42,8 @@ class CommunityManage extends Component
             'name' => 'required|string|max:100',
             'tagline' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:5000',
+            'guideContent' => 'nullable|string|max:30000',
+            'rulesContent' => 'nullable|string|max:30000',
             'logo' => 'nullable|image|max:4096',
             'banner' => 'nullable|image|max:8192',
         ]);
@@ -47,6 +54,8 @@ class CommunityManage extends Component
             'name' => trim($this->name),
             'tagline' => trim($this->tagline) ?: null,
             'description' => trim($this->description) ?: null,
+            'guide_content' => trim($this->guideContent) ?: null,
+            'rules_content' => trim($this->rulesContent) ?: null,
         ];
 
         if ($this->logo) {

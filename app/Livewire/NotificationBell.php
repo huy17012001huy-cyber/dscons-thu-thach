@@ -16,13 +16,13 @@ class NotificationBell extends Component
 
     public function markAllRead(): void
     {
-        Auth::user()?->unreadNotifications->markAsRead();
+        $this->communityNotifications()->whereNull('read_at')->get()->each->markAsRead();
         $this->showDropdown = false;
     }
 
     public function openNotification(string $id): void
     {
-        $notification = Auth::user()->notifications()->find($id);
+        $notification = $this->communityNotifications()->whereKey($id)->first();
         if (!$notification) return;
 
         $notification->markAsRead();
@@ -54,14 +54,26 @@ class NotificationBell extends Component
     public function render()
     {
         $user = Auth::user();
-        $count = $user?->unreadNotifications()->count() ?? 0;
+        $count = $this->communityNotifications()->whereNull('read_at')->count();
         $notifications = $this->showDropdown
-            ? $user?->notifications()->latest()->take(20)->get() ?? collect()
+            ? $this->communityNotifications()->latest()->take(20)->get()
             : collect();
 
         return view('livewire.notification-bell', [
             'count' => $count,
             'notifications' => $notifications,
         ]);
+    }
+
+    private function communityNotifications()
+    {
+        $query = Auth::user()->notifications();
+        if (app()->bound('brand')) {
+            $query->where(function ($builder) {
+                $builder->where('brand_id', brand()->id)->orWhereNull('brand_id');
+            });
+        }
+
+        return $query;
     }
 }

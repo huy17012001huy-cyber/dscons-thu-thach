@@ -17,7 +17,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'google_id', 'username', 'password', 'avatar', 'bio', 'account_type',
+        'name', 'email', 'google_id', 'username', 'password', 'avatar', 'bio', 'location', 'account_type',
         'class', 'level', 'xp', 'aip', 'streak', 'last_active_at',
         'referred_by', 'class_changed_at', 'source',
     ];
@@ -159,6 +159,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Brand::class)->withPivot('role')->withTimestamps();
     }
 
+    public function communityPreferences(): HasMany
+    {
+        return $this->hasMany(UserCommunityPreference::class);
+    }
+
+    public function billingProfiles(): HasMany
+    {
+        return $this->hasMany(UserBillingProfile::class);
+    }
+
     public function isBrandAdmin(?int $brandId = null): bool
     {
         $brandId ??= app()->bound('brand') ? brand()->id : null;
@@ -277,7 +287,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ->map(fn($w) => strtoupper(substr($w, 0, 1)))
             ->take(2)
             ->join('');
-        return 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=EDE9FE&color=4C1D95&bold=true&size=80';
+        return 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=DCECF7&color=125A96&bold=true&size=80';
     }
 
     public function isActive(): bool

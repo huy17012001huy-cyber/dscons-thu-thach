@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('feedbacks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', ['khieu_nai', 'gop_y'])->default('gop_y');
+            $table->enum('type', ['khieu_nai', 'gop_y', 'bao_loi', 'thanh_toan', 'khac'])->default('gop_y');
             $table->string('subject');
             $table->text('content');
             $table->enum('status', ['pending', 'reviewed', 'resolved'])->default('pending');

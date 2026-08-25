@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Bookmark;
+use App\Models\Membership;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\XpTransaction;
@@ -152,6 +153,16 @@ class ProfilePage extends Component
             : null;
         $symbols = $this->profileUser->powerSymbols->keyBy('pillar');
         $badges = $this->profileUser->userBadges()->with('badge')->get();
+        $currentMembership = Membership::withoutGlobalScopes()
+            ->where('user_id', $this->profileUser->id)
+            ->where('brand_id', brand()->id)
+            ->latest()
+            ->first();
+        $activeCommunities = $this->profileUser->brandRoles()
+            ->wherePivotIn('role', ['member', 'moderator', 'admin', 'owner'])
+            ->where('brands.status', 'active')
+            ->orderBy('brands.name')
+            ->get();
 
         // Contribution heatmap — last 52 weeks
         $since = now()->subWeeks(52)->startOfWeek();
@@ -172,6 +183,9 @@ class ProfilePage extends Component
             'badges' => $badges,
             'contributions' => $contributions,
             'contributionStart' => $since,
+            'currentMembership' => $currentMembership,
+            'activeCommunities' => $activeCommunities,
+            'commentCount' => $this->profileUser->comments()->count(),
         ])->layout('layouts.app', ['title' => $this->profileUser->name.' — DSCons']);
     }
 }
