@@ -288,39 +288,32 @@ class Revit21DaysSeeder extends Seeder
     private function payload(array $day): array
     {
         $reviewMode = $day['modality'] === 'live' ? 'live' : ($day['day'] >= 7 ? 'mentor' : 'auto');
+        $evidence = $this->simpleEvidence($day);
         return [
             'modality' => $day['modality'],
             'estimated_minutes' => $day['minutes'],
-            'learning_objectives' => $day['objectives'],
-            'prerequisites' => $day['prerequisites'],
+            'learning_objectives' => array_slice($day['objectives'], 0, 2),
+            'prerequisites' => array_slice($day['prerequisites'], 0, 1),
             'ai_actions' => [
-                'Đọc file hướng dẫn và workspace trước khi hành động.',
-                'Lập kế hoạch, liệt kê file sẽ thay đổi và chờ học viên xác nhận.',
-                'Thực hiện/build theo version Revit được khai báo.',
-                'Báo cáo file đã đổi, lệnh đã chạy, lỗi còn lại và cách kiểm thử.',
+                'Đọc workspace, hiểu mục tiêu và đề xuất cách làm.',
+                'Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.',
             ],
             'student_actions' => [
-                'Mở đúng workspace/model bản sao và kiểm tra version.',
-                'Đọc kế hoạch, trả lời câu hỏi của AI và xác nhận phạm vi.',
-                'Chạy kết quả thật trong Revit, cá nhân hóa tên tool và lưu bằng chứng.',
-                'Viết 3 câu: yêu cầu AI làm gì, AI sửa file nào, kiểm chứng ra sao.',
+                'Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.',
+                'Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.',
             ],
             'student_does_not_need' => [
                 'Không cần tự viết C#/WPF bằng tay.',
                 'Không cần upload model hoặc dữ liệu dự án mật lên AI.',
             ],
-            'sop_steps' => $day['sop'],
-            'verification_checklist' => array_merge($day['evidence'], [
-                'Bằng chứng là kết quả chạy thật, không chỉ là ảnh code.',
-                'Có tên/version cá nhân hóa khi bài yêu cầu.',
-                'Đã kiểm tra trên model bản sao và ghi rõ giới hạn.',
-            ]),
+            'sop_steps' => $this->compactSteps($day['sop']),
+            'verification_checklist' => $evidence,
             'homework' => [
                 'title' => 'Bài nộp ngày '.$day['day'].': '.$day['title'],
-                'instructions' => $day['evidence'],
+                'instructions' => $evidence,
                 'deadline_hours' => 24,
             ],
-            'evidence_requirements' => $day['evidence'],
+            'evidence_requirements' => $evidence,
             'rubric' => [
                 ['key' => 'evidence_completeness', 'label' => 'Đủ bằng chứng bắt buộc', 'points' => 30],
                 ['key' => 'correctness', 'label' => 'Kết quả đúng/đối chiếu được', 'points' => 40],
@@ -338,9 +331,8 @@ class Revit21DaysSeeder extends Seeder
             'review_mode' => $reviewMode,
             'pass_score' => 70,
             'track' => $day['track'],
-            'why' => 'Kỹ thuật này giúp kỹ sư BIM/MEP giảm thao tác lặp lại nhưng vẫn kiểm soát được model, output và rủi ro.',
+            'why' => 'Mỗi ngày dùng AI để làm nhanh hơn, nhưng học viên vẫn là người kiểm tra kết quả.',
             'required_outcome' => $day['outcome'],
-            'minimum_knowledge' => 'Biết mở Revit và đọc một phần tử/Properties; phần code do AI Agent thực hiện theo kế hoạch đã duyệt.',
             'ai_prompt' => $this->prompt($day),
             'error_prompts' => [
                 'Prompt sửa build: “Đọc đúng log lỗi, giải thích nguyên nhân, chỉ sửa file liên quan, build lại và nêu test regression.”',
@@ -354,12 +346,43 @@ class Revit21DaysSeeder extends Seeder
                 'Không đưa model/dữ liệu mật của công ty lên AI Agent.',
             ],
             'mentor_questions' => $day['questions'],
+            'share_to_feed' => $this->shareInstruction($day['day']),
         ];
+    }
+
+    /** @return array<int, string> */
+    private function compactSteps(array $steps): array
+    {
+        return array_values(array_slice($steps, 0, 4));
+    }
+
+    /** @return array<int, string> */
+    private function simpleEvidence(array $day): array
+    {
+        $videoDays = [7, 14, 21];
+        $productDays = [9, 10, 11, 12, 13, 16, 18, 19, 20, 21];
+
+        $evidence = ['Ảnh màn hình kết quả của ngày '.$day['day'].'.'];
+        if (in_array($day['day'], $videoDays, true)) {
+            $evidence[] = 'Video ngắn chứng minh thao tác chính chạy thật.';
+        }
+        if (in_array($day['day'], $productDays, true)) {
+            $evidence[] = 'Ảnh sản phẩm đã đăng lên Bảng tin cộng đồng.';
+        }
+
+        return $evidence;
+    }
+
+    private function shareInstruction(int $day): ?string
+    {
+        return in_array($day, [9, 10, 11, 12, 13, 16, 18, 19, 20, 21], true)
+            ? 'Đăng ảnh sản phẩm hoặc kết quả chạy thật, kèm 2–3 câu bạn đã dùng AI như thế nào.'
+            : null;
     }
 
     private function prompt(array $day): string
     {
-        return "BỐI CẢNH\n- Revit version: tôi sẽ khai báo trước khi bạn code\n- Tên học viên: tôi sẽ cung cấp khi cần cá nhân hóa\n- Tên tool: theo TOOL_BRIEF.md\n- Nhánh capstone: {$day['track']}\n- Workspace: thư mục hiện tại\n\nMỤC TIÊU\n{$day['outcome']}\n\nRÀNG BUỘC AN TOÀN\n1. Không xóa file hoặc sửa model gốc.\n2. Phải tạo/copy backup trước Transaction.\n3. Phải đọc file hiện có trước khi sửa.\n4. Lập kế hoạch và liệt kê file sẽ thay đổi; chờ tôi xác nhận.\n5. Không giả định Revit API nếu chưa kiểm tra version.\n6. Không gửi dữ liệu dự án mật lên AI.\n\nYÊU CẦU AI\n1. Phân tích workspace và tài liệu liên quan.\n2. Đề xuất kế hoạch, file ảnh hưởng, lệnh build và cách rollback.\n3. Chờ tôi xác nhận kế hoạch.\n4. Tạo/sửa code hoặc tài liệu theo mục tiêu ngày {$day['day']}.\n5. Build Release hoặc chạy kiểm tra phù hợp.\n6. Giải thích file đã thay đổi và lỗi còn tồn tại.\n7. Viết checklist kiểm thử trong Revit.\n\nĐẦU RA BẮT BUỘC\n- File đã thay đổi.\n- Lệnh build/chạy.\n- Cách cài và cách rollback.\n- Cách kiểm tra kết quả trong Revit.\n- Các giới hạn hiện tại.\n\nLưu ý: học viên không cần tự viết C#/WPF; học viên phải chạy, cá nhân hóa, kiểm chứng và nộp bằng chứng thật.";
+        return "BỐI CẢNH\n- Revit version: tôi sẽ khai báo\n- Workspace: thư mục hiện tại\n- Mục tiêu ngày {$day['day']}: {$day['outcome']}\n\nHÃY LÀM THEO THỨ TỰ\n1. Đọc workspace và các file liên quan.\n2. Nói ngắn gọn kế hoạch, file sẽ đổi và cách kiểm tra; chờ tôi xác nhận.\n3. Thực hiện mục tiêu, build/chạy theo version Revit thật.\n4. Báo lại file đã đổi, kết quả và lỗi còn lại.\n\nAN TOÀN\n- Không xóa file, không sửa model gốc và không đưa dữ liệu mật lên AI.\n- Backup trước thao tác làm thay đổi model.\n- Không đoán Revit API khi chưa kiểm tra version.\n\nTôi không cần tự viết C#/WPF, nhưng tôi sẽ mở Revit, kiểm tra kết quả và chụp bằng chứng.";
     }
 
     private function sopMarkdown(array $day, array $payload): string

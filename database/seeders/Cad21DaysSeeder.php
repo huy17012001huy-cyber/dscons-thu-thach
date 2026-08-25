@@ -59,7 +59,7 @@ abstract class Cad21DaysSeeder extends Seeder
                     'label' => $day['label'],
                     'title' => $day['title'],
                     'description' => $day['description'],
-                    'sop_content' => $this->sopMarkdown($day, $payload),
+                    'sop_content' => $this->sopMarkdown($day, $payload, $config),
                     'video_url' => null,
                     'meeting_at' => null,
                     'evidence_type' => 'text',
@@ -146,40 +146,33 @@ abstract class Cad21DaysSeeder extends Seeder
     {
         $reviewMode = $day['modality'] === 'live' ? 'live' : ($day['day'] >= 7 ? 'mentor' : 'auto');
         $appName = $config['app_name'];
+        $evidence = $this->simpleEvidence($day, $config);
 
         return [
             'modality' => $day['modality'],
             'estimated_minutes' => $day['minutes'],
-            'learning_objectives' => $day['objectives'],
-            'prerequisites' => $day['prerequisites'],
+            'learning_objectives' => array_slice($day['objectives'], 0, 2),
+            'prerequisites' => array_slice($day['prerequisites'], 0, 1),
             'ai_actions' => [
-                "Đọc tài liệu và workspace {$appName} trước khi hành động.",
-                'Lập kế hoạch, liệt kê file sẽ thay đổi và chờ học viên xác nhận.',
-                "Thực hiện/build theo phiên bản {$appName} đã khai báo; không đoán API.",
-                'Báo cáo file đã đổi, lệnh đã chạy, lỗi còn lại và cách kiểm thử.',
+                "Đọc workspace, hiểu mục tiêu và đề xuất cách làm trong {$appName}.",
+                'Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.',
             ],
             'student_actions' => [
-                "Mở đúng workspace và model bản sao trong {$appName}.",
-                'Đọc kế hoạch, trả lời câu hỏi của AI và xác nhận phạm vi.',
-                "Chạy kết quả thật trong {$appName}, cá nhân hóa tên tool và lưu bằng chứng.",
-                'Viết 3 câu: yêu cầu AI làm gì, AI sửa file nào, kiểm chứng ra sao.',
+                "Mở đúng workspace và bản sao trong {$appName}; đọc kế hoạch trước khi chạy.",
+                "Kiểm tra kết quả thật trong {$appName} và chụp minh chứng dễ đối chiếu.",
             ],
             'student_does_not_need' => [
                 'Không cần tự viết C# bằng tay; AI Agent thực hiện phần code theo kế hoạch.',
                 'Không cần upload model hoặc dữ liệu dự án mật lên AI.',
             ],
-            'sop_steps' => $day['sop'],
-            'verification_checklist' => array_merge($day['evidence'], [
-                'Bằng chứng là kết quả chạy thật, không chỉ là ảnh code.',
-                'Có tên/version cá nhân hóa khi bài yêu cầu.',
-                'Đã kiểm tra trên bản sao và ghi rõ giới hạn/capability chưa được test.',
-            ]),
+            'sop_steps' => array_values(array_slice($day['sop'], 0, 4)),
+            'verification_checklist' => $evidence,
             'homework' => [
                 'title' => 'Bài nộp ngày '.$day['day'].': '.$day['title'],
-                'instructions' => $day['evidence'],
+                'instructions' => $evidence,
                 'deadline_hours' => 24,
             ],
-            'evidence_requirements' => $day['evidence'],
+            'evidence_requirements' => $evidence,
             'rubric' => [
                 ['key' => 'evidence_completeness', 'label' => 'Đủ bằng chứng bắt buộc', 'points' => 30],
                 ['key' => 'correctness', 'label' => 'Kết quả đúng/đối chiếu được', 'points' => 40],
@@ -197,9 +190,8 @@ abstract class Cad21DaysSeeder extends Seeder
             'review_mode' => $reviewMode,
             'pass_score' => 70,
             'track' => $day['track'],
-            'why' => "Kỹ thuật này giúp kỹ sư BIM/MEP giảm thao tác lặp lại trong {$appName} nhưng vẫn kiểm soát model, output và rủi ro.",
+            'why' => 'AI làm phần nặng; học viên hiểu mục tiêu và kiểm tra kết quả thật.',
             'required_outcome' => $day['outcome'],
-            'minimum_knowledge' => "Biết mở {$appName}, đọc model và kiểm tra kết quả; phần code do AI Agent thực hiện theo kế hoạch đã duyệt.",
             'ai_prompt' => $this->prompt($day, $config),
             'error_prompts' => [
                 'Prompt sửa build: “Đọc đúng log lỗi, giải thích nguyên nhân, chỉ sửa file liên quan, build lại và nêu test regression.”',
@@ -213,7 +205,36 @@ abstract class Cad21DaysSeeder extends Seeder
                 'Không đưa model/dữ liệu mật của công ty lên AI Agent.',
             ],
             'mentor_questions' => $day['questions'],
+            'share_to_feed' => $this->shareInstruction($day['day']),
         ];
+    }
+
+    /** @return array<int, string> */
+    protected function simpleEvidence(array $day, array $config): array
+    {
+        $videoDays = [7, 14, 21];
+        $productDays = [9, 10, 11, 12, 13, 16, 18, 19, 20, 21];
+        $evidence = ['Ảnh màn hình kết quả của ngày '.$day['day'].'.'];
+
+        if (in_array($day['day'], $videoDays, true)) {
+            $evidence[] = 'Video ngắn chứng minh thao tác chính chạy thật.';
+        }
+        if (in_array($day['day'], $productDays, true)) {
+            $evidence[] = 'Ảnh sản phẩm đã đăng lên Bảng tin cộng đồng.';
+        }
+
+        if ($config['app_name'] === 'Navisworks' && $day['day'] === 11) {
+            $evidence[] = 'Ảnh capability đã kiểm tra; không kết luận tính năng chưa chạy thật.';
+        }
+
+        return $evidence;
+    }
+
+    protected function shareInstruction(int $day): ?string
+    {
+        return in_array($day, [9, 10, 11, 12, 13, 16, 18, 19, 20, 21], true)
+            ? 'Đăng ảnh sản phẩm hoặc kết quả chạy thật, kèm 2–3 câu bạn đã dùng AI như thế nào.'
+            : null;
     }
 
     protected function prompt(array $day, array $config): string
@@ -223,38 +244,29 @@ abstract class Cad21DaysSeeder extends Seeder
 
         return "BỐI CẢNH\n"
             ."- Ứng dụng/version: {$versionLine}\n"
-            ."- Đường dẫn bộ kit: KIT_ROOT do tôi cung cấp trên máy này\n"
-            ."- Tên học viên: tôi sẽ cung cấp khi cần cá nhân hóa\n"
-            ."- Tên tool: theo TOOL_BRIEF.md\n"
-            ."- Workspace: thư mục hiện tại\n\n"
-            ."MỤC TIÊU\n{$day['outcome']}\n\n"
-            ."RÀNG BUỘC AN TOÀN\n"
-            ."1. Không xóa file hoặc sửa model gốc.\n"
-            ."2. Phải tạo/copy backup trước thao tác ghi hoặc batch operation.\n"
-            ."3. Phải đọc file hiện có trước khi sửa.\n"
-            ."4. Lập kế hoạch, liệt kê file sẽ đổi và chờ tôi xác nhận.\n"
-            ."5. Không giả định {$appName} API nếu chưa kiểm tra version thật.\n"
-            ."6. Không đưa dữ liệu dự án mật lên AI.\n\n"
-            ."YÊU CẦU AI\n"
-            ."1. Phân tích workspace và tài liệu liên quan.\n"
-            ."2. Đề xuất kế hoạch, file ảnh hưởng, lệnh build và cách rollback.\n"
-            ."3. Chờ tôi xác nhận kế hoạch.\n"
-            . "4. Tạo/sửa code hoặc tài liệu theo mục tiêu ngày {$day['day']}.\n"
-            ."5. Build Release hoặc chạy kiểm tra phù hợp.\n"
-            ."6. Giải thích file đã đổi và lỗi còn tồn tại.\n"
-            ."7. Viết checklist kiểm thử trong {$appName}.\n\n"
-            ."ĐẦU RA BẮT BUỘC\n"
-            ."- File đã thay đổi.\n- Lệnh build/chạy.\n- Cách cài và rollback.\n"
-            ."- Cách kiểm tra kết quả trong {$appName}.\n- Các giới hạn hiện tại.\n\n"
-            ."Học viên không cần tự viết C#; học viên phải chạy, cá nhân hóa, kiểm chứng và nộp bằng chứng thật.";
+            ."- Kit: KIT_ROOT do tôi cung cấp trên máy này\n"
+            ."- Mục tiêu ngày {$day['day']}: {$day['outcome']}\n\n"
+            ."HÃY LÀM THEO THỨ TỰ\n"
+            ."1. Đọc workspace và file liên quan.\n"
+            ."2. Nói ngắn gọn kế hoạch, file sẽ đổi và cách kiểm tra; chờ tôi xác nhận.\n"
+            ."3. Thực hiện mục tiêu, build/chạy theo version thật.\n"
+            ."4. Báo lại file đã đổi, kết quả và lỗi còn lại.\n\n"
+            ."AN TOÀN\n"
+            ."- Không xóa file, không sửa bản vẽ/model gốc và không đưa dữ liệu mật lên AI.\n"
+            ."- Backup trước thao tác ghi; không đoán {$appName} API khi chưa kiểm tra version.\n\n"
+            ."Tôi không cần tự viết C#, nhưng tôi sẽ mở {$appName}, kiểm tra kết quả và chụp bằng chứng.";
     }
 
-    protected function sopMarkdown(array $day, array $payload): string
+    protected function sopMarkdown(array $day, array $payload, array $config): string
     {
         $steps = collect($payload['sop_steps'])->values()->map(fn ($step, $i) => ($i + 1).'. '.$step)->implode("\n");
         $checks = collect($payload['verification_checklist'])->map(fn ($item) => '- [ ] '.$item)->implode("\n");
         $evidence = collect($payload['evidence_requirements'])->map(fn ($item) => '- '.$item)->implode("\n");
         $errors = collect($day['errors'])->map(fn ($item) => '- '.$item)->implode("\n");
+
+        $versionNote = $config['app_name'] === 'Navisworks'
+            ? "\n\n### Giới hạn cần nhớ\nManage 2024 là mốc runtime đã kiểm tra. Simulate không dùng cho Clash. Không tạo nút giả cho capability chưa có bằng chứng runtime."
+            : '';
 
         return "## {$day['title']}\n\n"
             ."### Hôm nay học gì?\n{$day['description']}\n\n"
@@ -264,6 +276,6 @@ abstract class Cad21DaysSeeder extends Seeder
             ."### Bài tập và bằng chứng cần nộp\n{$evidence}\n\n"
             ."### Prompt copy vào AI Agent\n{$payload['ai_prompt']}\n\n"
             ."### Lỗi thường gặp\n{$errors}\n\n"
-            ."### Chấm đạt\nĐạt từ {$payload['pass_score']}/100, đủ bằng chứng, kiểm chứng được và không có Critical Fail. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP vì nộp lại.";
+            ."### Chấm đạt\nĐạt từ {$payload['pass_score']}/100, có ảnh kết quả thật và không có Critical Fail. Nếu chưa đạt, sửa đúng lý do rồi nộp lại; không bị trừ XP.".$versionNote;
     }
 }

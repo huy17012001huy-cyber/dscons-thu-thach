@@ -39,10 +39,12 @@ class CommunityGuidanceTest extends TestCase
         $rulesHtml = $this->get(route('community.rules', ['community' => $brand->slug]))
             ->assertOk()
             ->assertSee('Nội quy cộng đồng')
-            ->assertSee('Tôn trọng người khác');
+            ->assertSee('Tôn trọng người khác')
+            ->assertSee('Tinh thần AI First')
+            ->assertSee('Cam kết AI First');
 
         $rulesHtml = $rulesHtml->getContent();
-        $this->assertSame(10, substr_count($rulesHtml, 'class="rule-number"'));
+        $this->assertSame(11, substr_count($rulesHtml, 'class="rule-number"'));
         $this->assertStringNotContainsString('Ã', $rulesHtml);
         $this->assertStringNotContainsString('á»', $rulesHtml);
         $this->assertStringNotContainsString('Ä‘', $rulesHtml);

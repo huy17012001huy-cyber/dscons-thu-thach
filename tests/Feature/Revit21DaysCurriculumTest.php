@@ -69,7 +69,10 @@ class Revit21DaysCurriculumTest extends TestCase
         Livewire::actingAs($admin)
             ->test(\App\Livewire\ChallengeDetail::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent'])
             ->assertSee('Prompt copy vào AI Agent')
-            ->assertSee('Checklist trước khi nộp')
+            ->assertSee('SOP duy nhất — làm theo từng bước')
+            ->assertDontSee('SOP — Hướng dẫn')
+            ->assertDontSee('Bạn đã yêu cầu AI làm gì?')
+            ->assertSee('Minh chứng cần nộp')
             ->assertSee('Đạt từ 70/100');
     }
 }

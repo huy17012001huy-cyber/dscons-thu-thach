@@ -1,21 +1,25 @@
 # 21 Ngày Chinh Phục Tool Navisworks bằng AI Agent
 
-Challenge dành cho kỹ sư BIM/MEP muốn biến một workflow model coordination thành plugin Navisworks có output kiểm chứng được. AI Agent thực hiện phần code theo kế hoạch; học viên phải hiểu capability, chạy trên model mẫu/bản sao và chứng minh kết quả.
+Chương trình giúp kỹ sư BIM/MEP biến một workflow coordination thành tool Navisworks có kết quả đối chiếu được. AI Agent làm phần code theo kế hoạch; học viên kiểm tra capability, chạy trên model mẫu và ghi đúng giới hạn.
 
-## Đầu ra
+## Sau 21 ngày
 
-- Một plugin có Ribbon và DockPane khi phù hợp.
-- Một capstone thuộc Search Set, Model QA, Clash/Coordination, Viewpoint hoặc Reporting.
-- Output/report có nguồn dữ liệu, bộ cài, manual, UAT và VERSION_SUPPORT.md.
+- Có một tool thuộc một nhánh: Search Set; Model QA/Property Audit; Clash/Coordination; Viewpoint; hoặc báo cáo.
+- Có output/report có nguồn dữ liệu, bộ cài và hướng dẫn ngắn.
+- Biết phân biệt “build được” với “đã chạy thật”.
 
-## Nhịp học
+## Cách học
 
-Ngày 1, 8, 15 và 21 là livestream. Các ngày còn lại là video/SOP 40–90 phút. Mỗi ngày có deadline 24 giờ; milestone được mentor review.
+Mỗi ngày làm một việc, dùng một SOP duy nhất: đọc capability → copy prompt → để AI lập kế hoạch → xác nhận → chạy trên model mẫu → chụp minh chứng. Ngày 1, 8, 15 và 21 là livestream. Video nộp bài chỉ bắt buộc ở ngày 7, 14 và 21; các ngày khác chủ yếu nộp ảnh.
 
 ## Giới hạn bắt buộc
 
-- Navisworks Manage 2024 là runtime-certified reference hiện tại.
-- Navisworks 2020–2023 và 2025–2026 chỉ ghi build/profile cho đến khi test trực tiếp.
-- Simulate không dùng cho workflow Clash.
-- TimeLiner và Clash XML chỉ được dạy khi capability matrix có evidence.
-- Không tạo nút giả, không dùng data giả để vượt qua API spike và không ghi đè NWF/NWD/report cũ.
+- Navisworks Manage 2024 là mốc runtime-certified hiện tại.
+- Các version khác chỉ ghi là build/profile cho tới khi test trực tiếp.
+- Navisworks Simulate không dùng cho workflow Clash.
+- Không tạo nút giả cho TimeLiner, Clash XML hay capability chưa có bằng chứng.
+- Không dùng dữ liệu giả để kết luận tool chạy được.
+
+## Chấm bài
+
+Đạt từ 70/100: minh chứng 30, kết quả đúng 40, cá nhân hóa 15, kiểm chứng 15. Ngày capstone tạo ra sản phẩm/report phải đăng ảnh kết quả lên Bảng tin. Ảnh code hoặc báo cáo không có nguồn dữ liệu là chưa đạt.

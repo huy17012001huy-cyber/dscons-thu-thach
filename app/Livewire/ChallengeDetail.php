@@ -462,20 +462,9 @@ class ChallengeDetail extends Component
     // ─── Video feedback ────────────────────────────────────────
     private function validateStructuredSubmission(ChallengeTask $task): bool
     {
-        if (empty($task->instruction_payload)) return true;
-
-        $fields = $this->structuredSubmission[$task->id] ?? [];
-        foreach ([
-            'reflection_request' => 'Hãy ghi bạn đã yêu cầu AI làm gì.',
-            'reflection_files' => 'Hãy ghi AI đã sửa/tạo file nào.',
-            'reflection_verification' => 'Hãy ghi bạn kiểm chứng kết quả thế nào.',
-        ] as $field => $message) {
-            if (blank($fields[$field] ?? null)) {
-                $this->dispatch('toast', message: $message, type: 'error');
-                return false;
-            }
-        }
-
+        // The evidence textarea is the single required submission field. The
+        // curriculum intentionally keeps proof lightweight: image/link first,
+        // with no mandatory three-part reflection on every day.
         return true;
     }
 

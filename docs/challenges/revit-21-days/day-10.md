@@ -1,11 +1,44 @@
-# Ngày 10 — Lọc và đếm bằng FilteredElementCollector
+# Ngày 10 — Lọc và đếm phần tử bằng FilteredElementCollector
 
-**Hình thức:** Video · 60 phút · **Đầu ra:** command lõi dùng chung.
+**Hình thức:** Video ngắn · **Thời lượng:** 60 phút
 
-## SOP
+## Hôm nay làm gì?
 
-Yêu cầu AI dùng `FilteredElementCollector` để lọc Category/Level/View, không hard-code ElementId. Command chỉ đọc nên không mở Transaction. Build Release, chạy trên model bản sao, đối chiếu số lượng với Schedule/Filter và thử model không có phần tử.
+Xây command lõi dùng chung: lọc Category/Level/View và hiển thị số lượng có thể đối chiếu với Schedule.
 
-## Bài nộp / đạt
+## Kết quả cần đạt
 
-Video 15–30 giây bấm nút, ảnh đối chiếu và reflection về collector. Đạt khi kết quả đúng, ghi rõ phạm vi và có thông báo empty state. Chưa đạt nếu đếm cả type, lọc sai Level hoặc tạo Transaction không cần thiết.
+Kết quả đếm đúng trên model mẫu và lặp lại được
+
+## AI làm gì?
+
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+
+## Học viên kiểm tra gì?
+
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
+
+1. Mở bản sao model.
+2. Dán prompt yêu cầu AI dùng FilteredElementCollector, không hard-code ElementId.
+3. AI phải giải thích collector, filter và transaction; command đếm không được mở Transaction.
+4. Build Release, cài lại DLL và chạy nút.
+
+## Minh chứng cần nộp
+
+- Ảnh màn hình kết quả của ngày 10.
+- Ảnh sản phẩm đã đăng lên Bảng tin cộng đồng.
+
+**Đăng lên Bảng tin:** Đăng ảnh sản phẩm hoặc kết quả chạy thật, kèm 2–3 câu bạn đã dùng AI như thế nào.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Đếm cả type thay vì instance.
+- Lọc sai view/level.

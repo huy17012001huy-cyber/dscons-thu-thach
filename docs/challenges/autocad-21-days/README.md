@@ -1,24 +1,21 @@
 # 21 Ngày Chinh Phục Tool AutoCAD bằng AI Agent
 
-Challenge dành cho kỹ sư BIM/MEP muốn biến một workflow AutoCAD lặp lại thành plugin .NET chạy thật. Học viên không phải tự viết C# bằng tay; AI Agent lập kế hoạch, tạo code và hỗ trợ debug. Học viên phải chạy trên DWG bản sao, kiểm tra output và nộp bằng chứng thật.
+Chương trình giúp kỹ sư BIM/MEP biến một việc lặp lại trong AutoCAD thành plugin nhỏ chạy được. AI Agent làm phần code và debug theo kế hoạch; học viên kiểm tra trên DWG bản sao và chia sẻ kết quả.
 
-## Đầu ra
+## Sau 21 ngày
 
-- Một plugin AutoCAD có command/Ribbon và giao diện WPF khi cần.
-- Một chức năng capstone thuộc một trong bốn nhánh: dựng hình; Layer/Block/Property; Annotation/QA; xuất dữ liệu.
-- Bộ cài hoặc bundle, manual một trang, bảng UAT và support matrix.
+- Có một plugin AutoCAD cá nhân hóa, thuộc một nhánh: dựng hình; Layer/Block/Property; Annotation/QA; hoặc xuất dữ liệu.
+- Có command/Ribbon hoặc giao diện phù hợp với bài toán.
+- Có bộ cài, hướng dẫn ngắn và ảnh chứng minh chạy thật.
 
-## Nhịp học
+## Cách học
 
-Ngày 1, 8, 15 và 21 là livestream. Các ngày còn lại là video/SOP 35–90 phút. Mỗi ngày có một deadline 24 giờ; bài milestone được mentor review.
+Mỗi ngày làm một việc, dùng một SOP duy nhất: mở kit → copy prompt → đọc kế hoạch → xác nhận → để AI làm → chạy trên DWG bản sao → nộp minh chứng. Ngày 1, 8, 15 và 21 là livestream. Video nộp bài chỉ bắt buộc ở ngày 7, 14 và 21; các ngày khác nộp ảnh màn hình là chính.
 
-## Luật an toàn
+## An toàn
 
-- Chỉ dùng AutoCAD không phải LT và DWG bản sao.
-- Không tự cài dependency, NETLOAD, copy bundle, đổi TRUSTEDPATHS/SECURELOAD hoặc sửa DWG khi chưa đọc hướng dẫn và xác nhận.
-- AutoCAD 2019–2026 là dải profile; runtime support chỉ được công bố sau khi test trực tiếp đúng version.
-- Không đưa model hoặc dữ liệu dự án mật lên AI Agent.
+Chỉ dùng AutoCAD không phải LT và DWG bản sao. Không đổi TRUSTEDPATHS/SECURELOAD, NETLOAD hoặc cài bundle khi chưa hiểu file đang dùng. AutoCAD 2019–2026 là dải profile; chỉ công bố version đã runtime test.
 
-## Cách dùng mỗi bài
+## Chấm bài
 
-Đọc mục tiêu → mở đúng kit → copy prompt → chờ AI lập kế hoạch → xác nhận file thay đổi → build/chạy → đối chiếu trong AutoCAD → nộp video/ảnh/log và ba câu reflection.
+Đạt từ 70/100: minh chứng 30, kết quả đúng 40, cá nhân hóa 15, kiểm chứng 15. Ảnh code không thay cho ảnh plugin chạy. Sản phẩm tạo ra trong các ngày capstone phải được đăng lên Bảng tin.

@@ -1,11 +1,41 @@
 # Ngày 5 — Đọc Parameter của phần tử MEP
 
-**Hình thức:** Video · 45 phút · **Đầu ra:** bảng 5–10 phần tử có Parameter.
+**Hình thức:** Video ngắn · **Thời lượng:** 45 phút
 
-## SOP
+## Hôm nay làm gì?
 
-Chọn Duct/Pipe/Equipment; yêu cầu AI xuất ElementId, Category, Family, Type, Level, System, Size, Mark, Comments. Nếu Parameter không tồn tại phải ghi `missing`, không đoán. Đối chiếu ít nhất 5 giá trị với Properties hoặc Schedule rồi lưu bảng.
+Biết yêu cầu AI xuất dữ liệu có ngữ cảnh: Category, Family, Type, Level, System, Size, Mark và Comments.
 
-## Bài nộp và điều kiện đạt
+## Kết quả cần đạt
 
-Nộp bảng, ảnh đối chiếu và reflection. Đạt khi có tối thiểu 5 Parameter đúng tên/giá trị và phân biệt được Family với Type. Chưa đạt nếu không có ElementId hoặc thay giá trị thiếu bằng dữ liệu bịa.
+Đọc Parameter có thể truy nguyên về ElementId
+
+## AI làm gì?
+
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+
+## Học viên kiểm tra gì?
+
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
+
+1. Chọn một Category và 5–10 phần tử.
+2. Dán prompt yêu cầu AI trả bảng có ElementId, Category, Family, Type, Level và các Parameter MEP.
+3. Nếu Parameter không tồn tại, yêu cầu AI ghi “missing” thay vì đoán.
+4. Đối chiếu từng dòng trong Revit Properties.
+
+## Minh chứng cần nộp
+
+- Ảnh màn hình kết quả của ngày 5.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Nhầm Type với Family.
+- Dùng giá trị hiển thị đã format thay cho giá trị thật.

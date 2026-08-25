@@ -1,45 +1,31 @@
-# SOP Template — AI Agent làm, học viên kiểm chứng
+# SOP một ngày — AI làm, học viên kiểm chứng
 
 ## Bối cảnh
 
 - Revit version: `...`
-- .NET/Visual Studio: `...`
-- Tên học viên: `...`
-- Tên tool: `...`
-- Nhánh capstone: `counting | parameter | tagging | report`
-- Workspace: `...`
-- Model test: bản sao/anonymized, không phải file gốc
-
-## Mục tiêu
-
-Mô tả một output quan sát được trong Revit: `...`
-
-## Ràng buộc an toàn
-
-1. Không xóa file hoặc sửa model gốc.
-2. Đọc file hiện có và lập kế hoạch trước khi sửa.
-3. Tạo backup trước Transaction/batch operation.
-4. Không đoán Revit API khi chưa kiểm tra version.
-5. Không đưa model/dữ liệu mật lên AI.
+- Workspace/Kit: `...`
+- Tên học viên và tên tool: `...`
+- Model test: bản sao, không chứa dữ liệu mật
 
 ## Prompt copy vào AI Agent
 
 ```text
-Hãy đọc workspace và tài liệu liên quan trước. Lập kế hoạch, liệt kê file sẽ sửa,
-lệnh build, cách rollback và checklist test; chờ tôi xác nhận kế hoạch.
-Sau khi xác nhận, hãy tạo/sửa code theo mục tiêu, build Release, giải thích file
-đã đổi, nêu lỗi còn lại và hướng dẫn tôi kiểm tra output trong Revit.
-Không xóa file, không sửa model gốc, không đoán API, không log dữ liệu nhạy cảm.
+Hãy đọc workspace và file hướng dẫn trước.
+Mục tiêu hôm nay: [viết một kết quả nhìn thấy được].
+Hãy nói ngắn gọn kế hoạch, file sẽ đổi, lệnh chạy và cách kiểm tra; chờ tôi xác nhận.
+Sau khi tôi xác nhận, hãy thực hiện, build/chạy theo đúng version Revit và báo lại:
+file đã đổi, kết quả, lỗi còn lại và cách tôi kiểm tra trong Revit.
+Không xóa file, không sửa model gốc, không đưa dữ liệu mật lên AI.
 ```
 
-## Khi AI hỏi lại
+## Học viên làm gì?
 
-Trả lời đúng Revit version, đường dẫn workspace, Category/Level/System, input và output. Nếu chưa biết, nói “chưa xác định, hãy đề xuất cách đọc read-only”; không bịa giá trị.
+1. Mở workspace và model bản sao.
+2. Đọc kế hoạch của AI rồi xác nhận hoặc sửa phạm vi.
+3. Mở Revit, chạy tool và đối chiếu kết quả.
+4. Chụp ảnh minh chứng theo yêu cầu ngày học.
+5. Nếu tạo ra sản phẩm, đăng ảnh lên Bảng tin.
 
-## Sau khi AI hoàn thành
+## Nếu AI hỏi lại
 
-- Lưu log build và danh sách file thay đổi.
-- Chạy bản Release trên model bản sao.
-- Đối chiếu bằng Schedule/Properties hoặc file output độc lập.
-- Nếu lỗi: gửi phần log từ exception/error đến stack trace liên quan, bỏ token/đường dẫn bí mật.
-- Chỉ nộp khi có kết quả thật, tên cá nhân hóa và mô tả cách kiểm chứng.
+Trả lời đúng version, đường dẫn workspace, input và output. Nếu chưa biết, nói “chưa xác định, hãy đọc read-only”; không đoán.

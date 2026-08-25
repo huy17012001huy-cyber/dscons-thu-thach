@@ -149,6 +149,15 @@ Nếu thấy nội dung lừa đảo, quấy rối, vi phạm quyền riêng tư
 10. Cùng tạo ra giá trị
 Một câu trả lời hữu ích, một lời động viên đúng lúc và một chia sẻ có kinh nghiệm đều giúp cộng đồng tốt hơn. Hãy để lại giá trị sau mỗi lần tham gia và sẵn sàng học hỏi từ người khác.
 
+Tinh thần AI First
+Đây là cộng đồng của những người tin rằng AI sẽ thay đổi cách chúng ta sống và làm việc. AI First không chỉ là một khẩu hiệu mà là cách chúng ta học, thử nghiệm và chia sẻ mỗi ngày.
+- Ưu tiên ứng dụng AI: trước khi làm một việc, hãy tự hỏi AI có thể giúp mình làm tốt hơn hoặc nhanh hơn không.
+- Thử nghiệm liên tục: không ngại thử công cụ mới. Sai cũng là bài học nếu bạn ghi lại điều đã thử và điều đã rút ra.
+- Chia sẻ ứng dụng thực tế: ưu tiên kể cách bạn đã dùng AI trong công việc hoặc cuộc sống, không chỉ nói lý thuyết.
+- Tư duy mở: AI thay đổi nhanh, vì vậy hãy sẵn sàng cập nhật và thay đổi cách làm cũ.
+Cam kết AI First
+Mỗi ngày, hãy thử dùng ít nhất một công cụ AI vào một việc cụ thể, dù nhỏ hay lớn. 21 ngày là 21 lần thử nghiệm và vô vàn bài học.
+
 Khi có vấn đề
 Quản trị viên có thể nhắc nhở, ẩn nội dung hoặc giới hạn quyền tương tác khi cần để bảo vệ cộng đồng. Mọi quyết định đều hướng đến một không gian học tập tử tế, minh bạch và có cơ hội sửa sai.
 TEXT;

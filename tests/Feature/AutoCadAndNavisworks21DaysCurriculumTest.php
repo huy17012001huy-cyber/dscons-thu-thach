@@ -85,6 +85,31 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
         $this->assertStringContainsString('không tạo nút giả', strtolower($content));
     }
 
+    public function test_evidence_is_image_first_and_video_is_reserved_for_key_days(): void
+    {
+        app(Revit21DaysSeeder::class)->run();
+        app(AutoCAD21DaysSeeder::class)->run();
+        app(Navisworks21DaysSeeder::class)->run();
+
+        foreach (Expedition::query()->whereIn('slug', [
+            '21-ngay-lam-tool-revit-voi-ai-agent',
+            '21-ngay-chinh-phuc-tool-autocad-bang-ai-agent',
+            '21-ngay-chinh-phuc-tool-navisworks-bang-ai-agent',
+        ])->with('tasks')->get() as $challenge) {
+            foreach ($challenge->tasks as $task) {
+                $evidence = $task->instruction_payload['evidence_requirements'] ?? [];
+                $hasVideo = collect($evidence)->contains(fn ($item) => str_contains(strtolower($item), 'video'));
+
+                $this->assertSame(
+                    in_array($task->day_number, [7, 14, 21], true),
+                    $hasVideo,
+                    "Unexpected video evidence on {$challenge->slug} day {$task->day_number}"
+                );
+                $this->assertNotEmpty($evidence);
+            }
+        }
+    }
+
     public function test_challenge_detail_renders_both_new_curricula(): void
     {
         app(Revit21DaysSeeder::class)->run();
@@ -100,7 +125,7 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
                 ->test(\App\Livewire\ChallengeDetail::class, ['slug' => $slug])
                 ->assertSee($appName)
                 ->assertSee('Prompt copy vào AI Agent')
-                ->assertSee('Checklist trước khi nộp')
+                ->assertSee('Minh chứng cần nộp')
                 ->assertSee('Đạt từ 70/100');
         }
     }

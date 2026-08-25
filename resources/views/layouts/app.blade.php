@@ -309,7 +309,7 @@ body.is-impersonating #app { height: calc(100% - 36px); }
     text-decoration: none;
     transition: background-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
-.ch-item:hover   { background: var(--bg-hover); color: var(--text); }
+.ch-item:hover   { background: transparent; color: var(--text); }
 .ch-item.active  { background: var(--bg-active); color: var(--green); font-weight: 650; box-shadow: inset 3px 0 0 var(--green); }
 .ch-item svg     { width: 18px; height: 18px; flex-shrink: 0; color: var(--green, #1F77BE); opacity: .82; stroke-width: 1.8; }
 .ch-item.active svg, .ch-item:hover svg { opacity: 1; }
@@ -731,7 +731,7 @@ body.dscons-shell .card {
     box-shadow: 0 2px 8px rgba(18, 59, 89, .04);
 }
 body.dscons-shell .ch-item { color: var(--dscons-ink); }
-body.dscons-shell .ch-item:hover { background: #E7F2F8; color: #102A3B; }
+body.dscons-shell .ch-item:hover { background: transparent; color: #125A96; }
 body.dscons-shell .ch-item.active { background: #DCECF7; color: #102A3B; }
 body.dscons-shell .ch-item.active { box-shadow: inset 3px 0 0 var(--dscons-brand); }
 body.dscons-shell .topbar-title { color: var(--dscons-ink); }

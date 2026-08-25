@@ -1,19 +1,41 @@
 # Ngày 2 — Lập kế hoạch trước khi cho AI viết code
 
-**Hình thức:** Video · 45 phút · **Đầu ra:** `AI_WORKFLOW.md` có mục tiêu, kế hoạch, file ảnh hưởng và lệnh build.
+**Hình thức:** Video ngắn · **Thời lượng:** 45 phút
 
-## SOP
+## Hôm nay làm gì?
 
-1. Mở workspace và đọc `AGENTS.md`/`SETUP.md` nếu có.
-2. Dán prompt plan-first trong `SOP_TEMPLATE.md`.
-3. Yêu cầu AI chưa sửa file; đọc assumptions, file được phép sửa, rollback và test.
-4. Nếu AI hỏi, trả lời version Revit, input/output và đường dẫn; không đoán API.
-5. Sau khi hiểu kế hoạch mới xác nhận cho AI tạo file.
+Học viên biết AI Agent có thể đọc/sửa/build trong workspace, nhưng phải lập kế hoạch trước và chờ xác nhận.
 
-## Kiểm chứng
+## Kết quả cần đạt
 
-Ảnh chat thể hiện kế hoạch xuất hiện trước thay đổi. File phải có danh sách file, lệnh build và cách rollback. Chưa đạt nếu AI tự sửa mù hoặc học viên không biết file nào thay đổi.
+Lập kế hoạch có phê duyệt trước khi code
 
-## Bài nộp
+## AI làm gì?
 
-Nộp `AI_WORKFLOW.md`, ảnh kế hoạch và ba câu reflection. Đạt từ 70/100, không có Critical Fail.
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+
+## Học viên kiểm tra gì?
+
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
+
+1. Mở workspace và đọc AGENTS.md/SETUP.md nếu có.
+2. Dán prompt lập kế hoạch, yêu cầu AI chưa được sửa file.
+3. Đọc kế hoạch: mục tiêu, giả định, file ảnh hưởng, lệnh build và cách rollback.
+4. Nếu AI hỏi lại, trả lời phiên bản Revit, đường dẫn workspace và capstone dự kiến; không đoán API.
+
+## Minh chứng cần nộp
+
+- Ảnh màn hình kết quả của ngày 2.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Bấm “làm luôn” khi chưa đọc file.
+- Cho AI sửa cả model hoặc thư mục không liên quan.

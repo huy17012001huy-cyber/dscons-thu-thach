@@ -1,15 +1,42 @@
 # Ngày 7 — Chọn capstone và viết TOOL_BRIEF.md
 
-**Hình thức:** Assignment · 60 phút · **Đầu ra:** Tool Brief đủ nhỏ để hoàn thành trong hai tuần.
+**Hình thức:** Video ngắn · **Thời lượng:** 60 phút
 
-## SOP
+## Hôm nay làm gì?
 
-1. Chọn một nhánh trong `CAPSTONE_TRACKS.md`.
-2. Mô tả vấn đề lặp lại, input, Category/Level/System, thao tác và output.
-3. Nêu success metric đo được, model test, giới hạn và điều không làm.
-4. Dán prompt để AI phỏng vấn ngược và phát hiện phạm vi quá lớn.
-5. Lưu `TOOL_BRIEF.md`, không đưa dữ liệu mật vào file.
+Chuyển một vấn đề lặp lại của kỹ sư BIM/MEP thành bài toán đủ nhỏ để xây MVP trong hai tuần.
 
-## Bài nộp và điều kiện đạt
+## Kết quả cần đạt
 
-Nộp Tool Brief, sơ đồ workflow hiện tại và ba câu reflection. Mentor đạt khi bài toán có output đo được, đủ nhỏ cho hai tuần và chọn đúng một nhánh. Bài mơ hồ hoặc “làm mọi thứ cho dự án” phải sửa lại.
+Một Tool Brief có đầu vào và đầu ra quan sát được
+
+## AI làm gì?
+
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+
+## Học viên kiểm tra gì?
+
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
+
+1. Chọn đúng một workflow lặp lại trong công việc.
+2. Mở mẫu TOOL_BRIEF.md.
+3. Dán prompt yêu cầu AI phỏng vấn ngược và phát hiện phạm vi quá lớn.
+4. Điền input, output, Category, điều kiện an toàn, tiêu chí thành công và ngoài phạm vi.
+
+## Minh chứng cần nộp
+
+- Ảnh màn hình kết quả của ngày 7.
+- Video ngắn chứng minh thao tác chính chạy thật.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Phạm vi không đo được.
+- Chọn nhiều nhánh cùng lúc.

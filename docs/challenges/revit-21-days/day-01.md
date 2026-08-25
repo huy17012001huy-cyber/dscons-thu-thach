@@ -1,23 +1,41 @@
 # Ngày 1 — Khởi động workspace và chạy prompt đầu tiên
 
-**Hình thức:** Livestream 1 · 90 phút · **Đầu ra:** workspace đọc được, biết vị trí file và mục tiêu cuối khóa.
+**Hình thức:** Livestream · **Thời lượng:** 90 phút
 
-## Hôm nay học gì?
+## Hôm nay làm gì?
 
-AI Agent có thể đọc workspace và thao tác theo kế hoạch. Hôm nay chỉ khảo sát an toàn, chưa sửa code/model.
+Buổi kickoff giúp học viên cài/kiểm tra AI Agent, mở đúng Bộ Kit và biết đầu ra cuối khóa.
 
-## SOP
+## Kết quả cần đạt
 
-1. Cài/mở Codex, Antigravity hoặc agent tương đương.
-2. Mở thư mục Bộ Kit DSCons, không mở thư mục dự án mật.
-3. Dán prompt yêu cầu AI liệt kê cây thư mục, file hướng dẫn và output 21 ngày.
-4. Trả lời Revit version, tên học viên và workspace nếu AI hỏi.
-5. Lưu câu trả lời vào `AI_WORKFLOW.md`; không cho AI xóa/sửa file.
+Tạo workspace đầu tiên an toàn và có thể lặp lại
 
-## AI làm gì / học viên làm gì?
+## AI làm gì?
 
-AI đọc và giải thích workspace. Học viên xác nhận đúng thư mục, quay video ngắn, cá nhân hóa tên tool và viết ba câu reflection.
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
 
-## Bài nộp và rubric
+## Học viên kiểm tra gì?
 
-Ảnh workspace, video 30 giây, reflection. Đạt khi AI đọc đúng workspace, học viên chỉ ra file hướng dẫn và mô tả được output cuối khóa. Chưa đạt nếu chỉ chụp màn hình cài đặt hoặc gửi dữ liệu mật.
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
+
+1. Đăng nhập AI Agent bằng tài khoản được phép dùng cho dữ liệu không mật.
+2. Mở thư mục workspace Bộ Kit DSCons, không mở thư mục dự án mật của công ty.
+3. Yêu cầu AI chỉ đọc cây thư mục, không sửa file.
+4. Chạy prompt kiểm tra đầu tiên và lưu câu trả lời vào AI_WORKFLOW.md.
+
+## Minh chứng cần nộp
+
+- Ảnh màn hình kết quả của ngày 1.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Không gửi model hoặc file công ty lên AI.
+- Không cho phép AI xóa, di chuyển hoặc ghi đè file ngoài workspace.

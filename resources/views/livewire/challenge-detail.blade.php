@@ -22,6 +22,9 @@
     .challenge-submission-guide label:has(input[type="checkbox"]) { flex-direction:row; align-items:flex-start; }
     .challenge-submission-guide input[type="checkbox"] { accent-color:#1F77BE; margin-top:.18rem; }
     .challenge-submission-guide textarea { width:100%; min-height:55px; font-size:.74rem; }
+    .challenge-evidence-hint { margin:.15rem 0 0; color:#61798A; font-size:.72rem; line-height:1.5; }
+    .challenge-share-note { margin:.7rem 0 0; padding:.55rem .7rem; border-left:3px solid #F39402; background:#FFF8E9; color:#765D31; font-size:.72rem; line-height:1.5; }
+    .challenge-share-note strong { color:#9A5B00; }
     .challenge-rubric-preview { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem .5rem; margin-top:.8rem; padding-top:.65rem; border-top:1px solid #D7E5EE; color:#456477; font-size:.68rem; }
     .challenge-rubric-preview strong { color:#125A96; }
     .challenge-rubric-preview span { padding:.2rem .4rem; border:1px solid #B8D7E6; border-radius:5px; background:#fff; }
@@ -457,7 +460,9 @@
                     @endif
 
                     {{-- SOP --}}
-                    @if($task->sop_content)
+                    {{-- Structured curriculum owns the learner-facing SOP. Keep the legacy
+                         field for old tasks/data, but do not render it a second time. --}}
+                    @if($task->sop_content && empty($task->instruction_payload))
                     <div style="background:#F7F5F3; border-radius:0.5rem; padding:0.75rem; margin-bottom:0.75rem; border-left:3px solid #d17856;">
                         <p style="font-size:0.7rem; font-weight:700; color:#1B5E20; margin-bottom:0.375rem;">▤ SOP — Hướng dẫn</p>
                         <div class="prose-task" style="font-size:0.8rem; color:#2E2E2E; line-height:1.6;">{!! Str::markdown($task->sop_content, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}</div>
@@ -472,23 +477,34 @@
                     @php
                         $curriculum = is_array($task->instruction_payload) ? $task->instruction_payload : [];
                         $myTaskStatus = $myCompletions[$task->id]->status ?? null;
+                        $modalityLabel = match ($curriculum['modality'] ?? '') {
+                            'live' => 'Livestream',
+                            'video' => 'Video ngắn',
+                            'assignment' => 'Bài thực hành',
+                            default => 'Bài học',
+                        };
+                        $trackLabel = match ($curriculum['track'] ?? 'common') {
+                            'common' => 'Nền tảng chung',
+                            'capstone' => 'Tool của bạn',
+                            'wpf', 'ui' => 'Giao diện tool',
+                            default => 'Thực hành',
+                        };
                     @endphp
                     @if($curriculum)
                     <section class="challenge-curriculum" aria-labelledby="curriculum-{{ $task->id }}">
                         <div class="challenge-curriculum-head">
                             <div>
-                                <span class="challenge-eyebrow">{{ strtoupper($curriculum['modality'] ?? 'BÀI HỌC') }} · {{ $curriculum['estimated_minutes'] ?? 0 }} phút</span>
+                                <span class="challenge-eyebrow">{{ $modalityLabel }} · {{ $curriculum['estimated_minutes'] ?? 0 }} phút</span>
                                 <h3 id="curriculum-{{ $task->id }}">Lộ trình học ngày {{ $task->day_number }}</h3>
                             </div>
-                            <span class="challenge-track">{{ $curriculum['track'] ?? 'common' }}</span>
+                            <span class="challenge-track">{{ $trackLabel }}</span>
                         </div>
                         @if(!empty($curriculum['why']))
                         <p class="challenge-curriculum-why"><strong>Vì sao kỹ sư MEP cần?</strong> {{ $curriculum['why'] }}</p>
                         @endif
                         <div class="challenge-curriculum-grid">
                             <div>
-                                <h4>Kiến thức và kết quả bắt buộc</h4>
-                                <p>{{ $curriculum['minimum_knowledge'] ?? '' }}</p>
+                                <h4>Hôm nay cần đạt</h4>
                                 <p><strong>{{ $curriculum['required_outcome'] ?? '' }}</strong></p>
                                 @if(!empty($curriculum['learning_objectives']))
                                 <ul>
@@ -513,8 +529,8 @@
                                 </ul>
                             </div>
                         </div>
-                        <details class="challenge-curriculum-details">
-                            <summary>SOP chuẩn bị môi trường và các bước thực hiện</summary>
+                        <details class="challenge-curriculum-details" open>
+                            <summary>SOP duy nhất — làm theo từng bước</summary>
                             <ol>
                                 @foreach($curriculum['sop_steps'] ?? [] as $step)
                                 <li>{{ $step }}</li>
@@ -522,22 +538,25 @@
                             </ol>
                         </details>
                         @if(!empty($curriculum['ai_prompt']))
-                        <div class="challenge-prompt-box" x-data="{ copied: false }">
-                            <div class="challenge-prompt-title"><strong>Prompt copy vào AI Agent</strong><button type="button" @click="navigator.clipboard.writeText($refs.prompt.innerText); copied = true; setTimeout(() => copied = false, 1600)" aria-label="Sao chép prompt"><span x-show="!copied">Sao chép</span><span x-show="copied" x-cloak>Đã sao chép</span></button></div>
-                            <pre x-ref="prompt">{{ $curriculum['ai_prompt'] }}</pre>
-                        </div>
+                        <details class="challenge-curriculum-details">
+                            <summary>Prompt copy vào AI Agent</summary>
+                            <div class="challenge-prompt-box" x-data="{ copied: false }">
+                                <div class="challenge-prompt-title"><strong>Prompt của ngày {{ $task->day_number }}</strong><button type="button" @click="navigator.clipboard.writeText($refs.prompt.innerText); copied = true; setTimeout(() => copied = false, 1600)" aria-label="Sao chép prompt"><span x-show="!copied">Sao chép</span><span x-show="copied" x-cloak>Đã sao chép</span></button></div>
+                                <pre x-ref="prompt">{{ $curriculum['ai_prompt'] }}</pre>
+                            </div>
+                        </details>
                         @endif
                         @if(!$isCompleted || $myTaskStatus === 'rejected')
                         <div class="challenge-submission-guide">
-                            <h4>Checklist trước khi nộp</h4>
+                            <h4>Minh chứng cần nộp</h4>
                             @foreach($curriculum['verification_checklist'] ?? [] as $index => $check)
                             <label><input type="checkbox" value="{{ $index }}" wire:model="structuredSubmission.{{ $task->id }}.checklist.{{ $index }}"> <span>{{ $check }}</span></label>
                             @endforeach
-                            <h4>Ba câu bắt buộc để chứng minh bạn đã kiểm chứng</h4>
-                            <label>Bạn đã yêu cầu AI làm gì?<textarea wire:model="structuredSubmission.{{ $task->id }}.reflection_request" rows="2" placeholder="Ví dụ: Tôi yêu cầu AI lọc Duct ở Level 2..." class="input"></textarea></label>
-                            <label>AI đã sửa/tạo file nào?<textarea wire:model="structuredSubmission.{{ $task->id }}.reflection_files" rows="2" placeholder="Ghi tên file và thay đổi chính..." class="input"></textarea></label>
-                            <label>Bạn kiểm chứng kết quả thế nào?<textarea wire:model="structuredSubmission.{{ $task->id }}.reflection_verification" rows="2" placeholder="Ví dụ: đối chiếu Schedule và chạy lại trên bản sao..." class="input"></textarea></label>
+                            <p class="challenge-evidence-hint">Bạn nộp ảnh hoặc dán link ảnh ở ô nộp bài bên dưới. Ảnh phải cho thấy kết quả thật trong phần mềm, không chỉ là code.</p>
                         </div>
+                        @endif
+                        @if(!empty($curriculum['share_to_feed']))
+                        <p class="challenge-share-note"><strong>Chia sẻ lên Bảng tin:</strong> {{ $curriculum['share_to_feed'] }}</p>
                         @endif
                         <div class="challenge-rubric-preview">
                             <strong>Đạt từ {{ $curriculum['pass_score'] ?? 70 }}/100</strong>
@@ -626,7 +645,7 @@
                             ▣ Nộp bài{!! $evidenceHtml ? ': ' . $evidenceHtml : '' !!}
                         </div>
                         <p style="font-size:0.7rem; color:#5C5C66; margin-bottom:0.5rem;">
-                            Bằng chứng có thể là: screenshot, link Google Drive/Imgur, link website, hoặc mô tả ngắn. Mỗi bài tập có yêu cầu khác nhau — đọc kỹ đề bài.
+                            Hãy dán link ảnh hoặc mô tả ngắn cho ảnh minh chứng. Ảnh phải là kết quả thật trong phần mềm, không chỉ là code.
                         </p>
                         <textarea wire:model="taskEvidence.{{ $task->id }}" class="input" rows="3"
                             placeholder="Mô tả những gì bạn đã làm, paste link bằng chứng nếu có..."

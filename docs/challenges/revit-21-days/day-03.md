@@ -1,15 +1,41 @@
 # Ngày 3 — Chạy preflight môi trường Revit
 
-**Hình thức:** Video · 45 phút · **Đầu ra:** `environment-report.json` hoặc ảnh PASS.
+**Hình thức:** Video ngắn · **Thời lượng:** 45 phút
 
-## SOP
+## Hôm nay làm gì?
+
+Kiểm tra môi trường trước khi debug để phân biệt lỗi máy, lỗi version và lỗi code.
+
+## Kết quả cần đạt
+
+Môi trường build có thể kiểm tra bằng một lệnh rõ ràng
+
+## AI làm gì?
+
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+
+## Học viên kiểm tra gì?
+
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
 
 1. Mở PowerShell tại root workspace.
 2. Dán prompt yêu cầu AI đọc script preflight trước khi chạy.
-3. Cho chạy kiểm tra Windows, Revit, .NET SDK, Visual Studio/Build Tools, Git và Bộ Kit.
-4. Lưu output; nếu FAIL, gửi đúng đoạn ERROR đến summary cho AI.
-5. Kiểm tra lại sau sửa và ghi lỗi chưa sửa, không giấu FAIL.
+3. Cho AI chạy lệnh read-only; lưu output vào environment-report.json.
+4. Kiểm tra Revit version và .NET target có khớp Bộ Kit.
 
-## Kiểm chứng và bài nộp
+## Minh chứng cần nộp
 
-Report phải có từng thành phần PASS/FAIL, version Revit và danh sách lỗi đã xử lý. Nộp report/ảnh, log sửa lỗi và reflection. Không đạt nếu chỉ nói “máy đã cài” nhưng không có output kiểm tra.
+- Ảnh màn hình kết quả của ngày 3.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Chỉ chụp màn hình, không lưu report.
+- Dùng sai terminal hoặc chạy script từ thư mục con.

@@ -1,11 +1,41 @@
 # Ngày 8 — Review và chốt capstone với mentor
 
-**Hình thức:** Livestream 2 · 90–120 phút · **Đầu ra:** Tool Brief sau review và prompt riêng.
+**Hình thức:** Livestream · **Thời lượng:** 120 phút
 
-## SOP
+## Hôm nay làm gì?
 
-Trình bày 3 phút theo format vấn đề → input → thao tác → output → giới hạn. Mentor loại bỏ phạm vi quá lớn, chốt một nhánh và success metric. Sau live, cập nhật `TOOL_BRIEF.md`, ghi feedback critical/important/nice-to-have và chỉ yêu cầu AI lập kế hoạch.
+Mentor loại bỏ đề tài quá lớn, chốt nhánh kỹ thuật và viết prompt riêng cho từng học viên.
 
-## Bài nộp / đạt
+## Kết quả cần đạt
 
-Nộp Tool Brief sau chỉnh sửa, prompt riêng và video/trình bày. Đạt khi mentor xác nhận đề tài đủ nhỏ, có output đo được và model test an toàn. Chưa đạt nếu bắt đầu code trước khi chốt.
+Đề tài được mentor xác nhận và sẵn sàng xây MVP
+
+## AI làm gì?
+
+- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
+- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+
+## Học viên kiểm tra gì?
+
+- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
+- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+
+## SOP duy nhất
+
+1. Chuẩn bị demo workflow hiện tại và một model mẫu không mật.
+2. Trình bày theo format: vấn đề → input → thao tác → output → giới hạn.
+3. Ghi lại các câu hỏi mentor và cập nhật Tool Brief ngay sau livestream.
+4. Dán prompt capstone mới vào AI nhưng chỉ yêu cầu lập kế hoạch.
+
+## Minh chứng cần nộp
+
+- Ảnh màn hình kết quả của ngày 8.
+
+## Điều kiện Đạt
+
+Đạt từ 70/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.
+
+## Lỗi thường gặp
+
+- Không có output đo được.
+- Đổi đề tài sau livestream mà không cập nhật brief.
