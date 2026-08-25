@@ -26,13 +26,14 @@ class CommunityGuidePage extends Component
             'Sự kiện' => ['route' => 'events', 'icon' => 'calendar', 'tone' => 'teal'],
             'Bảng xếp hạng' => ['route' => 'leaderboard', 'icon' => 'chart', 'tone' => 'blue'],
             'Marketplace' => ['route' => 'marketplace', 'icon' => 'shopping-cart', 'tone' => 'orange'],
-            'Gói & Đơn hàng' => ['route' => 'orders', 'icon' => 'receipt', 'tone' => 'blue'],
+            'Gói và đơn hàng' => ['route' => 'orders', 'icon' => 'receipt', 'tone' => 'blue'],
             'Affiliate' => ['route' => 'affiliate', 'icon' => 'user-plus', 'tone' => 'teal'],
             'CV của tôi' => ['route' => 'engineer.cv', 'icon' => 'cv', 'tone' => 'blue'],
             'Yêu cầu tuyển dụng' => ['route' => 'engineer.recruitment-requests', 'icon' => 'briefcase', 'tone' => 'orange'],
-            'Góp ý & Khiếu nại' => ['route' => 'feedbacks', 'icon' => 'chat', 'tone' => 'teal'],
+            'Góp ý và Khiếu nại' => ['route' => 'feedbacks', 'icon' => 'chat', 'tone' => 'teal'],
             'Tìm kiếm, thông báo và hồ sơ' => ['route' => 'search', 'icon' => 'search', 'tone' => 'blue'],
         ];
+
         if (! brand()->has_cv || ! auth()->user()->isEngineer()) {
             unset($links['CV của tôi'], $links['Yêu cầu tuyển dụng']);
         }

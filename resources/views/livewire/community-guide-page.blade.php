@@ -24,8 +24,9 @@
         .community-guide-number { color:#8AA4B4; font-size:.68rem; font-weight:850; }
         .community-guide-card h3 { margin:.8rem 0 .35rem; color:#123B59; font-size:.91rem; font-weight:800; line-height:1.25; }
         .community-guide-card-details { display:grid; gap:.32rem; margin:0; }
-        .community-guide-card-details p { margin:0; color:#5A7182; font-size:.76rem; line-height:1.55; }
-        .community-guide-card-details strong { color:#123B59; font-weight:800; }
+        .community-guide-card-details p { margin:0; color:#47657A; font-size:.76rem; line-height:1.6; overflow-wrap:break-word; word-break:normal; }
+        .community-guide-card-details .guide-detail-label { color:#123B59; font-weight:800; }
+        .community-guide-card-details .guide-detail-value { color:#47657A; font-weight:500; }
         .community-guide-card-footer { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-top:auto; padding-top:.75rem; color:var(--tone); font-size:.7rem; font-weight:800; }
         .community-guide-arrow { display:grid; place-items:center; width:25px; height:25px; border-radius:50%; background:color-mix(in srgb,var(--tone) 10%,white); transition:transform .2s ease; }
         .community-guide-card:hover .community-guide-arrow { transform:translateX(3px); }
@@ -68,7 +69,7 @@
                 <div class="community-guide-card-details">
                     @if(count($section['details']) > 0)
                         @foreach($section['details'] as $detail)
-                            <p><strong>{{ $detail['label'] }}</strong>@if($detail['value'] !== ''): {{ $detail['value'] }}@endif</p>
+                            <p><span class="guide-detail-label">{{ $detail['label'] }}</span>@if($detail['value'] !== ''): <span class="guide-detail-value">{{ $detail['value'] }}</span>@endif</p>
                         @endforeach
                     @elseif($section['summary'] !== '')
                         <p>{{ $section['summary'] }}</p>

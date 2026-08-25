@@ -31,12 +31,21 @@ class CommunityGuidanceTest extends TestCase
             ->assertSee('Mẹo')
             ->getContent();
 
-        $this->assertSame(15, substr_count($html, '<strong>Mục đích</strong>'));
+        $this->assertSame(15, substr_count($html, 'class="guide-detail-label">Mục đích</span>'));
+        $this->assertStringNotContainsString('Ã', $html);
+        $this->assertStringNotContainsString('á»', $html);
+        $this->assertStringNotContainsString('Ä‘', $html);
 
-        $this->get(route('community.rules', ['community' => $brand->slug]))
+        $rulesHtml = $this->get(route('community.rules', ['community' => $brand->slug]))
             ->assertOk()
             ->assertSee('Nội quy cộng đồng')
             ->assertSee('Tôn trọng người khác');
+
+        $rulesHtml = $rulesHtml->getContent();
+        $this->assertSame(10, substr_count($rulesHtml, 'class="rule-number"'));
+        $this->assertStringNotContainsString('Ã', $rulesHtml);
+        $this->assertStringNotContainsString('á»', $rulesHtml);
+        $this->assertStringNotContainsString('Ä‘', $rulesHtml);
     }
 
     public function test_every_guide_section_keeps_its_details_when_a_legacy_invalid_byte_is_present(): void

@@ -19,6 +19,9 @@
         .rule-number { position:relative; z-index:1; display:grid; place-items:center; width:50px; height:50px; border:5px solid #F7FBFE; border-radius:15px; background:#EAF4FC; color:#1F77BE; font-size:.75rem; font-weight:850; box-shadow:0 0 0 1px #B9D8E8; }
         .rule-card h2 { margin:.2rem 0 .35rem; color:#123B59; font-size:.96rem; font-weight:800; line-height:1.3; }
         .rule-card p { margin:0; color:#47657A; font-size:.83rem; line-height:1.7; white-space:pre-line; }
+        .rules-note { margin-top:1rem; padding:1rem 1.1rem; border:1px solid #B9D8E8; border-radius:15px; background:#F7FCFF; }
+        .rules-note strong { display:block; color:#123B59; font-size:.88rem; }
+        .rules-note p { margin:.3rem 0 0; color:#47657A; font-size:.8rem; line-height:1.7; }
         .rules-contact { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-top:1rem; padding:1rem 1.1rem; border:1px solid #B9D8E8; border-radius:15px; background:#F0F8FD; }
         .rules-contact strong { display:block; color:#123B59; font-size:.88rem; }
         .rules-contact span { display:block; margin-top:.2rem; color:#61798A; font-size:.76rem; }
@@ -32,7 +35,7 @@
     <section class="rules-hero">
         <div class="rules-kicker"><x-icon name="shield" size="17" color="#DDF1FC" /> {{ brand()->name }}</div>
         <h1>Nội quy cộng đồng</h1>
-        <p>Đây không phải là bộ luật cứng nhắc. Đây là những nguyên tắc chung để mọi người có thể học tập, chia sẻ và phát triển trong một không gian tử tế.</p>
+        <p>Đây là những nguyên tắc chung để mọi người có thể học tập, chia sẻ và phát triển trong một không gian tử tế. Nội quy là kim chỉ nam, không phải những quy định cứng nhắc.</p>
         <div class="rules-hero-meta"><span>{{ max(count($sections) - 2, 0) }} nguyên tắc chính</span><span>Chào đón · Tôn trọng · Cùng phát triển</span></div>
     </section>
 
@@ -43,8 +46,13 @@
         </section>
     @endif
 
+    @php
+        $rules = array_slice($sections, 1, -1);
+        $closingSection = $sections[count($sections) - 1] ?? null;
+    @endphp
+
     <div class="rules-flow">
-        @foreach(array_slice($sections, 1) as $index => $section)
+        @foreach($rules as $index => $section)
             <article class="rule-card" style="--index:{{ $index }}">
                 <div class="rule-number">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</div>
                 @php($ruleTitle = preg_replace('/^\d+\.\s*/u', '', $section['title']))
@@ -53,10 +61,17 @@
         @endforeach
     </div>
 
+    @if($closingSection)
+        <section class="rules-note">
+            <strong>{{ $closingSection['title'] }}</strong>
+            <p>{{ $closingSection['body'] }}</p>
+        </section>
+    @endif
+
     <div class="rules-contact">
         <div><strong>Gặp vấn đề hoặc cần báo cáo?</strong><span>Mô tả cụ thể để quản trị viên có thể hỗ trợ bạn nhanh và công bằng.</span></div>
         <a href="{{ community_route('feedbacks.create') }}"><x-icon name="chat" size="16" color="#fff" /> Gửi góp ý</a>
     </div>
 
-    <a href="{{ community_route('feed') }}" class="rules-back">← Về bảng tin</a>
+    <a href="{{ community_route('feed') }}" class="rules-back">← Về Bảng tin</a>
 </div>
