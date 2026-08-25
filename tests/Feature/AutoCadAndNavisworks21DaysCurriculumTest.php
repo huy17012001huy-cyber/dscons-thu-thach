@@ -125,6 +125,9 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
                 ->test(\App\Livewire\ChallengeDetail::class, ['slug' => $slug])
                 ->assertSee($appName)
                 ->assertSee('Prompt copy vào AI Agent')
+                ->assertSee('SOP duy nhất — làm theo từng bước')
+                ->assertDontSee('SOP — Hướng dẫn')
+                ->assertDontSee('Bạn đã yêu cầu AI làm gì?')
                 ->assertSee('Minh chứng cần nộp')
                 ->assertSee('Đạt từ 70/100');
         }
