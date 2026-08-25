@@ -121,15 +121,16 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
             '21-ngay-chinh-phuc-tool-autocad-bang-ai-agent' => 'AutoCAD',
             '21-ngay-chinh-phuc-tool-navisworks-bang-ai-agent' => 'Navisworks',
         ] as $slug => $appName) {
-            Livewire::actingAs($admin)
+            $component = Livewire::actingAs($admin)
                 ->test(\App\Livewire\ChallengeDetail::class, ['slug' => $slug])
                 ->assertSee($appName)
                 ->assertSee('Prompt copy vào AI Agent')
-                ->assertSee('SOP duy nhất — làm theo từng bước')
-                ->assertDontSee('SOP — Hướng dẫn')
+                ->assertSee('SOP thực hiện')
                 ->assertDontSee('Bạn đã yêu cầu AI làm gì?')
-                ->assertSee('Minh chứng cần nộp')
+                ->assertSee('Checklist học viên tự kiểm tra')
                 ->assertSee('Đạt từ 70/100');
+
+            $this->assertSame(21, substr_count($component->html(), 'SOP — Hướng dẫn'));
         }
     }
 

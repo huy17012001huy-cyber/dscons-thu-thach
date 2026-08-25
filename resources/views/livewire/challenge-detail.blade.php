@@ -1,15 +1,24 @@
 <div class="challenge-detail-page">
 <style>
-    .challenge-curriculum { margin: 0 0 1rem; padding: 1rem; border: 1px solid #B8D7E6; border-radius: 12px; background: #F7FBFE; color: #123B59; }
-    .challenge-curriculum-head { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
-    .challenge-curriculum-head h3 { margin:.15rem 0 0; color:#125A96; font-size:1rem; font-weight:800; }
+    .challenge-curriculum { margin: 0 0 1rem; padding: 1rem 1.05rem 1.1rem; border: 1px solid #C9DEE8; border-left: 3px solid #F39402; border-radius: 12px; background: #F1F7FA; color: #123B59; }
+    .challenge-curriculum-head { display:block; margin-bottom:.8rem; padding-bottom:.7rem; border-bottom:1px solid #D7E5EE; }
+    .challenge-curriculum-head h3 { margin:.28rem 0 0; color:#125A96; font-size:1rem; font-weight:800; }
     .challenge-eyebrow { color:#61798A; font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-    .challenge-track { flex:0 0 auto; padding:.22rem .5rem; border-radius:999px; background:#E1F4F7; color:#125A96; font-size:.65rem; font-weight:800; }
+    .challenge-track { display:inline-flex; margin-top:.45rem; padding:.22rem .5rem; border-radius:999px; background:#E1F4F7; color:#125A96; font-size:.65rem; font-weight:800; }
     .challenge-curriculum-why { margin:.5rem 0 .8rem; color:#456477; font-size:.78rem; line-height:1.55; }
-    .challenge-curriculum-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
-    .challenge-curriculum h4 { margin:.55rem 0 .3rem; color:#125A96; font-size:.75rem; font-weight:800; }
+    .challenge-curriculum-grid { display:block; }
+    .challenge-curriculum h4 { margin:.8rem 0 .3rem; color:#125A96; font-size:.75rem; font-weight:800; }
     .challenge-curriculum p, .challenge-curriculum li { color:#456477; font-size:.76rem; line-height:1.55; }
     .challenge-curriculum ul, .challenge-curriculum ol { margin:.3rem 0 0; padding-left:1.15rem; }
+    .challenge-sop-kicker { display:flex; align-items:center; gap:.4rem; color:#18794E; font-size:.72rem; font-weight:850; }
+    .challenge-sop-section { margin-top:.75rem; }
+    .challenge-sop-section:first-of-type { margin-top:0; }
+    .challenge-sop-section p { margin:.15rem 0 0; }
+    .challenge-sop-section p strong { color:#125A96; }
+    .challenge-sop-section ul, .challenge-sop-section ol { margin-top:.2rem; }
+    .challenge-sop-steps { padding-top:.55rem; border-top:1px solid #D7E5EE; }
+    .challenge-sop-steps ol { padding-left:1.35rem; }
+    .challenge-sop-steps li { padding-left:.15rem; margin:.18rem 0; }
     .challenge-curriculum-details { margin-top:.8rem; padding-top:.65rem; border-top:1px solid #D7E5EE; }
     .challenge-curriculum-details summary { color:#125A96; cursor:pointer; font-size:.76rem; font-weight:800; }
     .challenge-prompt-box { margin-top:.8rem; overflow:hidden; border:1px solid #D7E5EE; border-radius:8px; background:#123B59; }
@@ -29,7 +38,7 @@
     .challenge-rubric-preview strong { color:#125A96; }
     .challenge-rubric-preview span { padding:.2rem .4rem; border:1px solid #B8D7E6; border-radius:5px; background:#fff; }
     .challenge-rubric-preview small { flex-basis:100%; color:#61798A; line-height:1.45; }
-    @media (max-width: 640px) { .challenge-curriculum-grid { grid-template-columns:1fr; gap:.25rem; } .challenge-curriculum { padding:.75rem; } }
+    @media (max-width: 640px) { .challenge-curriculum { padding:.8rem .75rem .9rem; } }
 
     .challenge-detail-page { width: min(100%, 960px); margin: 0 auto; }
     .challenge-detail-page > .card { border-radius: 18px; border-color: #D7E5EA; box-shadow: 0 2px 10px rgba(18,59,89,.045); }
@@ -493,52 +502,58 @@
                     @if($curriculum)
                     <section class="challenge-curriculum" aria-labelledby="curriculum-{{ $task->id }}">
                         <div class="challenge-curriculum-head">
-                            <div>
-                                <span class="challenge-eyebrow">{{ $modalityLabel }} · {{ $curriculum['estimated_minutes'] ?? 0 }} phút</span>
-                                <h3 id="curriculum-{{ $task->id }}">Lộ trình học ngày {{ $task->day_number }}</h3>
-                            </div>
+                            <div class="challenge-sop-kicker">▤ SOP — Hướng dẫn</div>
+                            <span class="challenge-eyebrow">{{ $modalityLabel }} · {{ $curriculum['estimated_minutes'] ?? 0 }} phút</span>
+                            <h3 id="curriculum-{{ $task->id }}">{{ $task->title }}</h3>
                             <span class="challenge-track">{{ $trackLabel }}</span>
                         </div>
-                        @if(!empty($curriculum['why']))
-                        <p class="challenge-curriculum-why"><strong>Vì sao kỹ sư MEP cần?</strong> {{ $curriculum['why'] }}</p>
-                        @endif
-                        <div class="challenge-curriculum-grid">
-                            <div>
-                                <h4>Hôm nay cần đạt</h4>
-                                <p><strong>{{ $curriculum['required_outcome'] ?? '' }}</strong></p>
-                                @if(!empty($curriculum['learning_objectives']))
-                                <ul>
-                                    @foreach($curriculum['learning_objectives'] as $objective)
-                                    <li>{{ $objective }}</li>
-                                    @endforeach
-                                </ul>
-                                @endif
-                            </div>
-                            <div>
-                                <h4>AI thực hiện</h4>
-                                <ul>
-                                    @foreach($curriculum['ai_actions'] ?? [] as $action)
-                                    <li>{{ $action }}</li>
-                                    @endforeach
-                                </ul>
-                                <h4>Học viên thực hiện</h4>
-                                <ul>
-                                    @foreach($curriculum['student_actions'] ?? [] as $action)
-                                    <li>{{ $action }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
+
+                        <div class="challenge-sop-section">
+                            <h4>Hôm nay học gì?</h4>
+                            <p>{{ $task->description }}</p>
                         </div>
-                        <details class="challenge-curriculum-details" open>
-                            <summary>SOP duy nhất — làm theo từng bước</summary>
+
+                        <div class="challenge-sop-section">
+                            <h4>Kết quả bắt buộc</h4>
+                            <p><strong>{{ $curriculum['required_outcome'] ?? '' }}</strong></p>
+                            @if(!empty($curriculum['learning_objectives']))
+                            <ul>
+                                @foreach($curriculum['learning_objectives'] as $objective)
+                                <li>{{ $objective }}</li>
+                                @endforeach
+                            </ul>
+                            @endif
+                        </div>
+
+                        <div class="challenge-sop-section">
+                            <h4>AI thực hiện</h4>
+                            <ul>
+                                @foreach($curriculum['ai_actions'] ?? [] as $action)
+                                <li>{{ $action }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+
+                        <div class="challenge-sop-section">
+                            <h4>Học viên kiểm tra</h4>
+                            <ul>
+                                @foreach($curriculum['student_actions'] ?? [] as $action)
+                                <li>{{ $action }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+
+                        <div class="challenge-sop-section challenge-sop-steps">
+                            <h4>SOP thực hiện</h4>
                             <ol>
                                 @foreach($curriculum['sop_steps'] ?? [] as $step)
                                 <li>{{ $step }}</li>
                                 @endforeach
                             </ol>
-                        </details>
+                        </div>
+
                         @if(!empty($curriculum['ai_prompt']))
-                        <details class="challenge-curriculum-details">
+                        <details class="challenge-curriculum-details" open>
                             <summary>Prompt copy vào AI Agent</summary>
                             <div class="challenge-prompt-box" x-data="{ copied: false }">
                                 <div class="challenge-prompt-title"><strong>Prompt của ngày {{ $task->day_number }}</strong><button type="button" @click="navigator.clipboard.writeText($refs.prompt.innerText); copied = true; setTimeout(() => copied = false, 1600)" aria-label="Sao chép prompt"><span x-show="!copied">Sao chép</span><span x-show="copied" x-cloak>Đã sao chép</span></button></div>
@@ -548,11 +563,12 @@
                         @endif
                         @if(!$isCompleted || $myTaskStatus === 'rejected')
                         <div class="challenge-submission-guide">
-                            <h4>Minh chứng cần nộp</h4>
+                            <h4>Checklist học viên tự kiểm tra</h4>
                             @foreach($curriculum['verification_checklist'] ?? [] as $index => $check)
                             <label><input type="checkbox" value="{{ $index }}" wire:model="structuredSubmission.{{ $task->id }}.checklist.{{ $index }}"> <span>{{ $check }}</span></label>
                             @endforeach
-                            <p class="challenge-evidence-hint">Bạn nộp ảnh hoặc dán link ảnh ở ô nộp bài bên dưới. Ảnh phải cho thấy kết quả thật trong phần mềm, không chỉ là code.</p>
+                            <h4>Bài tập và bằng chứng cần nộp</h4>
+                            <p class="challenge-evidence-hint">Nộp ảnh hoặc dán link ảnh ở ô bên dưới. Ảnh phải cho thấy kết quả thật trong phần mềm, không chỉ là code.</p>
                         </div>
                         @endif
                         @if(!empty($curriculum['share_to_feed']))

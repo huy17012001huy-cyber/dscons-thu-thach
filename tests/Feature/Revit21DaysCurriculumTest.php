@@ -66,13 +66,14 @@ class Revit21DaysCurriculumTest extends TestCase
         app(Revit21DaysSeeder::class)->run();
         $admin = \App\Models\User::query()->where('is_admin', true)->firstOrFail();
 
-        Livewire::actingAs($admin)
+        $component = Livewire::actingAs($admin)
             ->test(\App\Livewire\ChallengeDetail::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent'])
             ->assertSee('Prompt copy vào AI Agent')
-            ->assertSee('SOP duy nhất — làm theo từng bước')
-            ->assertDontSee('SOP — Hướng dẫn')
+            ->assertSee('SOP thực hiện')
             ->assertDontSee('Bạn đã yêu cầu AI làm gì?')
-            ->assertSee('Minh chứng cần nộp')
+            ->assertSee('Checklist học viên tự kiểm tra')
             ->assertSee('Đạt từ 70/100');
+
+        $this->assertSame(21, substr_count($component->html(), 'SOP — Hướng dẫn'));
     }
 }
