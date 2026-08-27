@@ -2,21 +2,18 @@
 
 namespace App\Livewire;
 
-use App\Models\Bookmark;
 use App\Models\Comment;
-use App\Models\Like;
 use App\Models\Post;
 use App\Models\Report;
 use App\Models\User;
 use App\Notifications\GenericNotification;
-use App\Services\XpService;
 use App\Support\PostContentRenderer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Modules\Community\Application\PostInteractionService;
 
 class PostCard extends Component
 {
@@ -38,10 +35,16 @@ class PostCard extends Component
 
     public int $likesCount = 0;
 
+    public bool $editing = false;
+
+    public string $editContent = '';
+
+    public ?int $editingCommentId = null;
+
+    public string $editCommentContent = '';
+
     public function mount(Post $post): void
     {
-        // Use pre-fetched attributes when available to avoid N+1 queries.
-        // We ensure relationship counts and existence flags are set.
         $this->post = $post;
         $this->likesCount = (int) ($post->likes_count ?? $post->likes()->count());
 
@@ -58,42 +61,9 @@ class PostCard extends Component
             return;
         }
 
-        $actor = $this->currentUser();
-
-        DB::transaction(function () use ($actor): void {
-            $existing = Like::withTrashed()
-                ->where('likeable_type', Post::class)
-                ->where('likeable_id', $this->post->id)
-                ->where('user_id', $actor->id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($existing && ! $existing->trashed()) {
-                $existing->delete(); // soft delete
-                $this->likesCount--;
-                $this->isLiked = false;
-            } elseif ($existing && $existing->trashed()) {
-                $existing->restore(); // unlike rồi like lại → không award XP
-                $this->likesCount++;
-                $this->isLiked = true;
-            } else {
-                Like::create([
-                    'likeable_type' => Post::class,
-                    'likeable_id' => $this->post->id,
-                    'user_id' => $actor->id,
-                ]);
-                $this->likesCount++;
-                $this->isLiked = true;
-
-                // Award EXP to post OWNER + notify (only first like, not self-like)
-                $owner = $this->post->user;
-                abort_unless($owner instanceof User, 500);
-                if ($owner->id !== $actor->id) {
-                    app(XpService::class)->award($owner, 'post_liked', 1.0, $actor->name.' thích bài viết', $this->post);
-                    $owner->notify(new GenericNotification('♥', $actor->name.' thích bài viết của bạn', null, $this->post->id));
-                }
-            }
-        });
+        $result = app(PostInteractionService::class)->togglePostLike($this->post, $this->currentUser());
+        $this->isLiked = $result->isActive;
+        $this->likesCount = $result->count;
     }
 
     public function toggleBookmark(): void
@@ -102,29 +72,9 @@ class PostCard extends Component
             return;
         }
 
-        $actor = $this->currentUser();
-
-        DB::transaction(function () use ($actor): void {
-            $existing = Bookmark::where('user_id', $actor->id)
-                ->where('post_id', $this->post->id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($existing) {
-                $existing->delete();
-                $this->isBookmarked = false;
-            } else {
-                $bookmark = Bookmark::firstOrCreate(['user_id' => $actor->id, 'post_id' => $this->post->id]);
-                $this->isBookmarked = true;
-
-                // Award EXP to post owner (only if new bookmark, not duplicate)
-                $owner = $this->post->user;
-                abort_unless($owner instanceof User, 500);
-                if ($bookmark->wasRecentlyCreated && $owner->id !== $actor->id) {
-                    app(XpService::class)->award($owner, 'post_bookmarked', 1.0, $actor->name.' lưu bài viết', $this->post);
-                }
-            }
-        });
+        $this->isBookmarked = app(PostInteractionService::class)
+            ->toggleBookmark($this->post, $this->currentUser())
+            ->isActive;
     }
 
     public function toggleCommentLike(int $commentId): void
@@ -132,35 +82,8 @@ class PostCard extends Component
         if (! Auth::check()) {
             return;
         }
-        $comment = Comment::findOrFail($commentId);
-        $actor = $this->currentUser();
 
-        DB::transaction(function () use ($comment, $commentId, $actor): void {
-            $existing = Like::withTrashed()
-                ->where('likeable_type', Comment::class)
-                ->where('likeable_id', $commentId)
-                ->where('user_id', $actor->id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($existing && ! $existing->trashed()) {
-                $existing->delete(); // soft delete
-            } elseif ($existing && $existing->trashed()) {
-                $existing->restore(); // unlike rồi like lại → không award XP
-            } else {
-                Like::create([
-                    'likeable_type' => Comment::class,
-                    'likeable_id' => $commentId,
-                    'user_id' => $actor->id,
-                ]);
-                // Award XP chỉ lần đầu, và không award nếu self-like
-                $commentOwner = $comment->user;
-                abort_unless($commentOwner instanceof User, 500);
-                if ($actor->id !== $comment->user_id) {
-                    app(XpService::class)->award($commentOwner, 'comment_liked', 1.0, $actor->name.' thích bình luận', $comment);
-                }
-            }
-        });
+        app(PostInteractionService::class)->toggleCommentLike($this->post, $commentId, $this->currentUser());
     }
 
     public function addComment(): void
@@ -170,56 +93,16 @@ class PostCard extends Component
         }
 
         $this->validate(['newComment' => 'required|max:2000']);
-
-        $actor = $this->currentUser();
-
-        // Anti-spam: max 20 comments per hour
-        $recentComments = Comment::where('user_id', $actor->id)
-            ->where('created_at', '>=', now()->subHour())->count();
-        if ($recentComments >= 20) {
+        $result = app(PostInteractionService::class)->addComment(
+            $this->post,
+            $this->currentUser(),
+            $this->newComment,
+            $this->replyToId,
+        );
+        if ($result->isRateLimited) {
             $this->addError('newComment', 'Bạn đã bình luận quá nhiều. Vui lòng đợi.');
 
             return;
-        }
-
-        $comment = $this->post->allComments()->create([
-            'user_id' => $actor->id,
-            'parent_id' => $this->replyToId,
-            'content' => $this->newComment,
-        ]);
-
-        // Atomic rune claim: only one user can win
-        $wonRune = false;
-        if ($this->post->isRuneActive()) {
-            $affected = Post::where('id', $this->post->id)
-                ->whereNull('rune_first_comment_user_id')
-                ->update(['rune_first_comment_user_id' => $actor->id]);
-            $wonRune = $affected > 0;
-            if ($wonRune) {
-                $comment->update(['is_rune_winner' => true]);
-            }
-        }
-
-        // Commenter gets +1 base EXP (or 2x if rune winner)
-        if ($wonRune) {
-            app(XpService::class)->award($actor, 'comment', 2.0, 'Phù văn 2x EXP', $comment);
-        } else {
-            app(XpService::class)->award($actor, 'comment', 1.0, null, $comment);
-        }
-
-        // Post OWNER gets +3 EXP only for FIRST comment from each unique user
-        $owner = $this->post->user;
-        abort_unless($owner instanceof User, 500);
-        if ($owner->id !== $actor->id) {
-            $alreadyCommented = $this->post->allComments()
-                ->where('user_id', $actor->id)
-                ->where('id', '!=', $comment->id)
-                ->exists();
-
-            if (! $alreadyCommented) {
-                app(XpService::class)->award($owner, 'post_commented', 1.0, $actor->name.' bình luận bài viết', $this->post);
-            }
-            $owner->notify(new GenericNotification('💬', $actor->name.' bình luận bài viết của bạn', null, $this->post->id));
         }
 
         $this->newComment = '';
@@ -246,17 +129,15 @@ class PostCard extends Component
         if (! Auth::check()) {
             return;
         }
+
         $actor = $this->currentUser();
         if ($actor->id !== $this->post->user_id && ! $actor->is_admin) {
             return;
         }
+
         $this->post->delete();
-        $this->dispatch('post-created'); // refresh feed
+        $this->dispatch('post-created');
     }
-
-    public bool $editing = false;
-
-    public string $editContent = '';
 
     public function startEdit(): void
     {
@@ -264,6 +145,7 @@ class PostCard extends Component
         if ($actor->id !== $this->post->user_id) {
             return;
         }
+
         $this->editing = true;
         $this->editContent = $this->post->content;
     }
@@ -274,6 +156,7 @@ class PostCard extends Component
         if ($actor->id !== $this->post->user_id) {
             return;
         }
+
         $this->validate(['editContent' => 'required|min:5|max:50000']);
         $this->post->update(['content' => $this->editContent]);
         $this->editing = false;
@@ -291,20 +174,15 @@ class PostCard extends Component
         if (! Auth::check()) {
             return;
         }
+
         $user = $this->currentUser();
-        if ($user->level < 30) {
-            return;
-        }
-        if ($this->post->is_cot || $this->post->cot_by) {
+        if ($user->level < 30 || $this->post->is_cot || $this->post->cot_by) {
             return;
         }
 
         $this->post->update(['cot_by' => $user->id]);
-
-        // Notify post owner
         $owner = $this->post->user;
-        abort_unless($owner instanceof User, 500);
-        if ($owner->id !== $user->id) {
+        if ($owner instanceof User && $owner->id !== $user->id) {
             $owner->notify(new GenericNotification('★', $user->name.' đề cử bài viết của bạn cho CỐT', null, $this->post->id));
         }
 
@@ -313,61 +191,25 @@ class PostCard extends Component
 
     public function reportPost(): void
     {
-        if (! Auth::check()) {
-            return;
-        }
-        $actor = $this->currentUser();
-        if ($actor->id === $this->post->user_id) {
+        if (! Auth::check() || $this->currentUser()->id === $this->post->user_id) {
             return;
         }
 
-        $throttleKey = 'report:'.$actor->id;
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
-            $this->dispatch('toast', message: 'Bạn báo cáo quá nhiều. Vui lòng thử lại sau '.round($seconds / 60).' phút.', type: 'error');
-
-            return;
-        }
-
-        $exists = Report::where('user_id', $actor->id)
-            ->where('reportable_type', Post::class)
-            ->where('reportable_id', $this->post->id)
-            ->exists();
-
-        if ($exists) {
-            $this->dispatch('toast', message: 'Bạn đã báo cáo bài viết này rồi', type: 'error');
-
-            return;
-        }
-
-        Report::create([
-            'user_id' => $actor->id,
-            'reportable_type' => Post::class,
-            'reportable_id' => $this->post->id,
-            'reason' => 'Spam / Vi phạm',
-        ]);
-
-        RateLimiter::hit($throttleKey, 3600);
-
-        $this->dispatch('toast', message: 'Đã báo cáo bài viết cho Admin', type: 'success');
+        $this->createReport(Post::class, $this->post->id, 'bài viết');
     }
-
-    // ─── Comment actions ──────────────────────────────────────────
-    public ?int $editingCommentId = null;
-
-    public string $editCommentContent = '';
 
     public function startEditComment(int $commentId): void
     {
         if (! Auth::check()) {
             return;
         }
-        $actor = $this->currentUser();
-        $comment = Comment::findOrFail($commentId);
-        if ($actor->id !== $comment->user_id) {
+
+        $comment = $this->currentComment($commentId);
+        if ($this->currentUser()->id !== $comment->user_id) {
             return;
         }
-        $this->editingCommentId = $commentId;
+
+        $this->editingCommentId = $comment->id;
         $this->editCommentContent = $comment->content;
     }
 
@@ -376,15 +218,15 @@ class PostCard extends Component
         if (! Auth::check() || ! $this->editingCommentId) {
             return;
         }
-        $actor = $this->currentUser();
-        $comment = Comment::findOrFail($this->editingCommentId);
-        if ($actor->id !== $comment->user_id) {
+
+        $comment = $this->currentComment($this->editingCommentId);
+        if ($this->currentUser()->id !== $comment->user_id) {
             return;
         }
+
         $this->validate(['editCommentContent' => 'required|min:1|max:2000']);
         $comment->update(['content' => $this->editCommentContent]);
-        $this->editingCommentId = null;
-        $this->editCommentContent = '';
+        $this->cancelEditComment();
         $this->post->refresh();
     }
 
@@ -399,11 +241,13 @@ class PostCard extends Component
         if (! Auth::check()) {
             return;
         }
+
+        $comment = $this->currentComment($commentId);
         $actor = $this->currentUser();
-        $comment = Comment::findOrFail($commentId);
         if ($actor->id !== $comment->user_id && ! $actor->is_admin) {
             return;
         }
+
         $comment->delete();
         $this->post->refresh();
     }
@@ -413,41 +257,13 @@ class PostCard extends Component
         if (! Auth::check()) {
             return;
         }
-        $actor = $this->currentUser();
-        $comment = Comment::findOrFail($commentId);
-        if ($actor->id === $comment->user_id) {
+
+        $comment = $this->currentComment($commentId);
+        if ($this->currentUser()->id === $comment->user_id) {
             return;
         }
 
-        $throttleKey = 'report:'.$actor->id;
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
-            $this->dispatch('toast', message: 'Bạn báo cáo quá nhiều. Vui lòng thử lại sau '.round($seconds / 60).' phút.', type: 'error');
-
-            return;
-        }
-
-        $exists = Report::where('user_id', $actor->id)
-            ->where('reportable_type', Comment::class)
-            ->where('reportable_id', $commentId)
-            ->exists();
-
-        if ($exists) {
-            $this->dispatch('toast', message: 'Bạn đã báo cáo bình luận này rồi', type: 'error');
-
-            return;
-        }
-
-        Report::create([
-            'user_id' => $actor->id,
-            'reportable_type' => Comment::class,
-            'reportable_id' => $commentId,
-            'reason' => 'Spam / Vi phạm',
-        ]);
-
-        RateLimiter::hit($throttleKey, 3600);
-
-        $this->dispatch('toast', message: 'Đã báo cáo bình luận cho Admin', type: 'success');
+        $this->createReport(Comment::class, $comment->id, 'bình luận');
     }
 
     public function renderContent(bool $showFull): string
@@ -460,32 +276,62 @@ class PostCard extends Component
         return Str::limit(trim(strip_tags(app(PostContentRenderer::class)->renderPost($this->post))), 180);
     }
 
-    private function currentUser(): User
-    {
-        $user = Auth::user();
-        abort_unless($user instanceof User, 403);
-
-        return $user;
-    }
-
     public function render(): View
     {
         $comments = $this->showComments
             ? $this->post->comments()
                 ->with([
                     'user.daKhongCuc',
-                    'replies' => fn ($q) => $q->with(['user'])
+                    'replies' => fn ($query) => $query->with(['user'])
                         ->withCount('likes')
-                        ->withExists(['likes' => fn ($q) => $q->where('user_id', Auth::id())]),
+                        ->withExists(['likes' => fn ($likes) => $likes->where('user_id', Auth::id())]),
                 ])
                 ->withCount('likes')
-                ->withExists(['likes' => fn ($q) => $q->where('user_id', Auth::id())])
+                ->withExists(['likes' => fn ($query) => $query->where('user_id', Auth::id())])
                 ->oldest()
                 ->get()
             : collect();
 
-        return view('livewire.post-card', [
-            'comments' => $comments,
+        return view('livewire.post-card', ['comments' => $comments]);
+    }
+
+    private function createReport(string $type, int $id, string $label): void
+    {
+        $actor = $this->currentUser();
+        $throttleKey = 'report:'.$actor->id;
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $this->dispatch('toast', message: 'Bạn báo cáo quá nhiều. Vui lòng thử lại sau '.round(RateLimiter::availableIn($throttleKey) / 60).' phút.', type: 'error');
+
+            return;
+        }
+
+        if (Report::query()->where('user_id', $actor->id)->where('reportable_type', $type)->where('reportable_id', $id)->exists()) {
+            $this->dispatch('toast', message: 'Bạn đã báo cáo '.$label.' này rồi', type: 'error');
+
+            return;
+        }
+
+        Report::create([
+            'brand_id' => $this->post->brand_id,
+            'user_id' => $actor->id,
+            'reportable_type' => $type,
+            'reportable_id' => $id,
+            'reason' => 'Spam / Vi phạm',
         ]);
+        RateLimiter::hit($throttleKey, 3600);
+        $this->dispatch('toast', message: 'Đã báo cáo '.$label.' cho Admin', type: 'success');
+    }
+
+    private function currentComment(int $commentId): Comment
+    {
+        return $this->post->allComments()->whereKey($commentId)->firstOrFail();
+    }
+
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }

@@ -2,19 +2,14 @@
 
 namespace App\Livewire;
 
-use App\Models\Bookmark;
-use App\Models\Comment;
-use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
-use App\Notifications\GenericNotification;
-use App\Services\XpService;
 use App\Support\PostContentRenderer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Modules\Community\Application\PostInteractionService;
 
 class PostModal extends Component
 {
@@ -40,30 +35,32 @@ class PostModal extends Component
     #[On('open-post')]
     public function openPost(int $postId): void
     {
-        // Performance: Optimized query to pre-fetch all counts and user-specific states
-        // to avoid N+1 queries during modal render. Deep eager load for nested comments.
         $this->post = Post::with(['user.daKhongCuc', 'topic', 'subject', 'postType', 'images'])
             ->withCount(['likes', 'allComments'])
-            ->withExists(['likes' => fn ($q) => $q->where('user_id', auth()->id())])
-            ->withExists(['bookmarks' => fn ($q) => $q->where('user_id', auth()->id())])
+            ->withExists(['likes' => fn ($query) => $query->where('user_id', Auth::id())])
+            ->withExists(['bookmarks' => fn ($query) => $query->where('user_id', Auth::id())])
             ->with([
-                'allComments' => fn ($q) => $q->with(['user.daKhongCuc', 'replies.user.daKhongCuc'])
+                'allComments' => fn ($query) => $query->with(['user.daKhongCuc', 'replies.user.daKhongCuc'])
                     ->withCount('likes')
-                    ->withExists(['likes' => fn ($q) => $q->where('user_id', auth()->id())])
+                    ->withExists(['likes' => fn ($likes) => $likes->where('user_id', Auth::id())])
                     ->oldest(),
             ])
-            ->when(app()->bound('brand'), fn ($query) => $query->where('brand_id', brand()->id))
+            ->where('brand_id', brand()->id)
             ->find($postId);
-        $this->show = $this->post !== null;
-        if ($this->post instanceof Post) {
-            $this->likesCount = (int) ($this->post->likes_count ?? 0);
-            $this->isLiked = (bool) ($this->post->likes_exists ?? false);
-            $this->isBookmarked = (bool) ($this->post->bookmarks_exists ?? false);
-        } else {
+
+        $this->show = $this->post instanceof Post;
+        if (! $this->post) {
             $this->likesCount = 0;
             $this->isLiked = false;
             $this->isBookmarked = false;
+            $this->resetComposer();
+
+            return;
         }
+
+        $this->likesCount = (int) $this->post->likes_count;
+        $this->isLiked = (bool) $this->post->likes_exists;
+        $this->isBookmarked = (bool) $this->post->bookmarks_exists;
         $this->resetComposer();
     }
 
@@ -91,9 +88,7 @@ class PostModal extends Component
 
     public function renderedPostContent(): string
     {
-        return $this->post
-            ? app(PostContentRenderer::class)->renderPost($this->post)
-            : '';
+        return $this->post ? app(PostContentRenderer::class)->renderPost($this->post) : '';
     }
 
     public function toggleLike(): void
@@ -102,38 +97,9 @@ class PostModal extends Component
             return;
         }
 
-        $post = $this->post;
-        $actor = $this->currentUser();
-
-        DB::transaction(function () use ($post, $actor): void {
-            $like = Like::withTrashed()
-                ->where('likeable_type', Post::class)
-                ->where('likeable_id', $post->id)
-                ->where('user_id', $actor->id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($like && ! $like->trashed()) {
-                $like->delete();
-                $this->likesCount = max(0, $this->likesCount - 1);
-                $this->isLiked = false;
-
-                return;
-            }
-
-            if ($like) {
-                $like->restore();
-            } else {
-                Like::create([
-                    'likeable_type' => Post::class,
-                    'likeable_id' => $post->id,
-                    'user_id' => $actor->id,
-                ]);
-            }
-
-            $this->likesCount++;
-            $this->isLiked = true;
-        });
+        $result = app(PostInteractionService::class)->togglePostLike($this->post, $this->currentUser());
+        $this->isLiked = $result->isActive;
+        $this->likesCount = $result->count;
     }
 
     public function toggleBookmark(): void
@@ -142,22 +108,9 @@ class PostModal extends Component
             return;
         }
 
-        $post = $this->post;
-        $actor = $this->currentUser();
-        $bookmark = Bookmark::query()
-            ->where('user_id', $actor->id)
-            ->where('post_id', $post->id)
-            ->first();
-
-        if ($bookmark) {
-            $bookmark->delete();
-            $this->isBookmarked = false;
-
-            return;
-        }
-
-        Bookmark::create(['user_id' => $actor->id, 'post_id' => $post->id]);
-        $this->isBookmarked = true;
+        $this->isBookmarked = app(PostInteractionService::class)
+            ->toggleBookmark($this->post, $this->currentUser())
+            ->isActive;
     }
 
     public function searchMentions(string $query): void
@@ -170,17 +123,17 @@ class PostModal extends Component
         }
 
         $this->mentionResults = User::query()
-            ->where(fn ($q) => $q
+            ->where(fn ($users) => $users
                 ->where('username', 'ilike', $query.'%')
                 ->orWhere('name', 'ilike', '%'.$query.'%'))
             ->whereKeyNot(Auth::id())
             ->orderByRaw('CASE WHEN username ILIKE ? THEN 0 ELSE 1 END', [$query.'%'])
             ->limit(5)
             ->get(['id', 'username', 'name', 'avatar'])
-            ->map(fn ($u) => [
-                'username' => $u->username,
-                'name' => $u->name,
-                'avatar_url' => $u->avatar_url,
+            ->map(fn (User $user) => [
+                'username' => $user->username,
+                'name' => $user->name,
+                'avatar_url' => $user->avatar_url,
             ])
             ->toArray();
     }
@@ -196,95 +149,30 @@ class PostModal extends Component
             return;
         }
 
-        $post = $this->post;
-        $actor = $this->currentUser();
         $this->validate(['newComment' => 'required|max:2000']);
-
-        $recentCount = Comment::where('user_id', Auth::id())
-            ->where('created_at', '>=', now()->subHour())->count();
-        if ($recentCount >= 20) {
+        $result = app(PostInteractionService::class)->addComment(
+            $this->post,
+            $this->currentUser(),
+            $this->newComment,
+            $this->replyToId,
+        );
+        if ($result->isRateLimited) {
             $this->addError('newComment', 'Bạn đã bình luận quá nhiều. Vui lòng đợi.');
 
             return;
         }
 
-        $parentId = $this->replyToId
-            ? $post->allComments()->whereKey($this->replyToId)->value('id')
-            : null;
-
-        $comment = $post->allComments()->create([
-            'user_id' => $actor->id,
-            'parent_id' => $parentId,
-            'content' => $this->newComment,
-        ]);
-
-        $wonRune = false;
-        if ($post->isRuneActive()) {
-            $affected = Post::where('id', $post->id)
-                ->whereNull('rune_first_comment_user_id')
-                ->update(['rune_first_comment_user_id' => $actor->id]);
-            $wonRune = $affected > 0;
-            if ($wonRune) {
-                $comment->update(['is_rune_winner' => true]);
-            }
-        }
-
-        app(XpService::class)->award(
-            $actor, 'comment', $wonRune ? 2.0 : 1.0,
-            $wonRune ? 'Phù văn 2x EXP' : null, $comment
-        );
-
-        $owner = $post->user;
-        abort_unless($owner instanceof User, 500);
-        if ($owner->id !== $actor->id) {
-            $alreadyCommented = $this->post->allComments()
-                ->where('user_id', Auth::id())
-                ->where('id', '!=', $comment->id)
-                ->exists();
-            if (! $alreadyCommented) {
-                app(XpService::class)->award($owner, 'post_commented', 1.0, $actor->name.' bình luận bài viết', $this->post);
-            }
-            $owner->notify(new GenericNotification('💬', $actor->name.' bình luận bài viết của bạn', null, $post->id));
-        }
-
-        $this->notifyMentions($comment->content, [$actor->id, $owner->id]);
-
+        $postId = $this->post->id;
         $this->resetComposer();
-        $this->openPost($post->id);
+        $this->openPost($postId);
     }
 
-    /**
-     * Parse @username mentions, notify each unique tagged user (excluding already-notified IDs).
-     *
-     * @param  array<int>  $excludeIds
-     */
-    private function notifyMentions(string $content, array $excludeIds): void
+    public function render(): View
     {
-        $actor = $this->currentUser();
-        $post = $this->post;
-        abort_unless($post instanceof Post, 500);
-
-        preg_match_all('/@([a-zA-Z0-9._-]+)/', $content, $m);
-        $usernames = array_unique($m[1]);
-        if (empty($usernames)) {
-            return;
-        }
-
-        $users = User::whereIn('username', $usernames)
-            ->whereNotIn('id', $excludeIds)
-            ->get();
-
-        foreach ($users as $u) {
-            $u->notify(new GenericNotification(
-                '@',
-                $actor->name.' đã nhắc đến bạn trong một bình luận',
-                null,
-                $post->id
-            ));
-        }
+        return view('livewire.post-modal');
     }
 
-    protected function resetComposer(): void
+    private function resetComposer(): void
     {
         $this->newComment = '';
         $this->replyToId = null;
@@ -298,10 +186,5 @@ class PostModal extends Component
         abort_unless($user instanceof User, 403);
 
         return $user;
-    }
-
-    public function render(): View
-    {
-        return view('livewire.post-modal');
     }
 }
