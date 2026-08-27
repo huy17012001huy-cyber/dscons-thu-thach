@@ -28,6 +28,7 @@ final class ArchitectureBoundaryTest extends TestCase
             self::assertSame($module, $manifest['name'] ?? null);
             self::assertIsString($manifest['provider'] ?? null);
             self::assertTrue(class_exists($manifest['provider']));
+            self::assertSame([], $manifest['depends'] ?? [], $module.' must depend on App Core contracts, not another module.');
         }
     }
 

@@ -1,5 +1,5 @@
 {
   "name": "Recruitment",
   "provider": "Modules\\Recruitment\\Providers\\RecruitmentServiceProvider",
-  "depends": ["Commerce"]
+  "depends": []
 }

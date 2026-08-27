@@ -15,6 +15,8 @@ increase deployment and transaction complexity without a measured need.
 Keep one Laravel application and introduce module boundaries under `modules/`.
 Modules depend on `App\\Core` only. Cross-module collaboration uses contracts
 or Laravel domain events; it must not reach into another module's internals.
+Module manifests therefore do not declare dependencies on other business
+modules; the application boot order is the explicit order in `config/modules.php`.
 
 The module loader discovers enabled module manifests and lets each provider
 register routes, views, translations, configuration and new migrations. Legacy
