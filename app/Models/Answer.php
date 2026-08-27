@@ -6,6 +6,7 @@ use App\Models\Concerns\HasBrand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/** @property int $brand_id */
 class Answer extends Model
 {
     use HasBrand;

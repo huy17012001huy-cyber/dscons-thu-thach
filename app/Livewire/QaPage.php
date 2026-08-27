@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Core\Gamification\XpService;
 use App\Models\Answer;
 use App\Models\Question;
 use App\Models\User;
@@ -13,6 +12,8 @@ use Livewire\Attributes\Rule;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Modules\Community\Application\QaAnswerOutcome;
+use Modules\Community\Application\QaService;
 
 class QaPage extends Component
 {
@@ -66,37 +67,24 @@ class QaPage extends Component
             return;
         }
         $this->validate(['answerBody' => 'required|min:3|max:5000']);
-        $q = Question::findOrFail($this->openQuestionId);
-
-        // Anti-spam: max 1 answer per question per user
-        $existing = Answer::where('question_id', $q->id)->where('user_id', $user->id)->exists();
-        if ($existing) {
+        $outcome = app(QaService::class)->submitAnswer($this->openQuestionId, $user, $this->answerBody);
+        if ($outcome === QaAnswerOutcome::AlreadyAnswered) {
             $this->addError('answerBody', 'Bạn đã trả lời câu hỏi này rồi.');
 
             return;
         }
-
-        // Anti-spam: max 10 answers per hour
-        $recentCount = Answer::where('user_id', $user->id)
-            ->where('created_at', '>=', now()->subHour())->count();
-        if ($recentCount >= 10) {
+        if ($outcome === QaAnswerOutcome::RateLimited) {
             $this->addError('answerBody', 'Bạn đã trả lời quá nhiều. Vui lòng đợi 1 giờ.');
 
             return;
         }
-
-        Answer::create(['question_id' => $q->id, 'user_id' => $user->id, 'body' => $this->answerBody]);
-        if ($q->status === 'open') {
-            $q->update(['status' => 'answered']);
-        }
-        app(XpService::class)->award($user, 'comment', 1.0, 'Trả lời câu hỏi', $q);
         $this->answerBody = '';
     }
 
     public function editAnswer(int $id): void
     {
         $answer = Answer::findOrFail($id);
-        if ($answer->user_id !== Auth::id() && ! Auth::user()?->is_admin) {
+        if ($answer->user_id !== Auth::id() && ! Auth::user()?->isCommunityModerator(brand()->id)) {
             return;
         }
         $this->editingAnswerId = $id;
@@ -115,11 +103,12 @@ class QaPage extends Component
             return;
         }
         $answer = Answer::findOrFail($this->editingAnswerId);
-        if ($answer->user_id !== Auth::id() && ! Auth::user()?->is_admin) {
+        $this->validate(['editingAnswerBody' => 'required|min:3|max:5000']);
+        $user = $this->authenticatedUser();
+        if (! $user) {
             return;
         }
-        $this->validate(['editingAnswerBody' => 'required|min:3|max:5000']);
-        $answer->update(['body' => $this->editingAnswerBody]);
+        app(QaService::class)->updateAnswer($answer->id, $user, $this->editingAnswerBody);
         $this->editingAnswerId = null;
         $this->editingAnswerBody = '';
     }
@@ -127,21 +116,16 @@ class QaPage extends Component
     public function deleteAnswer(int $id): void
     {
         $answer = Answer::findOrFail($id);
-        if ($answer->user_id !== Auth::id() && ! Auth::user()?->is_admin) {
+        $user = $this->authenticatedUser();
+        if (! $user) {
             return;
         }
-        $questionId = $answer->question_id;
-        $answer->delete();
-
-        $remaining = Answer::where('question_id', $questionId)->count();
-        if ($remaining === 0) {
-            Question::where('id', $questionId)->update(['status' => 'open']);
-        }
+        app(QaService::class)->deleteAnswer($answer->id, $user);
     }
 
     public function editQuestion(int $id): void
     {
-        if (! Auth::user()?->is_admin) {
+        if (! Auth::user()?->isCommunityModerator(brand()->id)) {
             return;
         }
         $q = Question::findOrFail($id);
@@ -159,27 +143,31 @@ class QaPage extends Component
 
     public function updateQuestion(): void
     {
-        if (! $this->editingQuestionId || ! Auth::user()?->is_admin) {
+        if (! $this->editingQuestionId || ! Auth::user()?->isCommunityModerator(brand()->id)) {
             return;
         }
         $this->validate([
             'editingQuestionTitle' => 'required|min:5|max:200',
             'editingQuestionBody' => 'nullable|max:50000',
         ]);
-        $q = Question::findOrFail($this->editingQuestionId);
-        $q->update([
-            'title' => $this->editingQuestionTitle,
-            'body' => $this->editingQuestionBody ?: null,
-        ]);
+        $user = $this->authenticatedUser();
+        if (! $user) {
+            return;
+        }
+        app(QaService::class)->updateQuestion($this->editingQuestionId, $user, $this->editingQuestionTitle, $this->editingQuestionBody ?: null);
         $this->cancelEditQuestion();
     }
 
     public function deleteQuestion(int $id): void
     {
-        if (! Auth::user()?->is_admin) {
+        if (! Auth::user()?->isCommunityModerator(brand()->id)) {
             return;
         }
-        Question::findOrFail($id)->delete(); // câu trả lời cascade theo FK
+        $user = $this->authenticatedUser();
+        if (! $user) {
+            return;
+        }
+        app(QaService::class)->deleteQuestion($id, $user);
         if ($this->openQuestionId === $id) {
             $this->openQuestionId = null;
         }
@@ -196,16 +184,18 @@ class QaPage extends Component
 
             return;
         }
-        $q = Question::create([
-            'user_id' => Auth::id(), 'title' => $this->title, 'body' => $this->body,
-            'pillar' => $this->pillar ?: null, 'is_anonymous' => $this->isAnonymous,
+        $user = $this->authenticatedUser();
+        if (! $user) {
+            return;
+        }
+        app(QaService::class)->submitQuestion($user, [
+            'title' => $this->title,
+            'body' => $this->body ?: null,
+            'pillar' => $this->pillar ?: null,
+            'isAnonymous' => $this->isAnonymous,
         ]);
         RateLimiter::hit($throttleKey, 3600); // 5 questions per hour
 
-        $user = $this->authenticatedUser();
-        if ($user) {
-            app(XpService::class)->award($user, 'post', 0.33, 'Đặt câu hỏi', $q);
-        }
         $this->reset(['title', 'body', 'pillar', 'isAnonymous', 'showAsk']);
     }
 
