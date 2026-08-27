@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Core\Auth;
 
 use App\Core\CommunityContext;
 use App\Exceptions\GoogleAuthException;
@@ -11,7 +11,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Contracts\User as ProviderUser;
 
-class GoogleAuthService
+final class GoogleAuthService
 {
     public function __construct(private readonly CommunityContext $context) {}
 
@@ -40,7 +40,6 @@ class GoogleAuthService
             }
 
             $existingEmailUser->forceFill(['google_id' => $googleId])->save();
-
             $existingEmailUser->refresh();
 
             return $existingEmailUser;
@@ -89,10 +88,7 @@ class GoogleAuthService
 
     private function uniqueUsername(string $name): string
     {
-        $ascii = transliterator_transliterate(
-            'Any-Latin; Latin-ASCII; Lower()',
-            trim($name)
-        ) ?: '';
+        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($name)) ?: '';
         $normalized = preg_replace('/\s+/', '.', $ascii) ?? '';
         $username = preg_replace('/[^a-z0-9._]/', '', $normalized) ?: 'user';
         $base = $username;

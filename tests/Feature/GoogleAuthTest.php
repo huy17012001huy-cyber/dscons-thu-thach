@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Core\Auth\GoogleAuthService;
 use App\Exceptions\GoogleAuthException;
 use App\Models\Membership;
 use App\Models\Post;
 use App\Models\User;
-use App\Services\GoogleAuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;

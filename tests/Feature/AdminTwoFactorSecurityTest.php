@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Core\Auth\AdminTwoFactorService;
 use App\Models\User;
-use App\Services\AdminTwoFactorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FA\Google2FA;

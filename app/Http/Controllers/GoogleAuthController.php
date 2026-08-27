@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Core\Auth\GoogleAuthService;
 use App\Exceptions\GoogleAuthException;
-use App\Services\GoogleAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
