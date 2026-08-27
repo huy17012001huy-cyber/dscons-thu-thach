@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
-use App\Core\Auth\UserProvisioningService;
 use App\Core\Auth\UserAdministrationService;
+use App\Core\Auth\UserProvisioningService;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -70,14 +72,14 @@ class AdminUsers extends Component
         $this->dispatch('toast', message: 'Đã tạo thành viên '.$user->name, type: 'success');
     }
 
-    public function toggleAdmin(int $id): void
+    public function toggleAdmin(int $id, UserAdministrationService $administration): void
     {
-        if (! Auth::user()?->is_admin) {
-            return;
-        }
+        $actor = Auth::user();
+        abort_unless($actor instanceof User && $actor->isSuperAdmin(), 403);
         $user = User::findOrFail($id);
-        $user->is_admin = ! $user->is_admin;
-        $user->save();
+        if ($administration->toggleSuperAdmin($actor, $user)) {
+            $this->dispatch('toast', message: 'Đã cập nhật quyền Super Admin cho '.$user->name, type: 'success');
+        }
     }
 
     public function toggleModerator(int $id, CommunityMemberRoleService $roles): void

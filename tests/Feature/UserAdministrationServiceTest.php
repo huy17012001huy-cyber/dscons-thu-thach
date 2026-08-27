@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Core\Auth\UserAdministrationService;
+use App\Models\AuditLog;
 use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -34,5 +35,25 @@ final class UserAdministrationServiceTest extends TestCase
         $this->expectException(AuthorizationException::class);
 
         app(UserAdministrationService::class)->ban(User::factory()->create(), User::factory()->create());
+    }
+
+    public function test_super_admin_can_change_another_users_super_admin_status_with_an_audit_record(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $target = User::factory()->create();
+        $service = app(UserAdministrationService::class);
+
+        self::assertTrue($service->toggleSuperAdmin($admin, $target));
+        self::assertTrue($target->fresh()->isSuperAdmin());
+        self::assertDatabaseHas('audit_logs', [
+            'actor_id' => $admin->id,
+            'subject_id' => $target->id,
+            'action' => 'super_admin_granted',
+        ]);
+
+        self::assertTrue($service->toggleSuperAdmin($admin, $target->fresh()));
+        self::assertFalse($target->fresh()->isSuperAdmin());
+        self::assertSame(2, AuditLog::query()->where('subject_id', $target->id)->count());
+        self::assertFalse($service->toggleSuperAdmin($admin, $admin));
     }
 }
