@@ -7,9 +7,11 @@ use App\Models\EngineerProfile;
 use App\Models\RecruiterPlan;
 use App\Models\RecruiterProfile;
 use App\Models\RecruitmentContactRequest;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\Recruitment\Application\RecruitmentAdminManagementService;
 
 class AdminRecruitment extends Component
 {
@@ -32,25 +34,43 @@ class AdminRecruitment extends Component
 
     public function approve(int $profileId): void
     {
-        $this->recruiterProfilesQuery()->findOrFail($profileId)->update(['verification_status' => 'verified', 'verified_at' => now(), 'reviewed_by' => auth()->id(), 'review_note' => null]);
+        $actor = $this->currentUser();
+        if ($actor) {
+            app(RecruitmentAdminManagementService::class)->approveRecruiter($profileId, $actor, $this->isGlobalAdmin);
+        }
     }
 
     public function reject(int $profileId): void
     {
-        $this->recruiterProfilesQuery()->findOrFail($profileId)->update(['verification_status' => 'rejected', 'reviewed_by' => auth()->id()]);
+        $actor = $this->currentUser();
+        if ($actor) {
+            app(RecruitmentAdminManagementService::class)->rejectRecruiter($profileId, $actor, $this->isGlobalAdmin);
+        }
     }
 
     public function savePlan(): void
     {
         $data = $this->validate(['planName' => 'required|string|max:120', 'planDescription' => 'nullable|string|max:500', 'planCredits' => 'integer|min:0|max:100000', 'planDuration' => 'nullable|integer|min:1|max:3650', 'planPrice' => 'integer|min:0|max:100000000']);
-        RecruiterPlan::create(['name' => $data['planName'], 'description' => $data['planDescription'] ?: null, 'contact_credits' => $data['planCredits'], 'duration_days' => $data['planDuration'], 'price' => $data['planPrice'], 'is_active' => true]);
+        $actor = $this->currentUser();
+        if (! $actor) {
+            return;
+        }
+        app(RecruitmentAdminManagementService::class)->createPlan($actor, $this->isGlobalAdmin, [
+            'name' => $data['planName'],
+            'description' => $data['planDescription'] ?: null,
+            'contact_credits' => $data['planCredits'],
+            'duration_days' => $data['planDuration'],
+            'price' => $data['planPrice'],
+        ]);
         $this->reset(['planName', 'planDescription', 'planCredits', 'planDuration', 'planPrice']);
     }
 
     public function togglePlan(int $planId): void
     {
-        $plan = RecruiterPlan::findOrFail($planId);
-        $plan->update(['is_active' => ! $plan->is_active]);
+        $actor = $this->currentUser();
+        if ($actor) {
+            app(RecruitmentAdminManagementService::class)->togglePlan($planId, $actor, $this->isGlobalAdmin);
+        }
     }
 
     public function render(): View
@@ -117,5 +137,12 @@ class AdminRecruitment extends Component
     private function engineerProfilesQuery(): Builder
     {
         return $this->isGlobalAdmin ? EngineerProfile::withoutGlobalScopes() : EngineerProfile::query();
+    }
+
+    private function currentUser(): ?User
+    {
+        $user = auth()->user();
+
+        return $user instanceof User ? $user : null;
     }
 }
