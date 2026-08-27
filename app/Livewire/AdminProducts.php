@@ -176,7 +176,6 @@ class AdminProducts extends Component
         if ($product->file_path) {
             Storage::disk('public')->delete($product->file_path);
         }
-        $product->delete();
         $this->dispatch('toast', message: 'Đã xóa sản phẩm', type: 'success');
     }
 

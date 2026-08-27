@@ -154,7 +154,6 @@ class AdminCourses extends Component
         if ($course->thumbnail && str_starts_with($course->thumbnail, 'course/thumbnails/')) {
             Storage::disk('public')->delete($course->thumbnail);
         }
-        $course->delete();
     }
 
     private function resetCourseForm(): void
