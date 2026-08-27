@@ -2,9 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Core\Gamification\AipService;
 use App\Models\AipTransaction;
+use App\Models\Post;
 use App\Models\User;
-use App\Services\AipService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -78,7 +79,7 @@ class AipServiceTest extends TestCase
     public function test_earn_with_reference_model(): void
     {
         $user = User::factory()->create(['aip' => 0]);
-        $post = \App\Models\Post::factory()->create();
+        $post = Post::factory()->create();
 
         $this->aipService->earn($user, 50, 'Post reward', $post);
 
@@ -87,7 +88,7 @@ class AipServiceTest extends TestCase
             'amount' => 50,
             'type' => 'earn',
             'reason' => 'Post reward',
-            'reference_type' => \App\Models\Post::class,
+            'reference_type' => Post::class,
             'reference_id' => $post->id,
         ]);
     }
@@ -150,7 +151,7 @@ class AipServiceTest extends TestCase
     public function test_spend_with_reference_model(): void
     {
         $user = User::factory()->create(['aip' => 100]);
-        $post = \App\Models\Post::factory()->create();
+        $post = Post::factory()->create();
 
         $this->aipService->spend($user, 25, 'Boost post', $post);
 
@@ -159,7 +160,7 @@ class AipServiceTest extends TestCase
             'amount' => -25,
             'type' => 'spend',
             'reason' => 'Boost post',
-            'reference_type' => \App\Models\Post::class,
+            'reference_type' => Post::class,
             'reference_id' => $post->id,
         ]);
     }
