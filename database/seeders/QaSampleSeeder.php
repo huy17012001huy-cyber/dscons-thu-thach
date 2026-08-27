@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Answer;
+use App\Models\Brand;
 use App\Models\ChallengeTask;
 use App\Models\CommunityUserStat;
 use App\Models\Course;
@@ -12,6 +13,7 @@ use App\Models\EventRegistration;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\LeaderboardSnapshot;
+use App\Models\Lesson;
 use App\Models\Membership;
 use App\Models\Module;
 use App\Models\Post;
@@ -21,19 +23,19 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Models\XpTransaction;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class QaSampleSeeder extends Seeder
 {
     public function run(): void
     {
-        if (!app()->environment(['local', 'staging', 'testing'])) {
+        if (! app()->environment(['local', 'staging', 'testing'])) {
             throw new \RuntimeException('QaSampleSeeder chỉ được chạy ở local, staging hoặc testing.');
         }
 
-        $brand = app()->bound('brand') ? brand() : \App\Models\Brand::query()->findOrFail(1);
+        $brand = app()->bound('brand') ? brand() : $this->dsconsBrand();
         app()->instance('brand', $brand);
 
         $admin = $this->user('qa-admin@example.test', '[TEST] QA Admin', 'qa-admin', true);
@@ -61,7 +63,7 @@ class QaSampleSeeder extends Seeder
             ['brand_id' => $brand->id, 'title' => '[TEST] Bài viết thường'],
             [
                 'user_id' => $member->id,
-                'content' => "[TEST] Nội dung bài viết thường với **định dạng** và [liên kết](https://example.com).",
+                'content' => '[TEST] Nội dung bài viết thường với **định dạng** và [liên kết](https://example.com).',
                 'pillar' => 'offer',
                 'topic_id' => $topic->id,
             ]
@@ -134,7 +136,7 @@ class QaSampleSeeder extends Seeder
             ['course_id' => $course->id, 'title' => '[TEST] Module mẫu'],
             ['order_index' => 0]
         );
-        \App\Models\Lesson::updateOrCreate(
+        Lesson::updateOrCreate(
             ['module_id' => $module->id, 'title' => '[TEST] Bài học mẫu'],
             [
                 'content' => '[TEST] Nội dung bài học mẫu.',
@@ -282,5 +284,16 @@ class QaSampleSeeder extends Seeder
     private function communityRole(int $brandId, User $user, string $role): void
     {
         $user->brandRoles()->syncWithoutDetaching([$brandId => ['role' => $role]]);
+    }
+
+    private function dsconsBrand(): Brand
+    {
+        $brand = Brand::query()->where('slug', 'dscons')->first();
+        if ($brand) {
+            return $brand;
+        }
+        app(BrandSeeder::class)->run();
+
+        return Brand::query()->where('slug', 'dscons')->firstOrFail();
     }
 }

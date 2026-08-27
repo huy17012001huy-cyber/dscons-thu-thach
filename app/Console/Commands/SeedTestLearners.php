@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Brand;
 use App\Models\Membership;
 use App\Models\User;
+use Database\Seeders\BrandSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,7 +18,7 @@ class SeedTestLearners extends Command
     public function handle(): int
     {
         $password = (string) ($this->option('password') ?: config('testing.test_learner_password'));
-        $brand = app()->bound('brand') ? brand() : Brand::query()->findOrFail(1);
+        $brand = app()->bound('brand') ? brand() : $this->dsconsBrand();
         app()->instance('brand', $brand);
 
         $learners = [
@@ -56,5 +57,16 @@ class SeedTestLearners extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function dsconsBrand(): Brand
+    {
+        $brand = Brand::query()->where('slug', 'dscons')->first();
+        if ($brand) {
+            return $brand;
+        }
+        app(BrandSeeder::class)->run();
+
+        return Brand::query()->where('slug', 'dscons')->firstOrFail();
     }
 }
