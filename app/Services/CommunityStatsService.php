@@ -1,15 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Core\CommunityContext;
 use App\Models\CommunityUserStat;
 use App\Models\User;
 
 class CommunityStatsService
 {
+    public function __construct(private readonly CommunityContext $context) {}
+
     public function brandId(): ?int
     {
-        return app()->bound('brand') ? (int) brand()->id : null;
+        return $this->context->current()?->id;
     }
 
     public function for(User $user): ?CommunityUserStat
