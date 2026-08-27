@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Commerce\Application;
 
-use App\Livewire\MembershipPricing;
 use App\Models\CommerceWebhookEvent;
 use App\Models\CourseEnrollment;
 use App\Models\DigitalProduct;
@@ -17,6 +16,7 @@ use App\Models\User;
 use App\Notifications\GenericNotification;
 use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
+use Modules\Commerce\Domain\LegacyMembershipPlans;
 use Modules\Commerce\Domain\PaymentReference;
 use Modules\Commerce\Domain\PaymentReferenceParser;
 
@@ -175,7 +175,7 @@ final class SepayWebhookProcessor
     {
         $weeks = $reference->attributes['weeks'];
         $user = User::query()->lockForUpdate()->find($reference->attributes['user_id']);
-        $plan = MembershipPricing::PLANS[$weeks] ?? null;
+        $plan = LegacyMembershipPlans::PLANS[$weeks] ?? null;
 
         if (! $user || ! $plan || $amount < $plan['weeks'] * $plan['price_per_week']) {
             return false;
