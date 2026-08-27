@@ -9,6 +9,7 @@ use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Modules\Learning\Application\CourseCatalogManagementService;
 
 class AdminCourses extends Component
 {
@@ -114,10 +115,13 @@ class AdminCourses extends Component
             $data['thumbnail'] = null;
         }
 
-        if ($course) {
-            $course->update($data);
-        } else {
-            $course = Course::create($data);
+        $course = app(CourseCatalogManagementService::class)->save(
+            $this->editingCourseId,
+            Auth::user(),
+            $data,
+        );
+        if (! $course) {
+            return;
         }
 
         $newThumbnail = $data['thumbnail'] ?? $oldThumbnail;
@@ -135,8 +139,7 @@ class AdminCourses extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        $course = Course::findOrFail($id);
-        $course->update(['is_published' => ! $course->is_published]);
+        app(CourseCatalogManagementService::class)->togglePublished($id, Auth::user());
     }
 
     public function deleteCourse(int $id): void
@@ -144,7 +147,10 @@ class AdminCourses extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        $course = Course::findOrFail($id);
+        $course = app(CourseCatalogManagementService::class)->delete($id, Auth::user());
+        if (! $course) {
+            return;
+        }
         if ($course->thumbnail && str_starts_with($course->thumbnail, 'course/thumbnails/')) {
             Storage::disk('public')->delete($course->thumbnail);
         }
