@@ -11,9 +11,11 @@ use App\Models\ExpeditionMember;
 use App\Models\User;
 use App\Livewire\ChallengeDetail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Modules\Learning\Application\ChallengeSubmissionOutcome;
 use Modules\Learning\Application\ChallengeSubmissionService;
+use Modules\Learning\Domain\Events\ChallengeSubmissionCreated;
 use Tests\TestCase;
 
 final class ChallengeSubmissionServiceTest extends TestCase
@@ -22,6 +24,7 @@ final class ChallengeSubmissionServiceTest extends TestCase
 
     public function test_submission_creates_one_pending_completion_for_an_unlocked_task(): void
     {
+        Event::fake([ChallengeSubmissionCreated::class]);
         [$challenge, $learner] = $this->enrolledChallenge('Submission Challenge');
         $task = $this->task($challenge, 1);
         $service = app(ChallengeSubmissionService::class);
@@ -40,6 +43,13 @@ final class ChallengeSubmissionServiceTest extends TestCase
             ChallengeSubmissionOutcome::AlreadySubmitted,
             $service->submit($challenge, $task->id, $learner, 'Second screenshot.', null)->outcome,
         );
+        Event::assertDispatched(ChallengeSubmissionCreated::class, function (ChallengeSubmissionCreated $event) use ($challenge, $learner, $task): bool {
+            return $event->challengeId === $challenge->id
+                && $event->taskId === $task->id
+                && $event->learnerId === $learner->id
+                && ! $event->isContest
+                && ! $event->isLate;
+        });
     }
 
     public function test_rejected_main_submission_can_be_resubmitted_without_creating_a_second_row(): void
@@ -83,6 +93,7 @@ final class ChallengeSubmissionServiceTest extends TestCase
 
     public function test_contest_entry_requires_approved_main_submission_and_reuses_a_rejected_entry(): void
     {
+        Event::fake([ChallengeSubmissionCreated::class]);
         [$challenge, $learner] = $this->enrolledChallenge('Contest Submission Challenge');
         $task = ChallengeTask::create([
             'expedition_id' => $challenge->id,
@@ -114,6 +125,13 @@ final class ChallengeSubmissionServiceTest extends TestCase
             ChallengeSubmissionOutcome::ContestEntryPending,
             $service->submitContestEntry($challenge, $task->id, $learner, 'Duplicate entry.')->outcome,
         );
+        Event::assertDispatched(ChallengeSubmissionCreated::class, function (ChallengeSubmissionCreated $event) use ($challenge, $learner, $task): bool {
+            return $event->challengeId === $challenge->id
+                && $event->taskId === $task->id
+                && $event->learnerId === $learner->id
+                && $event->isContest
+                && ! $event->isLate;
+        });
     }
 
     public function test_challenge_detail_submits_through_the_submission_service(): void

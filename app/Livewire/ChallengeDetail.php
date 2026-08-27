@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Core\Notifications\TelegramService;
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
@@ -253,14 +252,6 @@ class ChallengeDetail extends Component
         }
         $this->dispatch('toast', message: $msg, type: $late ? 'warning' : 'success');
 
-        // Notify admin via Telegram
-        TelegramService::sendToAdmin(
-            "📝 <b>Bài nộp mới</b>\n"
-            ."👤 {$user->name}\n"
-            ."📋 Ngày {$task->day_number}: {$task->title}\n"
-            .($late ? "⚠️ Nộp trễ\n" : '')
-            .'🔗 '.route('challenge.show', $this->expedition->slug)
-        );
     }
 
     // ─── Submit mini-game ứng dụng (contest task only — 1 row/user) ───
@@ -298,13 +289,6 @@ class ChallengeDetail extends Component
         $this->taskEvidence[$taskId] = '';
         $this->dispatch('toast', message: 'Đã nộp ứng dụng. Chờ admin duyệt.', type: 'success');
 
-        TelegramService::sendToAdmin(
-            "🏆 <b>Mini-game</b>\n"
-            ."👤 {$user->name}\n"
-            ."📋 Ngày {$task->day_number}: {$task->title}\n"
-            .($late ? "⚠️ Trễ\n" : '')
-            .'🔗 '.route('challenge.show', $this->expedition->slug)
-        );
     }
 
     // ─── Resubmit rejected task ───────────────────────────────

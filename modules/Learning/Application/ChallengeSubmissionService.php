@@ -13,6 +13,8 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\Learning\Domain\Events\ChallengeSubmissionCreated;
 
 final class ChallengeSubmissionService
 {
@@ -52,6 +54,13 @@ final class ChallengeSubmissionService
                 'is_late' => $isLate,
                 'submission_payload' => $payload,
             ]);
+            DB::afterCommit(fn () => Event::dispatch(new ChallengeSubmissionCreated(
+                $challenge->id,
+                $task->id,
+                $user->id,
+                false,
+                $isLate,
+            )));
 
             return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::Submitted, $task, $isLate);
         });
@@ -166,6 +175,13 @@ final class ChallengeSubmissionService
                     'is_late' => false,
                 ]);
             }
+            DB::afterCommit(fn () => Event::dispatch(new ChallengeSubmissionCreated(
+                $challenge->id,
+                $task->id,
+                $user->id,
+                true,
+                false,
+            )));
 
             return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::ContestSubmitted, $task);
         });
