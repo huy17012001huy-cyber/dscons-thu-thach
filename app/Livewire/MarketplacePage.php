@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\Commerce\Application\ProductPurchaseOutcome;
+use Modules\Commerce\Application\ProductPurchaseService;
 
 class MarketplacePage extends Component
 {
@@ -23,25 +25,13 @@ class MarketplacePage extends Component
         if (! $user instanceof User) {
             return;
         }
-        $product = DigitalProduct::where('is_published', true)->findOrFail($productId);
-        $existing = ProductPurchase::where('user_id', $user->id)
-            ->where('digital_product_id', $product->id)
-            ->first();
-
-        if ($existing) {
-            $this->dispatch('toast', message: $existing->status === 'active' ? 'Bạn đã sở hữu sản phẩm này.' : 'Đơn hàng đang chờ thanh toán.', type: 'info');
-
-            return;
-        }
-
-        ProductPurchase::create([
-            'user_id' => $user->id,
-            'digital_product_id' => $product->id,
-            'status' => $product->isFree() ? 'active' : 'pending_payment',
-            'paid_at' => $product->isFree() ? now() : null,
-        ]);
-
-        $this->dispatch('toast', message: $product->isFree() ? 'Đã nhận sản phẩm miễn phí.' : 'Đơn hàng đã tạo. Vui lòng chuyển khoản để hoàn tất.', type: $product->isFree() ? 'success' : 'info');
+        $outcome = app(ProductPurchaseService::class)->purchase($productId, $user);
+        match ($outcome) {
+            ProductPurchaseOutcome::Activated => $this->dispatch('toast', message: 'Đã nhận sản phẩm miễn phí.', type: 'success'),
+            ProductPurchaseOutcome::PendingPayment => $this->dispatch('toast', message: 'Đơn hàng đã tạo. Vui lòng chuyển khoản để hoàn tất.', type: 'info'),
+            ProductPurchaseOutcome::AlreadyOwned => $this->dispatch('toast', message: 'Bạn đã sở hữu sản phẩm này.', type: 'info'),
+            ProductPurchaseOutcome::AlreadyPending => $this->dispatch('toast', message: 'Đơn hàng đang chờ thanh toán.', type: 'info'),
+        };
     }
 
     public function render(): View
