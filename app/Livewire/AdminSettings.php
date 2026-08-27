@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Models\EngineerProfile;
 use App\Models\Setting;
 use App\Support\CommunityBrandSettings;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Modules\Community\Application\CommunityFeatureSettingsService;
 
 class AdminSettings extends Component
 {
@@ -124,13 +124,7 @@ class AdminSettings extends Component
             $this->memberAvatarSize,
         );
 
-        brand()->update([
-            'has_cv' => $this->hasCv,
-            'has_recruitment' => $this->hasRecruitment,
-        ]);
-        if (! $this->hasCv || ! $this->hasRecruitment) {
-            EngineerProfile::query()->update(['is_searchable' => false]);
-        }
+        app(CommunityFeatureSettingsService::class)->update(brand(), Auth::user(), $this->hasCv, $this->hasRecruitment);
 
         $this->dispatch('toast', message: 'Đã lưu cấu hình cộng đồng, level và membership.', type: 'success');
     }
