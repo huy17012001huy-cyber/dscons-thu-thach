@@ -7,8 +7,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Modules\Community\Application\CommunityTopicData;
+use Modules\Community\Application\CommunityTopicService;
 
 class AdminTopics extends Component
 {
@@ -43,8 +46,7 @@ class AdminTopics extends Component
             return;
         }
 
-        $this->reset(['name', 'emoji', 'slug', 'sort_order', 'editingId']);
-        $this->is_active = true;
+        $this->resetForm();
         $this->showForm = true;
     }
 
@@ -54,8 +56,8 @@ class AdminTopics extends Component
             return;
         }
 
-        $topic = Topic::findOrFail($id);
-        $this->editingId = $id;
+        $topic = Topic::query()->findOrFail($id);
+        $this->editingId = $topic->id;
         $this->name = $topic->name;
         $this->emoji = $topic->emoji ?? '';
         $this->slug = $topic->slug;
@@ -66,44 +68,57 @@ class AdminTopics extends Component
 
     public function save(): void
     {
-        if (! $this->currentUser()?->isCommunityAdmin()) {
+        $user = $this->currentUser();
+        if (! $user?->isCommunityAdmin()) {
             return;
         }
         $this->validate();
 
-        $data = [
-            'name' => $this->name,
-            'emoji' => $this->emoji ?: null,
-            'slug' => $this->slug,
-            'sort_order' => $this->sort_order,
-            'is_active' => $this->is_active,
-        ];
+        try {
+            app(CommunityTopicService::class)->save($this->editingId, $user, new CommunityTopicData(
+                name: trim($this->name),
+                emoji: trim($this->emoji) ?: null,
+                slug: trim($this->slug),
+                sortOrder: $this->sort_order,
+                isActive: $this->is_active,
+            ));
+        } catch (InvalidArgumentException $exception) {
+            $this->addError('slug', $exception->getMessage());
 
-        if ($this->editingId) {
-            Topic::findOrFail($this->editingId)->update($data);
-        } else {
-            Topic::create($data);
+            return;
         }
 
         $this->showForm = false;
-        $this->reset(['name', 'emoji', 'slug', 'sort_order', 'editingId']);
-        $this->is_active = true;
+        $this->resetForm();
     }
 
     public function toggleActive(int $id): void
     {
-        if (! $this->currentUser()?->isCommunityAdmin()) {
-            return;
+        $user = $this->currentUser();
+        if ($user?->isCommunityAdmin()) {
+            app(CommunityTopicService::class)->toggleActive($id, $user);
         }
-        Topic::findOrFail($id)->update(['is_active' => ! Topic::findOrFail($id)->is_active]);
     }
 
     public function delete(int $id): void
     {
-        if (! $this->currentUser()?->isCommunityAdmin()) {
-            return;
+        $user = $this->currentUser();
+        if ($user?->isCommunityAdmin()) {
+            app(CommunityTopicService::class)->delete($id, $user);
         }
-        Topic::findOrFail($id)->delete();
+    }
+
+    public function render(): View
+    {
+        return view('livewire.admin-topics', [
+            'topics' => Topic::query()->orderBy('sort_order')->orderBy('name')->get(),
+        ])->layout('layouts.app');
+    }
+
+    private function resetForm(): void
+    {
+        $this->reset(['name', 'emoji', 'slug', 'sort_order', 'editingId']);
+        $this->is_active = true;
     }
 
     private function currentUser(): ?User
@@ -111,12 +126,5 @@ class AdminTopics extends Component
         $user = Auth::user();
 
         return $user instanceof User ? $user : null;
-    }
-
-    public function render(): View
-    {
-        return view('livewire.admin-topics', [
-            'topics' => Topic::orderBy('sort_order')->orderBy('name')->get(),
-        ])->layout('layouts.app');
     }
 }
