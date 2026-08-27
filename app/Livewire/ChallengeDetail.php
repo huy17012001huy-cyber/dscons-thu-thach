@@ -129,17 +129,14 @@ class ChallengeDetail extends Component
             return;
         }
 
-        $member = ExpeditionMember::where('id', $memberId)
-            ->where('expedition_id', $this->expedition->id)
-            ->where('status', 'pending')
-            ->firstOrFail();
-
-        $member->update([
-            'status' => 'approved',
-            'approved_at' => now(),
-            'approved_by' => Auth::id(),
-            // personal_starts_at NOT set yet — user must click "Bắt đầu"
-        ]);
+        $member = app(ChallengeEnrollmentService::class)->approve(
+            $this->expedition,
+            $memberId,
+            $this->currentUser(),
+        );
+        if (! $member) {
+            return;
+        }
 
         $member->user->notify(new GenericNotification(
             '✅', 'Bạn đã được duyệt tham gia '.$this->expedition->title.'! Bấm "Bắt đầu" khi bạn sẵn sàng.',
@@ -156,12 +153,14 @@ class ChallengeDetail extends Component
             return;
         }
 
-        $member = ExpeditionMember::where('id', $memberId)
-            ->where('expedition_id', $this->expedition->id)
-            ->where('status', 'pending')
-            ->firstOrFail();
-
-        $member->update(['status' => 'rejected']);
+        $member = app(ChallengeEnrollmentService::class)->reject(
+            $this->expedition,
+            $memberId,
+            $this->currentUser(),
+        );
+        if (! $member) {
+            return;
+        }
 
         $member->user->notify(new GenericNotification(
             '❌', 'Yêu cầu tham gia '.$this->expedition->title.' đã bị từ chối.',

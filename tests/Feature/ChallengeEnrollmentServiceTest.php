@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Core\CommunityContext;
+use App\Models\Brand;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Learning\Application\ChallengeEnrollmentService;
 use Tests\TestCase;
@@ -82,6 +85,63 @@ final class ChallengeEnrollmentServiceTest extends TestCase
         self::assertTrue($service->start($challenge, $user));
         self::assertFalse($service->start($challenge, $user));
         self::assertNotNull(ExpeditionMember::query()->value('personal_starts_at'));
+    }
+
+    public function test_only_a_community_admin_can_review_a_pending_enrollment(): void
+    {
+        $admin = User::factory()->create();
+        $admin->brandRoles()->attach(brand()->id, ['role' => 'admin']);
+        $learner = User::factory()->create(['source' => null]);
+        $challenge = $this->challenge($admin, 'Review Challenge');
+        $service = app(ChallengeEnrollmentService::class);
+
+        $service->request($challenge, $learner);
+        $member = ExpeditionMember::query()->firstOrFail();
+
+        self::assertNull($service->approve($challenge, $member->id, $learner));
+        self::assertSame('pending', $member->fresh()->status);
+
+        $approved = $service->approve($challenge, $member->id, $admin);
+        self::assertNotNull($approved);
+        self::assertSame('approved', $approved->status);
+        self::assertSame($admin->id, $approved->approved_by);
+
+        $secondLearner = User::factory()->create(['source' => null]);
+        $service->request($challenge, $secondLearner);
+        $secondMember = ExpeditionMember::query()->where('user_id', $secondLearner->id)->firstOrFail();
+        $rejected = $service->reject(
+            $challenge,
+            $secondMember->id,
+            $admin,
+        );
+        self::assertNotNull($rejected);
+        self::assertSame('rejected', $rejected->status);
+    }
+
+    public function test_enrollment_service_rejects_challenges_outside_the_current_community(): void
+    {
+        $admin = User::factory()->create();
+        $admin->brandRoles()->attach(brand()->id, ['role' => 'admin']);
+        $learner = User::factory()->create(['source' => null]);
+        $challenge = $this->challenge($admin, 'Scoped Review Challenge');
+        $service = app(ChallengeEnrollmentService::class);
+        $service->request($challenge, $learner);
+        $member = ExpeditionMember::query()->firstOrFail();
+        $otherBrand = Brand::create([
+            'name' => 'Other community',
+            'slug' => 'other-community',
+            'domain' => 'other-community.test',
+            'status' => 'active',
+            'theme_primary' => '#1F77BE',
+            'theme_accent' => '#E1F4F7',
+            'theme_bg' => '#F7FAFC',
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+
+        app(CommunityContext::class)->run($otherBrand, function () use ($service, $challenge, $member, $admin): void {
+            $service->approve($challenge, $member->id, $admin);
+        });
     }
 
     private function challenge(User $owner, string $title = 'Service Challenge'): Expedition
