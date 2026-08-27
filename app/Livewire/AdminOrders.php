@@ -11,10 +11,9 @@ use App\Models\ProductPurchase;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\Commerce\Application\AdminCommerceOrderService;
 
 class AdminOrders extends Component
 {
@@ -39,52 +38,12 @@ class AdminOrders extends Component
             return;
         }
 
-        $reference = 'ADMIN-ACTIVATE-'.now()->format('YmdHis').'-'.Str::upper(Str::random(5));
-        $user = null;
-        $label = 'đơn hàng';
-
-        DB::transaction(function () use ($type, $id, $reference, &$user, &$label): void {
-            if ($type === 'challenge') {
-                $member = ExpeditionMember::with(['user', 'expedition'])->findOrFail($id);
-                $user = $member->user;
-                $expedition = $member->expedition;
-                $label = $expedition ? $expedition->title : 'Challenge đã lưu trữ';
-                $member->update([
-                    'status' => 'approved',
-                    'approved_at' => now(),
-                    'approved_by' => Auth::id(),
-                    'payment_amount' => 0,
-                    'payment_ref' => $member->payment_ref ?: $reference,
-                    'kicked_at' => null,
-                ]);
-            } elseif ($type === 'course') {
-                $enrollment = CourseEnrollment::with(['user', 'course'])->findOrFail($id);
-                $user = $enrollment->user;
-                $course = $enrollment->course;
-                $label = $course ? $course->title : 'Khóa học đã lưu trữ';
-                $enrollment->update([
-                    'status' => 'active',
-                    'amount_paid' => 0,
-                    'payment_ref' => $enrollment->payment_ref ?: $reference,
-                    'paid_at' => now(),
-                ]);
-            } elseif ($type === 'product') {
-                $purchase = ProductPurchase::with(['user', 'product'])->findOrFail($id);
-                $user = $purchase->user;
-                $label = $purchase->product->title;
-                $purchase->update([
-                    'status' => 'active',
-                    'amount_paid' => 0,
-                    'payment_ref' => $purchase->payment_ref ?: $reference,
-                    'paid_at' => now(),
-                ]);
-            }
-        });
-
-        if ($user instanceof User) {
-            $user->notify(new GenericNotification('✓', 'Đơn hàng đã được Admin kích hoạt: '.$label));
+        $result = app(AdminCommerceOrderService::class)->activate($type, $id, Auth::user());
+        if (! $result) {
+            return;
         }
-        $this->dispatch('toast', message: 'Đã kích hoạt '.$label, type: 'success');
+        $result->user->notify(new GenericNotification('✓', 'Đơn hàng đã được Admin kích hoạt: '.$result->label));
+        $this->dispatch('toast', message: 'Đã kích hoạt '.$result->label, type: 'success');
     }
 
     public function grantAccess(): void
@@ -99,68 +58,19 @@ class AdminOrders extends Component
             'grantResourceId' => 'required|integer',
         ]);
 
-        $reference = 'GIFT-ADMIN'.Auth::id().'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(5));
-        $user = User::findOrFail($this->grantUserId);
-        $label = '';
-        $url = null;
+        $result = app(AdminCommerceOrderService::class)->grant(
+            $this->grantType,
+            (int) $this->grantUserId,
+            (int) $this->grantResourceId,
+            Auth::user(),
+        );
+        if (! $result) {
+            return;
+        }
 
-        DB::transaction(function () use ($reference, $user, &$label, &$url): void {
-            if ($this->grantType === 'challenge') {
-                $resource = Expedition::findOrFail($this->grantResourceId);
-                $member = ExpeditionMember::withoutGlobalScopes()->firstOrNew([
-                    'expedition_id' => $resource->id,
-                    'user_id' => $user->id,
-                ]);
-                $member->fill([
-                    'brand_id' => brand()->id,
-                    'class_at_join' => $member->class_at_join ?: $user->class,
-                    'joined_at' => $member->joined_at ?: now(),
-                    'status' => 'approved',
-                    'approved_at' => now(),
-                    'approved_by' => Auth::id(),
-                    'payment_amount' => 0,
-                    'payment_ref' => $reference,
-                    'kicked_at' => null,
-                    'personal_starts_at' => null,
-                ])->save();
-                $label = $resource->title;
-                $url = route('challenge.show', $resource->slug);
-            } elseif ($this->grantType === 'course') {
-                $resource = Course::findOrFail($this->grantResourceId);
-                $enrollment = CourseEnrollment::withoutGlobalScopes()->firstOrNew([
-                    'user_id' => $user->id,
-                    'course_id' => $resource->id,
-                ]);
-                $enrollment->fill([
-                    'brand_id' => brand()->id,
-                    'status' => 'active',
-                    'payment_ref' => $reference,
-                    'amount_paid' => 0,
-                    'paid_at' => now(),
-                    'enrolled_at' => $enrollment->enrolled_at ?: now(),
-                ])->save();
-                $label = $resource->title;
-                $url = community_route('academy.show', ['id' => $resource->id]);
-            } else {
-                $resource = DigitalProduct::findOrFail($this->grantResourceId);
-                $purchase = ProductPurchase::withoutGlobalScopes()->firstOrNew([
-                    'user_id' => $user->id,
-                    'digital_product_id' => $resource->id,
-                ]);
-                $purchase->fill([
-                    'brand_id' => brand()->id,
-                    'status' => 'active',
-                    'payment_ref' => $reference,
-                    'amount_paid' => 0,
-                    'paid_at' => now(),
-                ])->save();
-                $label = $resource->title;
-            }
-        });
-
-        $user->notify(new GenericNotification('🎁', 'Bạn được tặng quyền truy cập: '.$label, $url));
+        $result->user->notify(new GenericNotification('🎁', 'Bạn được tặng quyền truy cập: '.$result->label, $result->url));
         $this->reset(['grantResourceId']);
-        $this->dispatch('toast', message: 'Đã tặng quyền cho '.$user->name, type: 'success');
+        $this->dispatch('toast', message: 'Đã tặng quyền cho '.$result->user->name, type: 'success');
     }
 
     public function render(): View
