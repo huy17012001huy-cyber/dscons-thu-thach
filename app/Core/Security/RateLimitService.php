@@ -13,6 +13,7 @@ final class RateLimitService
     public static function register(): void
     {
         RateLimiter::for('google-auth', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+        RateLimiter::for('bot-api', fn (Request $request): Limit => Limit::perMinute(60)->by($request->bearerToken() ?: $request->ip()));
         RateLimiter::for('sepay-webhook', fn (Request $request): Limit => Limit::perMinute(120)->by($request->ip()));
         RateLimiter::for('revit-device-start', fn (Request $request): Limit => Limit::perMinute(8)->by($request->ip()));
         RateLimiter::for('revit-device-poll', fn (Request $request): Limit => Limit::perMinute(30)->by($request->ip()));
@@ -21,6 +22,11 @@ final class RateLimitService
             $user = $request->user();
 
             return Limit::perMinute(20)->by((string) ($user?->getAuthIdentifier() ?? $request->ip()));
+        });
+        RateLimiter::for('impersonation', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perMinute(5)->by((string) ($user?->getAuthIdentifier() ?? $request->ip()));
         });
     }
 }

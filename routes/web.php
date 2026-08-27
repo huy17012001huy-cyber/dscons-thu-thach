@@ -66,13 +66,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // ─── Bot API (GoClaw integration) ───────────────────────────────────
-Route::prefix('api/bot')->group(function () {
+Route::prefix('api/bot')->middleware('throttle:bot-api')->group(function () {
     Route::get('/member', [\App\Http\Controllers\BotApiController::class, 'lookupMember']);
     Route::get('/challenge-progress', [\App\Http\Controllers\BotApiController::class, 'challengeProgress']);
     Route::get('/pending-submissions', [\App\Http\Controllers\BotApiController::class, 'pendingSubmissions']);
 });
 
-Route::prefix('api/v1/bot')->group(function () {
+Route::prefix('api/v1/bot')->middleware('throttle:bot-api')->group(function () {
     Route::get('/member', [\App\Http\Controllers\V1\BotApiController::class, 'member']);
     Route::get('/challenge-progress', [\App\Http\Controllers\V1\BotApiController::class, 'challengeProgress']);
     Route::get('/pending-submissions', [\App\Http\Controllers\V1\BotApiController::class, 'pendingSubmissions']);
@@ -368,11 +368,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/impersonate/{user}', [ImpersonationController::class, 'start'])
         ->name('admin.impersonate.start')
         ->whereNumber('user')
-        ->middleware(['throttle:admin-sensitive', \App\Http\Middleware\EnsureRecentAdminTwoFactor::class])
+        ->middleware(['throttle:admin-sensitive', 'throttle:impersonation', \App\Http\Middleware\EnsureRecentAdminTwoFactor::class])
         ->can('super-admin');
     Route::post('/admin/impersonate/stop', [ImpersonationController::class, 'stop'])
         ->name('admin.impersonate.stop')
-        ->middleware('throttle:admin-sensitive');
+        ->middleware(['throttle:admin-sensitive', 'throttle:impersonation']);
 
     Route::middleware([\App\Http\Middleware\EnsureEmailVerified::class])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/security', [AdminSecurityController::class, 'show'])->name('security')->can('super-admin');
