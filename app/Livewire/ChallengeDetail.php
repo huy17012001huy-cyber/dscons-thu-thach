@@ -25,6 +25,8 @@ use Modules\Learning\Application\ChallengeCheckinService;
 use Modules\Learning\Application\ChallengeEnrollmentService;
 use Modules\Learning\Application\ChallengeSubmissionOutcome;
 use Modules\Learning\Application\ChallengeSubmissionService;
+use Modules\Learning\Application\ChallengeVideoFeedbackOutcome;
+use Modules\Learning\Application\ChallengeVideoFeedbackService;
 use Modules\Learning\Application\SubmissionReviewService;
 
 class ChallengeDetail extends Component
@@ -566,21 +568,19 @@ class ChallengeDetail extends Component
         if (! Auth::check()) {
             return;
         }
-        $member = $this->getApprovedMember((int) Auth::id());
-        if (! $member) {
-            return;
-        }
-        if (blank($this->videoFeedbackUrl)) {
+        $outcome = app(ChallengeVideoFeedbackService::class)->submit(
+            $this->expedition,
+            $this->currentUser(),
+            $this->videoFeedbackUrl,
+        );
+        if ($outcome === ChallengeVideoFeedbackOutcome::MissingUrl) {
             $this->dispatch('toast', message: 'Vui lòng paste link video!', type: 'error');
 
             return;
         }
-
-        $member->update([
-            'video_feedback_url' => $this->videoFeedbackUrl,
-            'video_feedback_status' => 'pending',
-            'video_feedback_at' => now(),
-        ]);
+        if ($outcome === ChallengeVideoFeedbackOutcome::NotEnrolled) {
+            return;
+        }
 
         // Notify admins
         User::where('is_admin', true)->each(function ($admin) {
@@ -600,11 +600,14 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        $member = ExpeditionMember::findOrFail($memberId);
-        $member->update([
-            'video_feedback_status' => 'approved',
-            'video_feedback_note' => 'Video đạt yêu cầu! Ban tổ chức sẽ liên hệ bạn về phần thưởng.',
-        ]);
+        $member = app(ChallengeVideoFeedbackService::class)->approve(
+            $this->expedition,
+            $memberId,
+            $this->currentUser(),
+        );
+        if (! $member) {
+            return;
+        }
         $member->user->notify(new GenericNotification(
             '★', 'Video Feedback được duyệt! Ban tổ chức sẽ liên hệ bạn về phần thưởng.',
             route('challenge.show', $this->expedition->slug)
@@ -617,12 +620,16 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        $member = ExpeditionMember::findOrFail($memberId);
-        $member->update([
-            'video_feedback_status' => 'rejected',
-            'video_feedback_note' => $note ?: 'Video chưa đạt yêu cầu. Hãy quay lại video chân thật và đầy cảm xúc hơn.',
-            'video_feedback_url' => null, // allow resubmit
-        ]);
+        $rejectNote = $note ?: 'Video chưa đạt yêu cầu. Hãy quay lại video chân thật và đầy cảm xúc hơn.';
+        $member = app(ChallengeVideoFeedbackService::class)->reject(
+            $this->expedition,
+            $memberId,
+            $this->currentUser(),
+            $rejectNote,
+        );
+        if (! $member) {
+            return;
+        }
         $member->user->notify(new GenericNotification(
             '✗', 'Video Feedback chưa đạt: '.($note ?: 'Hãy quay lại video chân thật hơn.'),
             route('challenge.show', $this->expedition->slug)
