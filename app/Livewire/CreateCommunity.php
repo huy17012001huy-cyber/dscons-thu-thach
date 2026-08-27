@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Models\CommunityApplication;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -10,6 +9,7 @@ use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Modules\Community\Application\CommunityApplicationService;
 
 class CreateCommunity extends Component
 {
@@ -90,7 +90,7 @@ class CreateCommunity extends Component
             }
         }
 
-        CommunityApplication::create($data);
+        app(CommunityApplicationService::class)->submit($user, $data);
         session()->flash('toast', ['message' => 'Đã gửi hồ sơ. Đội ngũ nền tảng sẽ xem xét và phản hồi cho bạn.', 'type' => 'success']);
         $this->redirect(route('communities'), navigate: true);
     }

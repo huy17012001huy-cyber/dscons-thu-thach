@@ -17,6 +17,21 @@ final class CommunityApplicationServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_member_can_submit_a_pending_community_application(): void
+    {
+        $applicant = User::factory()->create();
+
+        $application = app(CommunityApplicationService::class)->submit($applicant, [
+            'name' => 'Submitted Community',
+            'slug' => 'submitted-community',
+            'description' => 'A community submitted by a member.',
+        ]);
+
+        self::assertSame($applicant->id, $application->applicant_id);
+        self::assertSame('pending', $application->status);
+        $this->assertDatabaseHas('community_applications', ['id' => $application->id, 'status' => 'pending']);
+    }
+
     public function test_super_admin_approval_creates_a_complete_community_once(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

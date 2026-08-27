@@ -14,6 +14,16 @@ use Illuminate\Support\Facades\DB;
 
 final class CommunityApplicationService
 {
+    /** @param array<string, mixed> $attributes */
+    public function submit(User $applicant, array $attributes): CommunityApplication
+    {
+        return DB::transaction(fn (): CommunityApplication => CommunityApplication::create([
+            ...$attributes,
+            'applicant_id' => $applicant->id,
+            'status' => 'pending',
+        ]));
+    }
+
     public function approve(int $applicationId, User $actor, ?string $reviewNote): ?Brand
     {
         $this->assertSuperAdmin($actor);
