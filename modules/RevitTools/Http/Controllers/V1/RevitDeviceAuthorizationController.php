@@ -7,7 +7,6 @@ namespace Modules\RevitTools\Http\Controllers\V1;
 use App\Http\Requests\Revit\PollDeviceAuthorizationRequest;
 use App\Http\Requests\Revit\StartDeviceAuthorizationRequest;
 use App\Http\Responses\ApiResponse;
-use App\Models\Brand;
 use App\Models\ToolDeviceAuthorization;
 use App\Models\ToolSession;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +18,7 @@ final class RevitDeviceAuthorizationController
 
     public function start(StartDeviceAuthorizationRequest $request): JsonResponse
     {
-        $started = $this->licenses->startDeviceAuthorization($this->dscons(), $request->validated());
+        $started = $this->licenses->startDeviceAuthorization($this->licenses->revitBrand(), $request->validated());
 
         return ApiResponse::success([
             'authorization_code' => $started['code'],
@@ -62,14 +61,6 @@ final class RevitDeviceAuthorizationController
 
     private function authorization(string $code): ?ToolDeviceAuthorization
     {
-        return ToolDeviceAuthorization::withoutGlobalScopes()
-            ->where('brand_id', $this->dscons()->id)
-            ->where('code_hash', hash('sha256', $code))
-            ->first();
-    }
-
-    private function dscons(): Brand
-    {
-        return Brand::query()->where('slug', 'dscons')->firstOrFail();
+        return $this->licenses->findAuthorizationByCode($this->licenses->revitBrand(), $code);
     }
 }

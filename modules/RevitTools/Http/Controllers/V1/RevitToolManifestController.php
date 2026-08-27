@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\RevitTools\Http\Controllers\V1;
 
 use App\Http\Responses\ApiResponse;
-use App\Models\DigitalProduct;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\RevitTools\Application\RevitApiSessionResolver;
@@ -26,12 +25,10 @@ final class RevitToolManifestController
             return ApiResponse::error('Token Revit không hợp lệ hoặc đã hết hạn.', 401);
         }
 
-        $product = DigitalProduct::withoutGlobalScopes()
-            ->where('brand_id', $session->installation->brand_id)
-            ->where('product_kind', 'revit_tool')
-            ->where('tool_key', $toolKey)
-            ->where('is_published', true)
-            ->firstOrFail();
+        $product = $this->licenses->findPublishedTool($session->installation, $toolKey);
+        if (! $product) {
+            return ApiResponse::error('Không tìm thấy tool Revit.', 404);
+        }
         $isEntitled = collect($this->licenses->getEntitlements($session->installation))
             ->contains('tool_key', $toolKey);
         if (! $isEntitled) {

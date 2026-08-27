@@ -5,9 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Revit\PollDeviceAuthorizationRequest;
 use App\Http\Requests\Revit\RevitHeartbeatRequest;
 use App\Http\Requests\Revit\StartDeviceAuthorizationRequest;
-use App\Models\Brand;
-use App\Models\DigitalProduct;
-use App\Models\ToolDeviceAuthorization;
 use App\Models\ToolSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +17,7 @@ final class RevitToolApiController extends Controller
     public function start(StartDeviceAuthorizationRequest $request): JsonResponse
     {
         $input = $request->validated();
-        $brand = $this->dscons();
+        $brand = $this->licenses->revitBrand();
         $started = $this->licenses->startDeviceAuthorization($brand, $input);
 
         return response()->json([
@@ -34,10 +31,7 @@ final class RevitToolApiController extends Controller
     public function poll(PollDeviceAuthorizationRequest $request): JsonResponse
     {
         $input = $request->validated();
-        $authorization = ToolDeviceAuthorization::withoutGlobalScopes()
-            ->where('brand_id', $this->dscons()->id)
-            ->where('code_hash', hash('sha256', $input['authorization_code']))
-            ->first();
+        $authorization = $this->licenses->findAuthorizationByCode($this->licenses->revitBrand(), $input['authorization_code']);
         if (! $authorization || $authorization->expires_at->isPast()) {
             return response()->json(['status' => 'expired', 'message' => 'Mã kích hoạt đã hết hạn.'], 410);
         }
@@ -76,12 +70,10 @@ final class RevitToolApiController extends Controller
         if (! $session) {
             return $this->unauthorized();
         }
-        $product = DigitalProduct::withoutGlobalScopes()
-            ->where('brand_id', $session->installation->brand_id)
-            ->where('product_kind', 'revit_tool')
-            ->where('tool_key', $toolKey)
-            ->where('is_published', true)
-            ->firstOrFail();
+        $product = $this->licenses->findPublishedTool($session->installation, $toolKey);
+        if ($product === null) {
+            abort(404);
+        }
         $allowed = collect($this->licenses->getEntitlements($session->installation))->contains('tool_key', $toolKey);
         abort_unless($allowed, 403);
 
@@ -135,11 +127,6 @@ final class RevitToolApiController extends Controller
         $token = $request->bearerToken();
 
         return $this->licenses->sessionFromToken($token);
-    }
-
-    private function dscons(): Brand
-    {
-        return Brand::query()->where('slug', 'dscons')->firstOrFail();
     }
 
     private function unauthorized(): JsonResponse

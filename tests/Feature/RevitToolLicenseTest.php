@@ -142,6 +142,10 @@ class RevitToolLicenseTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.tool_key', 'dscons-v1-tool');
+        $this->withToken($token)->getJson('/api/v1/revit/tools/not-purchased/manifest')
+            ->assertNotFound()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('status', 404);
         $this->withToken($token)->postJson('/api/v1/revit/heartbeat', ['revit_version' => '2024'])
             ->assertOk()
             ->assertJsonPath('success', true)

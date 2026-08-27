@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Brand;
 use App\Models\ToolDeviceAuthorization;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -41,9 +40,6 @@ final class RevitDeviceAuthorizationController extends Controller
 
     private function authorization(string $code): ?ToolDeviceAuthorization
     {
-        return ToolDeviceAuthorization::withoutGlobalScopes()
-            ->where('brand_id', Brand::query()->where('slug', 'dscons')->value('id'))
-            ->where('browser_code_hash', hash('sha256', $code))
-            ->first();
+        return $this->licenses->findAuthorizationByBrowserCode($code);
     }
 }

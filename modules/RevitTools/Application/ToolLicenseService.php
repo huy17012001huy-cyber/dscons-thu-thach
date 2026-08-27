@@ -6,6 +6,7 @@ namespace Modules\RevitTools\Application;
 
 use App\Core\Audit\AuditLogger;
 use App\Models\Brand;
+use App\Models\DigitalProduct;
 use App\Models\ProductPurchase;
 use App\Models\ToolDeviceAuthorization;
 use App\Models\ToolInstallation;
@@ -24,6 +25,37 @@ final class ToolLicenseService
     private const AUTHORIZATION_MINUTES = 10;
 
     public function __construct(private readonly AuditLogger $audit) {}
+
+    public function revitBrand(): Brand
+    {
+        return Brand::query()->where('slug', 'dscons')->firstOrFail();
+    }
+
+    public function findAuthorizationByCode(Brand $brand, string $code): ?ToolDeviceAuthorization
+    {
+        return ToolDeviceAuthorization::withoutGlobalScopes()
+            ->where('brand_id', $brand->id)
+            ->where('code_hash', hash('sha256', $code))
+            ->first();
+    }
+
+    public function findAuthorizationByBrowserCode(string $code): ?ToolDeviceAuthorization
+    {
+        return ToolDeviceAuthorization::withoutGlobalScopes()
+            ->where('brand_id', $this->revitBrand()->id)
+            ->where('browser_code_hash', hash('sha256', $code))
+            ->first();
+    }
+
+    public function findPublishedTool(ToolInstallation $installation, string $toolKey): ?DigitalProduct
+    {
+        return DigitalProduct::withoutGlobalScopes()
+            ->where('brand_id', $installation->brand_id)
+            ->where('product_kind', 'revit_tool')
+            ->where('tool_key', $toolKey)
+            ->where('is_published', true)
+            ->first();
+    }
 
     /**
      * @param  array<string, string|null>  $input
