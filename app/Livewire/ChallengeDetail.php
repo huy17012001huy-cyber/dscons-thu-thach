@@ -404,28 +404,18 @@ class ChallengeDetail extends Component
             return;
         }
 
-        $late = $this->taskIsLate($member, $task->day_number);
+        $result = app(ChallengeSubmissionService::class)->submitContestEntry(
+            $this->expedition,
+            $taskId,
+            $user,
+            $evidence,
+        );
+        if ($result->outcome !== ChallengeSubmissionOutcome::ContestSubmitted) {
+            $this->showContestSubmissionOutcome($result->outcome);
 
-        if ($latestMiniGame && $latestMiniGame->status === 'rejected') {
-            // Replace row rejected — reset về pending, KHÔNG động reject_count
-            \DB::table('challenge_task_completions')
-                ->where('id', $latestMiniGame->id)
-                ->update([
-                    'evidence' => $evidence,
-                    'status' => 'pending',
-                    'is_late' => $late,
-                    'reviewed_by' => null,
-                    'reviewed_at' => null,
-                    'review_note' => null,
-                    'updated_at' => now(),
-                ]);
-        } else {
-            // Insert row mới (latest = approved, hoặc chưa có row nào)
-            $task->completedByUsers()->attach($user->id, [
-                'evidence' => $evidence,
-                'is_late' => $late,
-            ]);
+            return;
         }
+        $late = $result->isLate;
 
         $this->taskEvidence[$taskId] = '';
         $this->dispatch('toast', message: 'Đã nộp ứng dụng. Chờ admin duyệt.', type: 'success');
@@ -559,6 +549,28 @@ class ChallengeDetail extends Component
                 message: $isResubmission ? 'Vui lòng cung cấp bằng chứng mới!' : 'Vui lòng cung cấp bằng chứng hoàn thành!',
                 type: 'error',
             );
+        }
+    }
+
+    private function showContestSubmissionOutcome(ChallengeSubmissionOutcome $outcome): void
+    {
+        if (in_array($outcome, [ChallengeSubmissionOutcome::Frozen, ChallengeSubmissionOutcome::TaskLocked], true)) {
+            $this->showSubmissionOutcome($outcome);
+
+            return;
+        }
+
+        $messages = [
+            ChallengeSubmissionOutcome::SubmissionClosed->value => 'Mini-game đã hết hạn — không nộp ứng dụng được nữa.',
+            ChallengeSubmissionOutcome::MainSubmissionMissing->value => 'Hãy nộp bài chính ngày 15 trước.',
+            ChallengeSubmissionOutcome::MainSubmissionPending->value => 'Bài chính đang chờ admin duyệt — đợi được duyệt mới tham gia mini-game được.',
+            ChallengeSubmissionOutcome::MainSubmissionRejected->value => 'Bài chính đang bị từ chối — chỉnh và nộp lại bài chính trước.',
+            ChallengeSubmissionOutcome::ContestEntryPending->value => 'Ứng dụng trước đang chờ duyệt — vui lòng đợi rồi mới nộp tiếp.',
+            ChallengeSubmissionOutcome::MissingEvidence->value => 'Vui lòng cung cấp bằng chứng ứng dụng.',
+        ];
+        $message = $messages[$outcome->value] ?? null;
+        if ($message) {
+            $this->dispatch('toast', message: $message, type: 'error');
         }
     }
 
@@ -1036,11 +1048,6 @@ class ChallengeDetail extends Component
         abort_unless($user instanceof User, 403);
 
         return $user;
-    }
-
-    private function taskIsLate(ExpeditionMember $member, int $dayNumber): bool
-    {
-        return $this->expedition->isTaskLateForMember($member, $dayNumber);
     }
 
     public function render(): View

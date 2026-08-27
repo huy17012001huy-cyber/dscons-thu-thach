@@ -81,6 +81,41 @@ final class ChallengeSubmissionServiceTest extends TestCase
         $this->assertDatabaseMissing('challenge_task_completions', ['challenge_task_id' => $task->id]);
     }
 
+    public function test_contest_entry_requires_approved_main_submission_and_reuses_a_rejected_entry(): void
+    {
+        [$challenge, $learner] = $this->enrolledChallenge('Contest Submission Challenge');
+        $task = ChallengeTask::create([
+            'expedition_id' => $challenge->id,
+            'day_number' => 1,
+            'title' => 'Contest task',
+            'is_contest' => true,
+        ]);
+        ChallengeTaskCompletion::create([
+            'challenge_task_id' => $task->id,
+            'user_id' => $learner->id,
+            'evidence' => 'Approved main submission.',
+            'status' => 'approved',
+        ]);
+        $rejectedEntry = ChallengeTaskCompletion::create([
+            'challenge_task_id' => $task->id,
+            'user_id' => $learner->id,
+            'evidence' => 'Rejected entry.',
+            'status' => 'rejected',
+        ]);
+        $service = app(ChallengeSubmissionService::class);
+
+        $result = $service->submitContestEntry($challenge, $task->id, $learner, 'Replacement contest entry.');
+
+        self::assertSame(ChallengeSubmissionOutcome::ContestSubmitted, $result->outcome);
+        self::assertSame(2, ChallengeTaskCompletion::query()->count());
+        self::assertSame('pending', $rejectedEntry->fresh()->status);
+        self::assertSame('Replacement contest entry.', $rejectedEntry->fresh()->evidence);
+        self::assertSame(
+            ChallengeSubmissionOutcome::ContestEntryPending,
+            $service->submitContestEntry($challenge, $task->id, $learner, 'Duplicate entry.')->outcome,
+        );
+    }
+
     public function test_challenge_detail_submits_through_the_submission_service(): void
     {
         [$challenge, $learner] = $this->enrolledChallenge('Livewire Submission Challenge');
@@ -95,6 +130,36 @@ final class ChallengeSubmissionServiceTest extends TestCase
         $this->assertDatabaseHas('challenge_task_completions', [
             'challenge_task_id' => $task->id,
             'user_id' => $learner->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_challenge_detail_submits_a_contest_entry_through_the_submission_service(): void
+    {
+        [$challenge, $learner] = $this->enrolledChallenge('Livewire Contest Submission Challenge');
+        $task = ChallengeTask::create([
+            'expedition_id' => $challenge->id,
+            'day_number' => 1,
+            'title' => 'Contest task',
+            'is_contest' => true,
+        ]);
+        ChallengeTaskCompletion::create([
+            'challenge_task_id' => $task->id,
+            'user_id' => $learner->id,
+            'evidence' => 'Approved main submission.',
+            'status' => 'approved',
+        ]);
+
+        Livewire::actingAs($learner)
+            ->test(ChallengeDetail::class, ['slug' => $challenge->slug])
+            ->set('taskEvidence.'.$task->id, 'Contest entry from the learner workspace.')
+            ->call('submitMiniGame', $task->id)
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('challenge_task_completions', [
+            'challenge_task_id' => $task->id,
+            'user_id' => $learner->id,
+            'evidence' => 'Contest entry from the learner workspace.',
             'status' => 'pending',
         ]);
     }

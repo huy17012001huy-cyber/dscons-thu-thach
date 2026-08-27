@@ -101,6 +101,76 @@ final class ChallengeSubmissionService
         });
     }
 
+    public function submitContestEntry(
+        Expedition $challenge,
+        int $taskId,
+        User $user,
+        string $evidence,
+    ): ChallengeSubmissionResult {
+        return DB::transaction(function () use ($challenge, $taskId, $user, $evidence): ChallengeSubmissionResult {
+            $task = $this->taskForChallenge($challenge, $taskId);
+            if (! $task->is_contest) {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::NotContest, $task);
+            }
+
+            $outcome = $this->submissionAvailability($challenge, $task, $user);
+            if ($outcome) {
+                return new ChallengeSubmissionResult($outcome, $task);
+            }
+
+            $member = $this->requireApprovedMember($challenge, $user);
+            if ($challenge->isTaskLateForMember($member, $task->day_number)) {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::SubmissionClosed, $task, true);
+            }
+
+            $completions = ChallengeTaskCompletion::query()
+                ->where('challenge_task_id', $task->id)
+                ->where('user_id', $user->id)
+                ->oldest()
+                ->lockForUpdate()
+                ->get();
+            $mainSubmission = $completions->first();
+            if (! $mainSubmission) {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::MainSubmissionMissing, $task);
+            }
+            if ($mainSubmission->status === 'pending') {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::MainSubmissionPending, $task);
+            }
+            if ($mainSubmission->status === 'rejected') {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::MainSubmissionRejected, $task);
+            }
+
+            $latestEntry = $completions->slice(1)->last();
+            if ($latestEntry?->status === 'pending') {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::ContestEntryPending, $task);
+            }
+            if (blank($evidence)) {
+                return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::MissingEvidence, $task);
+            }
+
+            if ($latestEntry?->status === 'rejected') {
+                $latestEntry->update([
+                    'evidence' => $evidence,
+                    'status' => 'pending',
+                    'is_late' => false,
+                    'reviewed_by' => null,
+                    'reviewed_at' => null,
+                    'review_note' => null,
+                ]);
+            } else {
+                ChallengeTaskCompletion::create([
+                    'challenge_task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'evidence' => $evidence,
+                    'status' => 'pending',
+                    'is_late' => false,
+                ]);
+            }
+
+            return new ChallengeSubmissionResult(ChallengeSubmissionOutcome::ContestSubmitted, $task);
+        });
+    }
+
     private function taskForChallenge(Expedition $challenge, int $taskId): ChallengeTask
     {
         $this->assertCurrentCommunity($challenge);
