@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Core\Auth\UserProvisioningService;
-use App\Models\CommunityRoleAudit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +10,7 @@ use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Modules\Community\Application\CommunityMemberRoleService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminUsers extends Component
@@ -79,7 +79,7 @@ class AdminUsers extends Component
         $user->save();
     }
 
-    public function toggleModerator(int $id): void
+    public function toggleModerator(int $id, CommunityMemberRoleService $roles): void
     {
         if (! Auth::user()?->is_admin) {
             return;
@@ -90,18 +90,11 @@ class AdminUsers extends Component
         }
 
         $currentRole = $user->communityRole(brand()->id);
-        $nextRole = $currentRole === 'moderator' ? 'member' : 'moderator';
-        $user->brandRoles()->syncWithoutDetaching([
-            brand()->id => ['role' => $nextRole],
-        ]);
-        CommunityRoleAudit::create([
-            'brand_id' => brand()->id,
-            'actor_id' => Auth::id(),
-            'user_id' => $user->id,
-            'from_role' => $currentRole,
-            'to_role' => $nextRole,
-            'action' => 'role_changed_from_global_admin',
-        ]);
+        if ($currentRole === null) {
+            return;
+        }
+
+        $roles->changeRole(brand(), Auth::user(), $user->id, $currentRole === 'moderator' ? 'member' : 'moderator');
     }
 
     public function banUser(int $id): void
