@@ -87,6 +87,37 @@ final class SubmissionReviewServiceTest extends TestCase
         self::assertSame('pending', $otherCompletion->fresh()->status);
     }
 
+    public function test_community_admin_can_approve_all_pending_submissions_without_duplicate_xp_pairs(): void
+    {
+        $admin = $this->communityAdmin();
+        $challenge = $this->challenge($admin, 'Bulk Review Challenge');
+        $task = ChallengeTask::create([
+            'expedition_id' => $challenge->id,
+            'day_number' => 1,
+            'title' => 'Bulk review task',
+        ]);
+        $newLearner = User::factory()->create();
+        $returningLearner = User::factory()->create();
+        $newCompletion = $this->completion($challenge, $newLearner, $task);
+        ChallengeTaskCompletion::create([
+            'challenge_task_id' => $task->id,
+            'user_id' => $returningLearner->id,
+            'evidence' => 'Previously approved evidence.',
+            'status' => 'approved',
+        ]);
+        $returningCompletion = $this->completion($challenge, $returningLearner, $task);
+
+        $result = app(SubmissionReviewService::class)->approveAllPending($challenge, $admin);
+
+        self::assertNotNull($result);
+        self::assertCount(2, $result->completions);
+        self::assertCount(1, $result->awardableCompletions);
+        self::assertSame($newCompletion->id, $result->awardableCompletions->first()->id);
+        self::assertSame('approved', $newCompletion->fresh()->status);
+        self::assertSame('approved', $returningCompletion->fresh()->status);
+        $this->assertDatabaseCount('challenge_task_reviews', 2);
+    }
+
     public function test_challenge_detail_uses_the_review_service_for_an_admin_action(): void
     {
         $admin = $this->communityAdmin();
@@ -104,6 +135,25 @@ final class SubmissionReviewServiceTest extends TestCase
             'id' => $completion->id,
             'status' => 'approved',
             'score' => 85,
+        ]);
+    }
+
+    public function test_challenge_detail_approves_all_pending_submissions_through_the_review_service(): void
+    {
+        $admin = $this->communityAdmin();
+        $learner = User::factory()->create();
+        $challenge = $this->challenge($admin, 'Livewire Bulk Review Challenge');
+        $completion = $this->completion($challenge, $learner);
+
+        Livewire::actingAs($admin)
+            ->test(ChallengeDetail::class, ['slug' => $challenge->slug])
+            ->call('approveAllPending')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('challenge_task_completions', [
+            'id' => $completion->id,
+            'status' => 'approved',
+            'score' => 70,
         ]);
     }
 

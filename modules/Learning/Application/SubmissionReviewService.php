@@ -11,6 +11,7 @@ use App\Models\Expedition;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class SubmissionReviewService
@@ -38,6 +39,59 @@ final class SubmissionReviewService
         ?array $rubric,
     ): ?SubmissionReviewResult {
         return $this->review($challenge, $completionId, $reviewer, 'rejected', $note, $score, $rubric);
+    }
+
+    public function approveAllPending(Expedition $challenge, User $reviewer): ?BulkSubmissionReviewResult
+    {
+        $this->assertCurrentCommunity($challenge);
+
+        if (! $reviewer->isCommunityAdmin($challenge->brand_id)) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($challenge, $reviewer): BulkSubmissionReviewResult {
+            $pendingCompletions = $this->completionsForChallenge($challenge)
+                ->with(['task', 'user'])
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->get();
+            if ($pendingCompletions->isEmpty()) {
+                return new BulkSubmissionReviewResult(new Collection, new Collection);
+            }
+
+            $approvedPairs = $this->completionsForChallenge($challenge)
+                ->where('status', 'approved')
+                ->get(['user_id', 'challenge_task_id'])
+                ->map(fn (ChallengeTaskCompletion $completion): string => $this->pairKey($completion))
+                ->flip();
+            $awardableCompletions = new Collection;
+            $processedPairs = [];
+
+            foreach ($pendingCompletions as $completion) {
+                $pairKey = $this->pairKey($completion);
+                if (! isset($approvedPairs[$pairKey]) && ! isset($processedPairs[$pairKey])) {
+                    $awardableCompletions->push($completion);
+                    $processedPairs[$pairKey] = true;
+                }
+
+                $completion->update([
+                    'status' => 'approved',
+                    'reviewed_by' => $reviewer->id,
+                    'reviewed_at' => now(),
+                    'score' => 70,
+                ]);
+                ChallengeTaskReview::create([
+                    'completion_id' => $completion->id,
+                    'reviewer_id' => $reviewer->id,
+                    'status' => 'approved',
+                    'note' => null,
+                    'score' => 70,
+                    'created_at' => now(),
+                ]);
+            }
+
+            return new BulkSubmissionReviewResult($pendingCompletions, $awardableCompletions);
+        });
     }
 
     /** @param array<string, mixed>|null $rubric */
@@ -103,14 +157,25 @@ final class SubmissionReviewService
 
     private function findCompletion(Expedition $challenge, int $completionId): ?ChallengeTaskCompletion
     {
-        return ChallengeTaskCompletion::query()
+        return $this->completionsForChallenge($challenge)
             ->with(['task', 'user'])
             ->whereKey($completionId)
-            ->whereHas('task', function (Builder $query) use ($challenge): void {
-                $query->where('expedition_id', $challenge->id);
-            })
             ->lockForUpdate()
             ->first();
+    }
+
+    /** @return Builder<ChallengeTaskCompletion> */
+    private function completionsForChallenge(Expedition $challenge): Builder
+    {
+        return ChallengeTaskCompletion::query()
+            ->whereHas('task', function (Builder $query) use ($challenge): void {
+                $query->where('expedition_id', $challenge->id);
+            });
+    }
+
+    private function pairKey(ChallengeTaskCompletion $completion): string
+    {
+        return $completion->user_id.':'.$completion->challenge_task_id;
     }
 
     private function isMiniGameEntry(ChallengeTaskCompletion $completion): bool

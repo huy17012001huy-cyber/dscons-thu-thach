@@ -765,46 +765,23 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        $taskIds = $this->expedition->tasks()->pluck('id');
-
-        // Lấy pending rows TRƯỚC khi update — để biết XP target (user x task pairs chưa có approval)
-        $pendingRows = \DB::table('challenge_task_completions')
-            ->whereIn('challenge_task_id', $taskIds)
-            ->where('status', 'pending')
-            ->get(['id', 'user_id', 'challenge_task_id']);
-
-        // Tìm các (user_id, task_id) đã có approval trước đó → các pair này KHÔNG award XP
-        $existingApprovedPairs = \DB::table('challenge_task_completions')
-            ->whereIn('challenge_task_id', $taskIds)
-            ->where('status', 'approved')
-            ->get(['user_id', 'challenge_task_id'])
-            ->map(fn ($r) => $r->user_id.':'.$r->challenge_task_id)
-            ->unique()
-            ->flip();
-
-        // Bulk update
-        $pendingIds = $pendingRows->pluck('id');
-        $count = \DB::table('challenge_task_completions')
-            ->whereIn('id', $pendingIds)
-            ->update([
-                'status' => 'approved',
-                'reviewed_by' => Auth::id(),
-                'reviewed_at' => now(),
-                'score' => 70,
-            ]);
-
-        if ($pendingIds->isNotEmpty()) {
-            \DB::table('challenge_task_reviews')->insert(
-                $pendingIds->map(fn ($id) => [
-                    'completion_id' => $id,
-                    'reviewer_id' => Auth::id(),
-                    'status' => 'approved',
-                    'note' => null,
-                    'score' => 70,
-                    'created_at' => now(),
-                ])->all()
-            );
+        $result = app(SubmissionReviewService::class)->approveAllPending(
+            $this->expedition,
+            $this->currentUser(),
+        );
+        if (! $result) {
+            return;
         }
+        $taskIds = $this->expedition->tasks()->pluck('id');
+        $pendingRows = $result->completions;
+        $awardablePairs = $result->awardableCompletions
+            ->map(fn (\App\Models\ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
+            ->flip();
+        $existingApprovedPairs = $pendingRows
+            ->filter(fn (\App\Models\ChallengeTaskCompletion $completion): bool => ! isset($awardablePairs[$completion->user_id.':'.$completion->challenge_task_id]))
+            ->map(fn (\App\Models\ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
+            ->flip();
+        $count = $pendingRows->count();
 
         // Award XP: chỉ first approval per (user, task). Pair đã có approved trước đó → skip.
         $tasksById = ChallengeTask::whereIn('id', $taskIds)->get()->keyBy('id');
