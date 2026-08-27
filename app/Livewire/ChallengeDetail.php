@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
 use App\Mail\ChallengeCompletionMail;
@@ -19,6 +21,7 @@ use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Modules\Learning\Application\ChallengeAccessService;
+use Modules\Learning\Application\ChallengeEnrollmentService;
 
 class ChallengeDetail extends Component
 {
@@ -74,48 +77,22 @@ class ChallengeDetail extends Component
             return;
         }
 
-        $existingMember = $this->expedition->members()->where('user_id', $user->id)->first();
-        if ($existingMember) {
-            if ($existingMember->status === 'rejected' || $existingMember->kicked_at) {
-                // Rejected or kicked — safe to delete and re-apply
-                $existingMember->delete();
-            } else {
-                $this->dispatch('toast', message: 'Bạn đã đăng ký Challenge này rồi', type: 'error');
+        $outcome = app(ChallengeEnrollmentService::class)->request($this->expedition, $user);
 
-                return;
-            }
+        if ($outcome === ChallengeEnrollmentService::DUPLICATE) {
+            $this->dispatch('toast', message: 'Bạn đã đăng ký Challenge này rồi', type: 'error');
+
+            return;
         }
 
-        // Member tạo qua webhook (đã mua qua funnel) → duyệt tự động, bỏ bước admin.
-        // Vẫn để personal_starts_at null: user tự bấm "Bắt đầu" khi sẵn sàng.
-        // Premium membership opens every Challenge in the current community;
-        // keep the existing webhook auto-approval behaviour as well.
-        $autoApprove = $user->isWebhookCreated() || $user->hasPremiumMembership();
-
-        // Challenge có giá → chờ chuyển khoản. Webhook SePay tự duyệt khi nhận đủ tiền.
-        $price = (int) $this->expedition->price;
-        $needsPayment = ! $autoApprove && $price > 0;
-
-        ExpeditionMember::create([
-            'expedition_id' => $this->expedition->id,
-            'user_id' => $user->id,
-            'class_at_join' => $user->class,
-            'joined_at' => now(),
-            'status' => $autoApprove ? 'approved' : ($needsPayment ? 'pending_payment' : 'pending'),
-            'approved_at' => $autoApprove ? now() : null,
-            'payment_amount' => $needsPayment ? $price : null,
-            // approved_by null = hệ thống tự duyệt, không phải admin nào
-        ]);
-
-        if ($autoApprove) {
+        if ($outcome === ChallengeEnrollmentService::AUTO_APPROVED) {
             $this->dispatch('toast', message: 'Đã tham gia Challenge! Bấm "Bắt đầu" khi bạn sẵn sàng.', type: 'success');
             $this->expedition->refresh();
 
             return;
         }
 
-        // Chờ thanh toán: chưa cần admin làm gì, khỏi bắn thông báo cho họ.
-        if ($needsPayment) {
+        if ($outcome === ChallengeEnrollmentService::PENDING_PAYMENT) {
             $this->dispatch('toast', message: 'Quét mã QR để chuyển khoản. Hệ thống tự duyệt ngay khi nhận được tiền.', type: 'success');
             $this->expedition->refresh();
 
@@ -139,14 +116,9 @@ class ChallengeDetail extends Component
         if (! Auth::check()) {
             return;
         }
-        $member = $this->expedition->members()
-            ->where('user_id', Auth::id())
-            ->whereIn('status', ['pending', 'pending_payment'])
-            ->first();
-        if (! $member) {
+        if (! app(ChallengeEnrollmentService::class)->cancel($this->expedition, $this->currentUser())) {
             return;
         }
-        $member->delete();
         $this->dispatch('toast', message: 'Đã rút yêu cầu tham gia', type: 'success');
         $this->expedition->refresh();
     }
@@ -205,16 +177,10 @@ class ChallengeDetail extends Component
         if (! Auth::check()) {
             return;
         }
-        $member = $this->expedition->members()
-            ->where('user_id', Auth::id())
-            ->where('status', 'approved')
-            ->whereNull('personal_starts_at')
-            ->first();
-        if (! $member) {
+        if (! app(ChallengeEnrollmentService::class)->start($this->expedition, $this->currentUser())) {
             return;
         }
 
-        $member->update(['personal_starts_at' => now()]);
         $this->dispatch('toast', message: 'Challenge đã bắt đầu! Chúc bạn chinh phục thành công!', type: 'success');
         $this->expedition->refresh();
     }
