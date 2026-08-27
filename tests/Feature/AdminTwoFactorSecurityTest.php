@@ -77,5 +77,10 @@ final class AdminTwoFactorSecurityTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseMissing('sessions', ['id' => 'other-admin-session']);
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $admin->id,
+            'domain' => 'auth',
+            'action' => 'admin_sessions_revoked',
+        ]);
     }
 }

@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Core\Auth\AdminSessionService;
 use App\Core\Auth\AdminTwoFactorService;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 final class AdminSecurityController extends Controller
 {
-    public function __construct(private readonly AdminTwoFactorService $twoFactor) {}
+    public function __construct(
+        private readonly AdminSessionService $sessions,
+        private readonly AdminTwoFactorService $twoFactor,
+    ) {}
 
     public function show(Request $request): View
     {
@@ -23,10 +26,7 @@ final class AdminSecurityController extends Controller
         return view('pages.admin-security', [
             'user' => $user,
             'setup' => $request->session()->get('admin_2fa_setup'),
-            'sessions' => DB::table('sessions')
-                ->where('user_id', $user->id)
-                ->orderByDesc('last_activity')
-                ->get(['id', 'ip_address', 'user_agent', 'last_activity']),
+            'sessions' => $this->sessions->activeFor($user),
         ]);
     }
 
@@ -65,10 +65,7 @@ final class AdminSecurityController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User && $user->isSuperAdmin(), 403);
 
-        DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->where('id', '!=', $request->session()->getId())
-            ->delete();
+        $this->sessions->revokeOther($user, $request->session()->getId());
 
         return back()->with('success', 'Đã thu hồi các phiên đăng nhập khác.');
     }
