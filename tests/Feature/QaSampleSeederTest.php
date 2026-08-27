@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Brand;
 use Database\Seeders\QaSampleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,17 @@ class QaSampleSeederTest extends TestCase
 
         $this->assertSame($firstCounts, $this->sampleCounts());
         $this->assertSame(0, DB::table('users')->where('email', 'qa-member@example.test')->whereNotNull('password')->count());
+    }
+
+    public function test_qa_sample_seeder_bootstraps_dscons_when_no_community_exists(): void
+    {
+        app()->forgetInstance('brand');
+        Brand::query()->delete();
+
+        app(QaSampleSeeder::class)->run();
+
+        $this->assertDatabaseHas('brands', ['id' => 1, 'slug' => 'dscons']);
+        $this->assertDatabaseHas('users', ['email' => 'qa-member@example.test']);
     }
 
     private function sampleCounts(): array
