@@ -228,33 +228,6 @@ class ChallengeDetail extends Component
             ->where('expedition_id', $this->expedition->id)
             ->firstOrFail();
 
-        // Block submit during freeze for tasks at/after freeze_from_day (admin bypass)
-        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && ! $user->isBrandAdmin() && $this->expedition->freeze_ends_at) {
-            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
-
-            return;
-        }
-
-        $member = $this->getApprovedMember($user->id);
-        if (! $member) {
-            return;
-        }
-
-        $currentDay = $this->expedition->getCurrentDayForMember($member);
-        if ($task->day_number > $currentDay) {
-            return;
-        }
-
-        if ($task->locked_until && now()->lessThan($task->locked_until)) {
-            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
-
-            return;
-        }
-
-        if ($task->completedByUsers()->where('user_id', $user->id)->exists()) {
-            return;
-        }
-
         $evidence = $this->taskEvidence[$taskId] ?? '';
         if (blank($evidence)) {
             $this->dispatch('toast', message: 'Vui lòng cung cấp bằng chứng hoàn thành!', type: 'error');
@@ -307,74 +280,6 @@ class ChallengeDetail extends Component
         }
         $user = $this->currentUser();
 
-        $task = ChallengeTask::where('id', $taskId)
-            ->where('expedition_id', $this->expedition->id)
-            ->where('is_contest', true)
-            ->firstOrFail();
-
-        // Block submit during freeze for tasks at/after freeze_from_day (admin bypass)
-        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && ! $user->isBrandAdmin() && $this->expedition->freeze_ends_at) {
-            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
-
-            return;
-        }
-
-        $member = $this->getApprovedMember($user->id);
-        if (! $member) {
-            return;
-        }
-
-        $currentDay = $this->expedition->getCurrentDayForMember($member);
-        if ($task->day_number > $currentDay) {
-            return;
-        }
-
-        if ($task->locked_until && now()->lessThan($task->locked_until)) {
-            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa.', type: 'warning');
-
-            return;
-        }
-
-        // Mini-game cứng hạn: hết deadline → không cho nộp tiếp
-        if ($this->expedition->isTaskLateForMember($member, $task->day_number)) {
-            $this->dispatch('toast', message: 'Mini-game đã hết hạn — không nộp ứng dụng được nữa.', type: 'error');
-
-            return;
-        }
-
-        // Phải có bài chính (row 1) ĐÃ được approve mới được tham gia mini-game
-        $allRows = \DB::table('challenge_task_completions')
-            ->where('challenge_task_id', $taskId)
-            ->where('user_id', $user->id)
-            ->orderBy('created_at')
-            ->get();
-        $daySub = $allRows->first();
-        if (! $daySub) {
-            $this->dispatch('toast', message: 'Hãy nộp bài chính ngày 15 trước.', type: 'error');
-
-            return;
-        }
-        if ($daySub->status === 'pending') {
-            $this->dispatch('toast', message: 'Bài chính đang chờ admin duyệt — đợi được duyệt mới tham gia mini-game được.', type: 'error');
-
-            return;
-        }
-        if ($daySub->status === 'rejected') {
-            $this->dispatch('toast', message: 'Bài chính đang bị từ chối — chỉnh và nộp lại bài chính trước.', type: 'error');
-
-            return;
-        }
-
-        // Queue rule: tối đa 1 row đang pending. Approved rows = final (counted). Rejected = replace.
-        $miniGameRows = $allRows->slice(1)->values();
-        $latestMiniGame = $miniGameRows->last();
-
-        if ($latestMiniGame && $latestMiniGame->status === 'pending') {
-            $this->dispatch('toast', message: 'Ứng dụng trước đang chờ duyệt — vui lòng đợi rồi mới nộp tiếp.', type: 'error');
-
-            return;
-        }
-
         $evidence = $this->taskEvidence[$taskId] ?? '';
         if (blank($evidence)) {
             $this->dispatch('toast', message: 'Vui lòng cung cấp bằng chứng ứng dụng.', type: 'error');
@@ -391,6 +296,10 @@ class ChallengeDetail extends Component
         if ($result->outcome !== ChallengeSubmissionOutcome::ContestSubmitted) {
             $this->showContestSubmissionOutcome($result->outcome);
 
+            return;
+        }
+        $task = $result->task;
+        if (! $task) {
             return;
         }
         $late = $result->isLate;
@@ -419,30 +328,6 @@ class ChallengeDetail extends Component
             ->where('expedition_id', $this->expedition->id)
             ->firstOrFail();
 
-        // Block resubmit during freeze for tasks at/after freeze_from_day (admin bypass)
-        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && ! $user->isBrandAdmin() && $this->expedition->freeze_ends_at) {
-            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
-
-            return;
-        }
-
-        if ($task->locked_until && now()->lessThan($task->locked_until)) {
-            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
-
-            return;
-        }
-
-        // Cho contest task: chỉ resubmit "bài chính" (row đầu tiên rejected). Các ứng dụng cộng sự rejected khác KHÔNG resubmit.
-        $existing = \DB::table('challenge_task_completions')
-            ->where('challenge_task_id', $taskId)
-            ->where('user_id', $user->id)
-            ->where('status', 'rejected')
-            ->orderBy('created_at')
-            ->first();
-        if (! $existing) {
-            return;
-        }
-
         $evidence = $this->taskEvidence[$taskId] ?? '';
         if (blank($evidence)) {
             $this->dispatch('toast', message: 'Vui lòng cung cấp bằng chứng mới!', type: 'error');
@@ -454,11 +339,6 @@ class ChallengeDetail extends Component
             return;
         }
         $submissionPayload = $this->buildSubmissionPayload($task);
-        $member = $this->getApprovedMember($user->id);
-        if (! $member) {
-            return;
-        }
-
         $result = app(ChallengeSubmissionService::class)->resubmit(
             $this->expedition,
             $taskId,
@@ -516,23 +396,31 @@ class ChallengeDetail extends Component
 
             return;
         }
-        if ($outcome === ChallengeSubmissionOutcome::TaskLocked) {
-            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
-
-            return;
-        }
-        if ($outcome === ChallengeSubmissionOutcome::MissingEvidence) {
-            $this->dispatch(
-                'toast',
-                message: $isResubmission ? 'Vui lòng cung cấp bằng chứng mới!' : 'Vui lòng cung cấp bằng chứng hoàn thành!',
-                type: 'error',
-            );
+        $messages = [
+            ChallengeSubmissionOutcome::TaskLocked->value => ['Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', 'warning'],
+            ChallengeSubmissionOutcome::NotEnrolled->value => ['Bạn chưa được duyệt tham gia Challenge này.', 'error'],
+            ChallengeSubmissionOutcome::NotUnlocked->value => ['Nhiệm vụ này chưa mở. Hãy hoàn thành các ngày trước trước.', 'warning'],
+            ChallengeSubmissionOutcome::AlreadySubmitted->value => ['Bạn đã nộp bài cho nhiệm vụ này.', 'info'],
+            ChallengeSubmissionOutcome::NotRejected->value => ['Không có bài bị từ chối để nộp lại.', 'info'],
+            ChallengeSubmissionOutcome::MissingEvidence->value => [
+                $isResubmission ? 'Vui lòng cung cấp bằng chứng mới!' : 'Vui lòng cung cấp bằng chứng hoàn thành!',
+                'error',
+            ],
+        ];
+        [$message, $type] = $messages[$outcome->value] ?? [null, null];
+        if ($message && $type) {
+            $this->dispatch('toast', message: $message, type: $type);
         }
     }
 
     private function showContestSubmissionOutcome(ChallengeSubmissionOutcome $outcome): void
     {
-        if (in_array($outcome, [ChallengeSubmissionOutcome::Frozen, ChallengeSubmissionOutcome::TaskLocked], true)) {
+        if (in_array($outcome, [
+            ChallengeSubmissionOutcome::Frozen,
+            ChallengeSubmissionOutcome::TaskLocked,
+            ChallengeSubmissionOutcome::NotEnrolled,
+            ChallengeSubmissionOutcome::NotUnlocked,
+        ], true)) {
             $this->showSubmissionOutcome($outcome);
 
             return;
@@ -833,18 +721,6 @@ class ChallengeDetail extends Component
             $type,
         );
     }
-
-    // ─── Helpers ─────────────────────────────────────────────
-    private function getApprovedMember(int $userId): ?ExpeditionMember
-    {
-        return $this->expedition->members()
-            ->where('user_id', $userId)
-            ->whereIn('status', ['approved', 'paid'])
-            ->whereNull('kicked_at')
-            ->first();
-    }
-
-    // Day calculation + late check moved to Expedition model (freeze-aware)
 
     private function currentUser(): User
     {
