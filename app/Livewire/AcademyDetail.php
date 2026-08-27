@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Modules\Commerce\Application\CourseEnrollmentOutcome;
+use Modules\Commerce\Application\CourseEnrollmentService;
 
 class AcademyDetail extends Component
 {
@@ -54,14 +56,9 @@ class AcademyDetail extends Component
             // Premium membership includes every course in the current community.
             // Create the enrollment lazily so progress, completion and XP keep
             // using the existing course flow without a second payment.
-            if (! $this->enrolled && ! $this->pendingPayment
-                && $user->hasPremiumMembership()
-                && $this->course->is_published) {
-                $enrollment = CourseEnrollment::firstOrCreate(
-                    ['user_id' => $user->id, 'course_id' => $this->course->id],
-                    ['status' => 'active', 'enrolled_at' => now()]
-                );
-                if ($enrollment->status === 'active') {
+            if (! $this->enrolled && ! $this->pendingPayment) {
+                $outcome = app(CourseEnrollmentService::class)->ensurePremiumEnrollment($this->course, $user);
+                if (in_array($outcome, [CourseEnrollmentOutcome::Active, CourseEnrollmentOutcome::AlreadyActive], true)) {
                     $this->enrolled = true;
                 }
             }
@@ -83,41 +80,29 @@ class AcademyDetail extends Component
             return;
         }
 
-        if ($user->level < $this->course->min_level) {
-            $this->dispatch('toast', message: 'Cần đạt Lv.'.$this->course->min_level.' để tham gia', type: 'error');
+        $outcome = app(CourseEnrollmentService::class)->enroll($this->course, $user);
 
-            return;
-        }
+        match ($outcome) {
+            CourseEnrollmentOutcome::Active => $this->activateEnrollment('Đăng ký khóa học thành công!'),
+            CourseEnrollmentOutcome::PendingPayment => $this->markPaymentPending(),
+            CourseEnrollmentOutcome::AlreadyActive => $this->enrolled = true,
+            CourseEnrollmentOutcome::AlreadyPending => $this->pendingPayment = true,
+            CourseEnrollmentOutcome::LevelLocked => $this->dispatch('toast', message: 'Cần đạt Lv.'.$this->course->min_level.' để tham gia', type: 'error'),
+            CourseEnrollmentOutcome::Unavailable => $this->dispatch('toast', message: 'Khóa học hiện chưa mở đăng ký trong cộng đồng này.', type: 'error'),
+        };
+    }
 
-        // Check for existing pending enrollment
-        $existing = CourseEnrollment::where('user_id', $user->id)
-            ->where('course_id', $this->course->id)
-            ->first();
-        if ($existing) {
-            return;
-        }
+    private function activateEnrollment(string $message): void
+    {
+        $this->enrolled = true;
+        $this->pendingPayment = false;
+        $this->dispatch('toast', message: $message, type: 'success');
+    }
 
-        if ($user->hasPremiumMembership() || $this->course->isFree()) {
-            // Free course — enroll immediately
-            CourseEnrollment::create([
-                'user_id' => $user->id,
-                'course_id' => $this->course->id,
-                'status' => 'active',
-                'enrolled_at' => now(),
-            ]);
-            $this->enrolled = true;
-            $this->dispatch('toast', message: 'Đăng ký khóa học thành công!', type: 'success');
-        } else {
-            // Paid course — create pending enrollment, show payment info
-            CourseEnrollment::create([
-                'user_id' => $user->id,
-                'course_id' => $this->course->id,
-                'status' => 'pending_payment',
-                'enrolled_at' => now(),
-            ]);
-            $this->pendingPayment = true;
-            $this->dispatch('toast', message: 'Vui lòng chuyển khoản để hoàn tất đăng ký!', type: 'info');
-        }
+    private function markPaymentPending(): void
+    {
+        $this->pendingPayment = true;
+        $this->dispatch('toast', message: 'Vui lòng chuyển khoản để hoàn tất đăng ký!', type: 'info');
     }
 
     public function toggleLesson(int $lessonId): void
