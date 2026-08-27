@@ -4,23 +4,19 @@ namespace App\Livewire;
 
 use App\Models\CommunityPostType;
 use App\Models\CommunitySubject;
-use App\Models\Post;
-use App\Models\PostImage;
 use App\Models\Topic;
 use App\Models\User;
 use App\Support\PostContentRenderer;
 use App\Support\PostHtmlSanitizer;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Modules\Community\Application\PostPublishData;
+use Modules\Community\Application\PostPublishingService;
 
 class ComposePost extends Component
 {
@@ -69,17 +65,6 @@ class ComposePost extends Component
     /** @var list<TemporaryUploadedFile> */
     public array $imageUploads = [];
 
-    public function mount(): void
-    {
-        $this->pillars = collect(brand()->pillarProfiles())
-            ->map(fn (array $pillar) => ['icon' => $pillar['icon'], 'label' => $pillar['name']])
-            ->all();
-    }
-
-    /**
-     * Keep validation copy useful in the UI instead of exposing Laravel's
-     * translation keys when the project does not ship a language pack yet.
-     */
     /** @var array<string, string> */
     protected array $messages = [
         'title.max' => 'Tiêu đề tối đa :max ký tự.',
@@ -92,6 +77,13 @@ class ComposePost extends Component
         'imageUploads.*.image' => 'Tệp đính kèm phải là hình ảnh.',
         'imageUploads.*.max' => 'Mỗi hình ảnh tối đa :max KB.',
     ];
+
+    public function mount(): void
+    {
+        $this->pillars = collect(brand()->pillarProfiles())
+            ->map(fn (array $pillar) => ['icon' => $pillar['icon'], 'label' => $pillar['name']])
+            ->all();
+    }
 
     public function updatedImageUploads(): void
     {
@@ -136,7 +128,7 @@ class ComposePost extends Component
     public function submit(): void
     {
         $user = $this->authenticatedUser();
-        if (! $user || ! $user->isCommunityParticipant()) {
+        if (! $user) {
             $this->addError('content', 'Bạn cần tham gia cộng đồng trước khi đăng bài.');
 
             return;
@@ -145,52 +137,21 @@ class ComposePost extends Component
         $this->prepareContentForValidation();
         $this->syncLegacyPillar();
         $this->validate();
-        $this->validateCommunityTaxonomy();
 
-        $dayKey = Carbon::now('Asia/Ho_Chi_Minh')->format('Y-m-d');
-        $lock = Cache::lock('compose-post-day:'.$user->id.':'.$dayKey, 10);
-        if (! $lock->get()) {
-            $this->addError('content', 'Bài viết đang được xử lý. Vui lòng thử lại sau một chút.');
+        $outcome = app(PostPublishingService::class)->publish($user, new PostPublishData(
+            content: $this->content,
+            pillar: $this->pillar,
+            title: $this->title ?: null,
+            contentHtml: $this->contentHtml ?: null,
+            topicId: $this->topic_id,
+            subjectId: $this->subject_id,
+            postTypeId: $this->post_type_id,
+            imagePaths: $this->uploadedImages,
+        ), $this->dailyPostLimit);
+        if ($outcome->error) {
+            $this->addError('content', $outcome->error);
 
             return;
-        }
-
-        try {
-            $postsToday = $this->todayPostCount($user->id);
-
-            if ($postsToday >= $this->dailyPostLimit) {
-                $this->addError('content', 'Bạn đã đạt giới hạn '.$this->dailyPostLimit.' bài hôm nay. Bạn có thể đăng lại sau 00:00 (giờ Việt Nam).');
-
-                return;
-            }
-
-            $post = Post::create([
-                'user_id' => $user->id,
-                'brand_id' => brand()->id,
-                'title' => $this->title ?: null,
-                'content' => $this->content,
-                'content_html' => filled($this->contentHtml)
-                    ? app(PostHtmlSanitizer::class)->sanitize($this->contentHtml)
-                    : null,
-                'content_format' => filled($this->contentHtml) ? 'html' : 'markdown',
-                'pillar' => $this->pillar,
-                'topic_id' => $this->topic_id ?: null,
-                'subject_id' => $this->subject_id ?: null,
-                'post_type_id' => $this->post_type_id ?: null,
-                'is_signal' => false,
-            ]);
-
-            $post->update(['slug' => $this->buildSlug($post)]);
-
-            foreach ($this->uploadedImages as $order => $path) {
-                PostImage::create([
-                    'post_id' => $post->id,
-                    'path' => $path,
-                    'order_index' => $order,
-                ]);
-            }
-        } finally {
-            $lock->release();
         }
 
         $this->resetForm();
@@ -200,23 +161,9 @@ class ComposePost extends Component
 
     public function previewContent(): string
     {
-        if (filled($this->contentHtml)) {
-            return app(PostHtmlSanitizer::class)->sanitize($this->contentHtml);
-        }
-
-        return app(PostContentRenderer::class)->render($this->content);
-    }
-
-    private function todayPostCount(int $userId): int
-    {
-        $timezone = 'Asia/Ho_Chi_Minh';
-        $start = Carbon::now($timezone)->startOfDay()->utc();
-        $end = Carbon::now($timezone)->endOfDay()->utc();
-
-        return Post::withTrashed()
-            ->where('user_id', $userId)
-            ->whereBetween('created_at', [$start, $end])
-            ->count();
+        return filled($this->contentHtml)
+            ? app(PostHtmlSanitizer::class)->sanitize($this->contentHtml)
+            : app(PostContentRenderer::class)->render($this->content);
     }
 
     private function deleteUploadedImages(): void
@@ -260,28 +207,6 @@ class ComposePost extends Component
         };
     }
 
-    private function validateCommunityTaxonomy(): void
-    {
-        if ($this->subject_id && ! CommunitySubject::query()->whereKey($this->subject_id)->exists()) {
-            $this->addError('subject_id', 'Chủ đề không thuộc cộng đồng hiện tại.');
-        }
-
-        if ($this->post_type_id && ! CommunityPostType::query()->whereKey($this->post_type_id)->exists()) {
-            $this->addError('post_type_id', 'Loại nội dung không thuộc cộng đồng hiện tại.');
-        }
-
-        if ($this->getErrorBag()->isNotEmpty()) {
-            throw ValidationException::withMessages($this->getErrorBag()->toArray());
-        }
-    }
-
-    private function buildSlug(Post $post): string
-    {
-        $base = Str::slug($post->title ?: Str::limit($this->content, 60, '')) ?: 'bai-viet';
-
-        return $base.'-'.$post->id;
-    }
-
     private function authenticatedUser(): ?User
     {
         $user = Auth::user();
@@ -292,13 +217,11 @@ class ComposePost extends Component
     public function render(): View
     {
         $user = $this->authenticatedUser();
-        $postsToday = $user ? $this->todayPostCount($user->id) : 0;
+        $postsToday = $user ? app(PostPublishingService::class)->postsToday($user) : 0;
 
         return view('livewire.compose-post', [
             'topics' => Topic::active()->get(),
-            'subjects' => CommunitySubject::active()
-                ->where('slug', '!=', 'tieu-chuan')
-                ->get(),
+            'subjects' => CommunitySubject::active()->where('slug', '!=', 'tieu-chuan')->get(),
             'postTypes' => CommunityPostType::active()->get(),
             'postsToday' => $postsToday,
             'remainingPosts' => max(0, $this->dailyPostLimit - $postsToday),

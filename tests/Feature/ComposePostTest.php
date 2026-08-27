@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Livewire\ComposePost;
 use App\Models\Membership;
 use App\Models\Post;
+use App\Models\User;
 use App\Support\PostContentRenderer;
 use App\Support\PostHtmlSanitizer;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -18,11 +18,13 @@ class ComposePostTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @param array<string, mixed> $attributes */
     private function member(array $attributes = []): User
     {
         $user = User::factory()->create(array_merge(['level' => 1, 'class' => 'offer_architect'], $attributes));
         Membership::factory()->active()->create(['user_id' => $user->id]);
         $user->brandRoles()->attach(brand()->id, ['role' => 'member']);
+
         return $user;
     }
 
