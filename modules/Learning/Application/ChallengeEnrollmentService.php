@@ -12,6 +12,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Learning\Domain\Events\ChallengeEnrollmentRequested;
+use Modules\Learning\Domain\Events\ChallengeEnrollmentReviewed;
 
 final class ChallengeEnrollmentService
 {
@@ -156,6 +157,7 @@ final class ChallengeEnrollmentService
                 ->firstOrFail();
 
             $member->update($attributes);
+            DB::afterCommit(fn () => Event::dispatch(new ChallengeEnrollmentReviewed($challenge->id, $member->user_id, (string) $attributes['status'])));
 
             return $member->load('user');
         });

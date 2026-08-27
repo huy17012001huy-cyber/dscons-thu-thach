@@ -135,11 +135,6 @@ class ChallengeDetail extends Component
             return;
         }
 
-        $member->user->notify(new GenericNotification(
-            '✅', 'Bạn đã được duyệt tham gia '.$this->expedition->title.'! Bấm "Bắt đầu" khi bạn sẵn sàng.',
-            route('challenge.show', $this->expedition->slug)
-        ));
-
         $this->dispatch('toast', message: 'Đã duyệt '.$member->user->name, type: 'success');
         $this->expedition->refresh();
     }
@@ -158,10 +153,6 @@ class ChallengeDetail extends Component
         if (! $member) {
             return;
         }
-
-        $member->user->notify(new GenericNotification(
-            '❌', 'Yêu cầu tham gia '.$this->expedition->title.' đã bị từ chối.',
-        ));
 
         $this->dispatch('toast', message: 'Đã từ chối '.$member->user->name, type: 'success');
         $this->expedition->refresh();
