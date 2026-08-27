@@ -17,6 +17,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use Modules\Learning\Application\ChallengeFreezeService;
 use Modules\Learning\Application\ChallengeManagementService;
+use Modules\Learning\Application\ChallengeTaskManagementService;
 
 class AdminChallenges extends Component
 {
@@ -394,7 +395,13 @@ class AdminChallenges extends Component
 
     public function openEditTask(int $id): void
     {
-        $task = ChallengeTask::findOrFail($id);
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
+        $task = app(ChallengeTaskManagementService::class)->find($id, Auth::user());
+        if (! $task) {
+            return;
+        }
         $this->editingTaskId = $id;
         $this->taskDayNumber = $task->day_number;
         $this->taskLabel = $task->label ?? '';
@@ -518,7 +525,10 @@ class AdminChallenges extends Component
         ];
 
         if ($this->editingTaskId) {
-            $task = ChallengeTask::findOrFail($this->editingTaskId);
+            $task = app(ChallengeTaskManagementService::class)->find($this->editingTaskId, Auth::user());
+            if (! $task) {
+                return;
+            }
             // Lưu file mới: xoá file cũ nếu có, rồi store file upload
             if ($this->taskRewardFile) {
                 if ($task->reward_file_path && Storage::disk('local')->exists($task->reward_file_path)) {
@@ -534,10 +544,26 @@ class AdminChallenges extends Component
                     $data['reward_file_path'] = $stored;
                 }
             }
-            $task->update($data);
+            $task = app(ChallengeTaskManagementService::class)->save(
+                (int) $this->managingExpeditionId,
+                $task->id,
+                Auth::user(),
+                $data,
+            );
+            if (! $task) {
+                return;
+            }
             $this->dispatch('toast', message: 'Đã cập nhật task', type: 'success');
         } else {
-            $task = ChallengeTask::create($data);
+            $task = app(ChallengeTaskManagementService::class)->save(
+                (int) $this->managingExpeditionId,
+                null,
+                Auth::user(),
+                $data,
+            );
+            if (! $task) {
+                return;
+            }
             if ($this->taskRewardFile) {
                 $ext = $this->taskRewardFile->getClientOriginalExtension();
                 $stored = $this->taskRewardFile->storeAs(
@@ -546,7 +572,7 @@ class AdminChallenges extends Component
                     'local'
                 );
                 if (is_string($stored)) {
-                    $task->update(['reward_file_path' => $stored]);
+                    app(ChallengeTaskManagementService::class)->saveRewardFile($task, Auth::user(), $stored);
                 }
             }
             $this->dispatch('toast', message: 'Đã thêm task mới', type: 'success');
@@ -561,11 +587,13 @@ class AdminChallenges extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        $task = ChallengeTask::findOrFail($id);
-        if ($task->reward_file_path && Storage::disk('local')->exists($task->reward_file_path)) {
-            Storage::disk('local')->delete($task->reward_file_path);
+        $deletedTask = app(ChallengeTaskManagementService::class)->delete($id, Auth::user());
+        if (! $deletedTask) {
+            return;
         }
-        $task->delete();
+        if ($deletedTask->reward_file_path && Storage::disk('local')->exists($deletedTask->reward_file_path)) {
+            Storage::disk('local')->delete($deletedTask->reward_file_path);
+        }
         $this->dispatch('toast', message: 'Đã xóa task', type: 'success');
     }
 
@@ -574,11 +602,10 @@ class AdminChallenges extends Component
         if (! Auth::user()?->isBrandAdmin() || ! $this->editingTaskId) {
             return;
         }
-        $task = ChallengeTask::findOrFail($this->editingTaskId);
-        if ($task->reward_file_path && Storage::disk('local')->exists($task->reward_file_path)) {
-            Storage::disk('local')->delete($task->reward_file_path);
+        $rewardPath = app(ChallengeTaskManagementService::class)->removeRewardFile($this->editingTaskId, Auth::user());
+        if ($rewardPath && Storage::disk('local')->exists($rewardPath)) {
+            Storage::disk('local')->delete($rewardPath);
         }
-        $task->update(['reward_file_path' => null, 'reward_file_label' => null]);
         $this->existingRewardFile = null;
         $this->taskRewardFileLabel = '';
         $this->dispatch('toast', message: 'Đã xoá file thưởng', type: 'success');
