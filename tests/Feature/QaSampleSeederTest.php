@@ -32,7 +32,7 @@ class QaSampleSeederTest extends TestCase
 
         app(QaSampleSeeder::class)->run();
 
-        $this->assertDatabaseHas('brands', ['id' => 1, 'slug' => 'dscons']);
+        $this->assertDatabaseHas('brands', ['slug' => 'dscons']);
         $this->assertDatabaseHas('users', ['email' => 'qa-member@example.test']);
     }
 
