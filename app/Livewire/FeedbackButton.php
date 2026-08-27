@@ -2,10 +2,11 @@
 
 namespace App\Livewire;
 
-use App\Models\Feedback;
+use App\Models\User;
 use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Modules\Community\Application\CommunityFeedbackService;
 
 class FeedbackButton extends Component
 {
@@ -36,13 +37,9 @@ class FeedbackButton extends Component
     {
         $this->validate();
 
-        Feedback::create([
-            'user_id' => auth()->id(),
-            'brand_id' => app()->bound('brand') ? brand()->id : null,
-            'type' => $this->type,
-            'subject' => $this->subject,
-            'content' => $this->content,
-        ]);
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+        app(CommunityFeedbackService::class)->submit($user, $this->type, $this->subject, $this->content);
 
         $this->closeModal();
         $this->dispatch('toast', message: 'Gửi thành công! Cảm ơn bạn đã góp ý.', type: 'success');
