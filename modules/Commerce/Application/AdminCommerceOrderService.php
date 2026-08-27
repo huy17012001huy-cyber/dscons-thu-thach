@@ -12,6 +12,7 @@ use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\ProductPurchase;
 use App\Models\User;
+use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -32,11 +33,16 @@ final class AdminCommerceOrderService
         $this->assertType($type);
         $reference = $this->reference('ADMIN-ACTIVATE', $actor);
 
-        return DB::transaction(fn (): AdminCommerceOrderResult => match ($type) {
-            'challenge' => $this->activateChallenge($orderId, $actor, $reference, $brand->id),
-            'course' => $this->activateCourse($orderId, $reference, $brand->id),
-            'product' => $this->activateProduct($orderId, $reference, $brand->id),
-            default => throw new InvalidArgumentException('Unsupported order type.'),
+        return DB::transaction(function () use ($type, $orderId, $actor, $reference, $brand): AdminCommerceOrderResult {
+            $result = match ($type) {
+                'challenge' => $this->activateChallenge($orderId, $actor, $reference, $brand->id),
+                'course' => $this->activateCourse($orderId, $reference, $brand->id),
+                'product' => $this->activateProduct($orderId, $reference, $brand->id),
+                default => throw new InvalidArgumentException('Unsupported order type.'),
+            };
+            DB::afterCommit(fn () => $result->user->notify(new GenericNotification('check', 'Đơn hàng đã được Admin kích hoạt: '.$result->label, $result->url)));
+
+            return $result;
         });
     }
 
@@ -50,11 +56,16 @@ final class AdminCommerceOrderService
         $user = User::query()->findOrFail($userId);
         $reference = $this->reference('GIFT-ADMIN', $actor);
 
-        return DB::transaction(fn (): AdminCommerceOrderResult => match ($type) {
-            'challenge' => $this->grantChallenge($user, $resourceId, $actor, $reference, $brand->id),
-            'course' => $this->grantCourse($user, $resourceId, $reference, $brand->id),
-            'product' => $this->grantProduct($user, $resourceId, $reference, $brand->id),
-            default => throw new InvalidArgumentException('Unsupported order type.'),
+        return DB::transaction(function () use ($type, $user, $resourceId, $actor, $reference, $brand): AdminCommerceOrderResult {
+            $result = match ($type) {
+                'challenge' => $this->grantChallenge($user, $resourceId, $actor, $reference, $brand->id),
+                'course' => $this->grantCourse($user, $resourceId, $reference, $brand->id),
+                'product' => $this->grantProduct($user, $resourceId, $reference, $brand->id),
+                default => throw new InvalidArgumentException('Unsupported order type.'),
+            };
+            DB::afterCommit(fn () => $result->user->notify(new GenericNotification('gift', 'Bạn được tặng quyền truy cập: '.$result->label, $result->url)));
+
+            return $result;
         });
     }
 

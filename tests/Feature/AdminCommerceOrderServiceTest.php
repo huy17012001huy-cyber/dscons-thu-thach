@@ -79,5 +79,6 @@ final class AdminCommerceOrderServiceTest extends TestCase
             'status' => 'approved',
             'approved_by' => $admin->id,
         ]);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $learner->id]);
     }
 }

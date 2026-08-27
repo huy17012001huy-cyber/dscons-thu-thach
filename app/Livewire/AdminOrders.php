@@ -9,7 +9,6 @@ use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\ProductPurchase;
 use App\Models\User;
-use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -42,7 +41,6 @@ class AdminOrders extends Component
         if (! $result) {
             return;
         }
-        $result->user->notify(new GenericNotification('✓', 'Đơn hàng đã được Admin kích hoạt: '.$result->label));
         $this->dispatch('toast', message: 'Đã kích hoạt '.$result->label, type: 'success');
     }
 
@@ -68,7 +66,6 @@ class AdminOrders extends Component
             return;
         }
 
-        $result->user->notify(new GenericNotification('🎁', 'Bạn được tặng quyền truy cập: '.$result->label, $result->url));
         $this->reset(['grantResourceId']);
         $this->dispatch('toast', message: 'Đã tặng quyền cho '.$result->user->name, type: 'success');
     }
