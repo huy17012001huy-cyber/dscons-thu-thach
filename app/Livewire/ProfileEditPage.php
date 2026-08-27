@@ -5,12 +5,12 @@ namespace App\Livewire;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use App\Core\Auth\ProfileUpdateService;
 
 class ProfileEditPage extends Component
 {
@@ -58,7 +58,7 @@ class ProfileEditPage extends Component
         }
 
         $user = $this->currentUser();
-        $user->update([
+        app(ProfileUpdateService::class)->update($user, [
             'name' => trim($this->editName),
             'username' => strtolower(trim($this->editUsername)),
             'bio' => trim($this->editBio) ?: null,
@@ -78,11 +78,7 @@ class ProfileEditPage extends Component
         }
 
         $user = $this->currentUser();
-        $path = $this->avatarUpload->store('avatars', 'public');
-        if ($user->avatar && ! filter_var($user->avatar, FILTER_VALIDATE_URL)) {
-            Storage::disk('public')->delete($user->avatar);
-        }
-        $user->update(['avatar' => $path]);
+        app(ProfileUpdateService::class)->updateAvatar($user, $this->avatarUpload);
         $this->dispatch('toast', message: 'Đã cập nhật ảnh đại diện.', type: 'success');
     }
 
