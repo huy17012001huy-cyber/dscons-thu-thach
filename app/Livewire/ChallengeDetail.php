@@ -22,6 +22,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Modules\Learning\Application\ChallengeAccessService;
 use Modules\Learning\Application\ChallengeEnrollmentService;
+use Modules\Learning\Application\SubmissionReviewService;
 
 class ChallengeDetail extends Component
 {
@@ -803,46 +804,27 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        $completion = \DB::table('challenge_task_completions')->where('id', $completionId)->first();
-        if (! $completion || $completion->status === 'approved') {
-            return;
-        }
-
-        // First approval per (user, task) → award XP. Các approval sau (vd contest entries) KHÔNG award thêm.
-        $hadPriorApproval = \DB::table('challenge_task_completions')
-            ->where('challenge_task_id', $completion->challenge_task_id)
-            ->where('user_id', $completion->user_id)
-            ->where('status', 'approved')
-            ->where('id', '!=', $completionId)
-            ->exists();
-
         $score = isset($this->reviewScores[$completionId]) && $this->reviewScores[$completionId] !== ''
-            ? max(0, min(100, (int) $this->reviewScores[$completionId]))
+            ? (int) $this->reviewScores[$completionId]
             : null;
         $rubric = $this->reviewRubrics[$completionId] ?? null;
+        $result = app(SubmissionReviewService::class)->approve(
+            $this->expedition,
+            $completionId,
+            $this->currentUser(),
+            $score,
+            $rubric,
+        );
+        if (! $result) {
+            return;
+        }
+        $completion = $result->completion;
 
-        \DB::table('challenge_task_completions')->where('id', $completionId)->update([
-            'status' => 'approved',
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-            'score' => $score,
-            'rubric_payload' => $rubric ? json_encode($rubric, JSON_UNESCAPED_UNICODE) : null,
-        ]);
-
-        \DB::table('challenge_task_reviews')->insert([
-            'completion_id' => $completionId,
-            'reviewer_id' => Auth::id(),
-            'status' => 'approved',
-            'note' => null,
-            'score' => $score,
-            'rubric_payload' => $rubric ? json_encode($rubric, JSON_UNESCAPED_UNICODE) : null,
-            'created_at' => now(),
-        ]);
-
-        $user = User::query()->whereKey($completion->user_id)->first();
+        // First approval per (user, task) → award XP. Các approval sau (vd contest entries) KHÔNG award thêm.
+        $user = $completion->user;
         if ($user) {
-            if (! $hadPriorApproval) {
-                $task = ChallengeTask::query()->whereKey($completion->challenge_task_id)->first();
+            if ($result->shouldAwardXp) {
+                $task = $completion->task;
                 if ($task) {
                     app(XpService::class)->award(
                         $user, 'expedition_checkin', 1.0,
@@ -867,55 +849,29 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        $completion = \DB::table('challenge_task_completions')->where('id', $completionId)->first();
-        if (! $completion) {
-            return;
-        }
+        $score = isset($this->reviewScores[$completionId]) && $this->reviewScores[$completionId] !== ''
+            ? (int) $this->reviewScores[$completionId]
+            : null;
+        $rubric = $this->reviewRubrics[$completionId] ?? null;
 
         // Mini-game entry (row thứ 2+ của contest task) → không tăng reject_count, không phí 34k
-        $task = ChallengeTask::query()->whereKey($completion->challenge_task_id)->first();
-        $isMiniGameEntry = false;
-        if ($task && $task->is_contest) {
-            $firstRow = \DB::table('challenge_task_completions')
-                ->where('challenge_task_id', $completion->challenge_task_id)
-                ->where('user_id', $completion->user_id)
-                ->orderBy('created_at')
-                ->first();
-            $isMiniGameEntry = $firstRow && $firstRow->id !== $completion->id;
-        }
-
         $rejectNote = $note ?: 'Bài nộp chưa đạt yêu cầu';
 
-        $updates = [
-            'status' => 'rejected',
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-            'review_note' => $rejectNote,
-            'score' => isset($this->reviewScores[$completionId]) && $this->reviewScores[$completionId] !== ''
-                ? max(0, min(100, (int) $this->reviewScores[$completionId]))
-                : null,
-            'rubric_payload' => ! empty($this->reviewRubrics[$completionId])
-                ? json_encode($this->reviewRubrics[$completionId], JSON_UNESCAPED_UNICODE)
-                : null,
-        ];
-        if (! $isMiniGameEntry) {
-            $updates['reject_count'] = \DB::raw('reject_count + 1');
+        $result = app(SubmissionReviewService::class)->reject(
+            $this->expedition,
+            $completionId,
+            $this->currentUser(),
+            $rejectNote,
+            $score,
+            $rubric,
+        );
+        if (! $result) {
+            return;
         }
-
-        \DB::table('challenge_task_completions')->where('id', $completionId)->update($updates);
-
-        \DB::table('challenge_task_reviews')->insert([
-            'completion_id' => $completionId,
-            'reviewer_id' => Auth::id(),
-            'status' => 'rejected',
-            'note' => $rejectNote,
-            'score' => $updates['score'],
-            'rubric_payload' => $updates['rubric_payload'],
-            'created_at' => now(),
-        ]);
+        $completion = $result->completion;
 
         // Notify user
-        $user = User::query()->whereKey($completion->user_id)->first();
+        $user = $completion->user;
         if ($user) {
             $user->notify(new GenericNotification(
                 '✗',
