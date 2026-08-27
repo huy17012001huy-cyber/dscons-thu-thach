@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\CommerceWebhookEvent;
+use App\Models\Expedition;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -86,6 +88,28 @@ class SepayWebhookSecurityTest extends TestCase
         $this->assertSame('ignored', CommerceWebhookEvent::query()->value('status'));
     }
 
+    public function test_v1_webhook_uses_the_standard_response_contract_without_changing_the_legacy_endpoint(): void
+    {
+        config(['services.sepay.webhook_token' => 'secret-token']);
+
+        $this->postJson('/api/v1/webhooks/sepay', [
+            'id' => 'sepay-v1-event-1001',
+            'transferType' => 'in',
+            'content' => 'UNMATCHED',
+            'transferAmount' => 1000,
+        ], ['Authorization' => 'Apikey secret-token'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.accepted', true);
+        $this->postJson(route('webhook.sepay'), [
+            'transferType' => 'in',
+            'content' => 'TEST',
+            'transferAmount' => 1000,
+        ], ['Authorization' => 'Apikey secret-token'])
+            ->assertOk()
+            ->assertExactJson(['success' => true]);
+    }
+
     public function test_bot_api_requires_authorization_header(): void
     {
         $response = $this->getJson('/api/bot/member?q=test');
@@ -130,5 +154,34 @@ class SepayWebhookSecurityTest extends TestCase
         $response
             ->assertStatus(400)
             ->assertExactJson(['error' => 'Missing q parameter']);
+    }
+
+    public function test_v1_bot_api_uses_standard_contract_for_member_and_challenge_queries(): void
+    {
+        config(['services.bot.api_token' => 'bot-token']);
+        $user = User::factory()->create(['username' => 'bot-member']);
+        $challenge = Expedition::create([
+            'title' => 'Bot Challenge',
+            'slug' => 'bot-challenge',
+            'difficulty' => 'normal',
+            'required_days' => 7,
+            'max_members' => 20,
+            'created_by' => $user->id,
+            'leader_id' => $user->id,
+            'status' => 'active',
+        ]);
+
+        $this->getJson('/api/v1/bot/member?q=bot-member', ['Authorization' => 'Bearer bot-token'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.username', 'bot-member');
+        $this->getJson('/api/v1/bot/challenge-progress?q=bot-member&challenge='.$challenge->slug, ['Authorization' => 'Bearer bot-token'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'not_enrolled');
+        $this->getJson('/api/v1/bot/pending-submissions?challenge='.$challenge->slug, ['Authorization' => 'Bearer bot-token'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.pending_count', 0);
     }
 }

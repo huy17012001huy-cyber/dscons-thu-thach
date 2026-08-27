@@ -72,6 +72,12 @@ Route::prefix('api/bot')->group(function () {
     Route::get('/pending-submissions', [\App\Http\Controllers\BotApiController::class, 'pendingSubmissions']);
 });
 
+Route::prefix('api/v1/bot')->group(function () {
+    Route::get('/member', [\App\Http\Controllers\V1\BotApiController::class, 'member']);
+    Route::get('/challenge-progress', [\App\Http\Controllers\V1\BotApiController::class, 'challengeProgress']);
+    Route::get('/pending-submissions', [\App\Http\Controllers\V1\BotApiController::class, 'pendingSubmissions']);
+});
+
 // Revit add-ins use their own bearer token, never a browser session or Google password.
 Route::prefix('api/revit')->group(function () {
     Route::post('/device/start', [\App\Http\Controllers\RevitToolApiController::class, 'start'])->middleware('throttle:revit-device-start');
