@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Core\CommunityContext;
 use App\Models\DaKhongCuc;
 use App\Models\DaKhongCucLog;
 use App\Models\User;
@@ -9,10 +12,13 @@ use App\Notifications\GenericNotification;
 
 class DaKhongCucService
 {
+    public function __construct(private readonly CommunityContext $context) {}
+
     public function award(User $user, int $delta, string $reason, ?User $awardedBy = null): void
     {
+        $brandId = $this->context->current()?->id;
         $record = DaKhongCuc::firstOrCreate(
-            ['user_id' => $user->id, 'brand_id' => app()->bound('brand') ? brand()->id : null],
+            ['user_id' => $user->id, 'brand_id' => $brandId],
             ['total_count' => 0]
         );
 
