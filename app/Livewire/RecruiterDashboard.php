@@ -8,11 +8,11 @@ use App\Models\RecruiterEntitlement;
 use App\Models\RecruiterProfile;
 use App\Models\RecruitmentContactRequest;
 use App\Models\User;
-use App\Services\CandidateMatcher;
-use App\Services\JobDescriptionParser;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Modules\Recruitment\Application\RecruiterContactService;
+use Modules\Recruitment\Contracts\CandidateMatcher;
+use Modules\Recruitment\Contracts\JobDescriptionParser;
 
 class RecruiterDashboard extends Component
 {
