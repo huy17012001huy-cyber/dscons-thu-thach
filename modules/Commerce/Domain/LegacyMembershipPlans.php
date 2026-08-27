@@ -12,9 +12,9 @@ final class LegacyMembershipPlans
      * @var array<int, array{weeks: int, price_per_week: int, label: string, save: int}>
      */
     public const PLANS = [
-        1 => ['weeks' => 1, 'price_per_week' => 500000, 'label' => '1 week', 'save' => 0],
-        4 => ['weeks' => 4, 'price_per_week' => 350000, 'label' => '4 weeks', 'save' => 30],
-        5 => ['weeks' => 5, 'price_per_week' => 300000, 'label' => '5 weeks', 'save' => 40],
-        52 => ['weeks' => 52, 'price_per_week' => 250000, 'label' => '52 weeks (1 year)', 'save' => 50],
+        1 => ['weeks' => 1, 'price_per_week' => 500000, 'label' => '1 tu\u{1EA7}n', 'save' => 0],
+        4 => ['weeks' => 4, 'price_per_week' => 350000, 'label' => '4 tu\u{1EA7}n', 'save' => 30],
+        5 => ['weeks' => 5, 'price_per_week' => 300000, 'label' => '5 tu\u{1EA7}n', 'save' => 40],
+        52 => ['weeks' => 52, 'price_per_week' => 250000, 'label' => '52 tu\u{1EA7}n (1 n\u{0103}m)', 'save' => 50],
     ];
 }
