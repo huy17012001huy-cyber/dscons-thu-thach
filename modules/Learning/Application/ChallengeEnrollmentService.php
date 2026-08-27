@@ -10,6 +10,8 @@ use App\Models\ExpeditionMember;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\Learning\Domain\Events\ChallengeEnrollmentRequested;
 
 final class ChallengeEnrollmentService
 {
@@ -59,9 +61,14 @@ final class ChallengeEnrollmentService
                 'payment_amount' => $needsPayment ? $price : null,
             ]);
 
-            return $autoApprove
+            $outcome = $autoApprove
                 ? self::AUTO_APPROVED
                 : ($needsPayment ? self::PENDING_PAYMENT : self::PENDING_REVIEW);
+            if ($outcome === self::PENDING_REVIEW) {
+                DB::afterCommit(fn () => Event::dispatch(new ChallengeEnrollmentRequested($challenge, $user)));
+            }
+
+            return $outcome;
         });
     }
 

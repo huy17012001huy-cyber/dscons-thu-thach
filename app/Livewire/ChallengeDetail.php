@@ -6,6 +6,7 @@ namespace App\Livewire;
 
 use App\Mail\ChallengeCompletionMail;
 use App\Models\ChallengeTask;
+use App\Models\ChallengeTaskCompletion;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\User;
@@ -106,14 +107,6 @@ class ChallengeDetail extends Component
 
             return;
         }
-
-        // Notify all admins
-        User::where('is_admin', true)->each(function ($admin) use ($user) {
-            $admin->notify(new GenericNotification(
-                '★', $user->name.' đăng ký tham gia '.$this->expedition->title,
-                route('challenge.show', $this->expedition->slug)
-            ));
-        });
 
         $this->dispatch('toast', message: 'Đã gửi yêu cầu tham gia! Vui lòng chờ Admin duyệt.', type: 'success');
         $this->expedition->refresh();
@@ -730,15 +723,15 @@ class ChallengeDetail extends Component
             $this->editingTaskId,
             $this->currentUser(),
             [
-            'title' => $this->editTaskTitle ?: 'Nhiệm vụ',
-            'description' => $this->editTaskDesc ?: null,
-            'video_url' => $this->editTaskVideo ?: null,
-            'meeting_at' => $this->editTaskMeetingAt
-                ? Carbon::parse($this->editTaskMeetingAt, 'Asia/Ho_Chi_Minh')->utc()
-                : null,
-            'sop_content' => $this->editTaskSop ?: null,
-            'evidence_label' => $this->editTaskEvidenceLabel ?: null,
-            'admin_note' => $this->editTaskAdminNote ?: null,
+                'title' => $this->editTaskTitle ?: 'Nhiệm vụ',
+                'description' => $this->editTaskDesc ?: null,
+                'video_url' => $this->editTaskVideo ?: null,
+                'meeting_at' => $this->editTaskMeetingAt
+                    ? Carbon::parse($this->editTaskMeetingAt, 'Asia/Ho_Chi_Minh')->utc()
+                    : null,
+                'sop_content' => $this->editTaskSop ?: null,
+                'evidence_label' => $this->editTaskEvidenceLabel ?: null,
+                'admin_note' => $this->editTaskAdminNote ?: null,
                 'quiz_json' => $quizJson,
             ],
         );
@@ -780,11 +773,11 @@ class ChallengeDetail extends Component
         $taskIds = $this->expedition->tasks()->pluck('id');
         $pendingRows = $result->completions;
         $awardablePairs = $result->awardableCompletions
-            ->map(fn (\App\Models\ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
+            ->map(fn (ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
             ->flip();
         $existingApprovedPairs = $pendingRows
-            ->filter(fn (\App\Models\ChallengeTaskCompletion $completion): bool => ! isset($awardablePairs[$completion->user_id.':'.$completion->challenge_task_id]))
-            ->map(fn (\App\Models\ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
+            ->filter(fn (ChallengeTaskCompletion $completion): bool => ! isset($awardablePairs[$completion->user_id.':'.$completion->challenge_task_id]))
+            ->map(fn (ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
             ->flip();
         $count = $pendingRows->count();
 

@@ -33,6 +33,24 @@ final class ChallengeEnrollmentServiceTest extends TestCase
         ]);
     }
 
+    public function test_pending_enrollment_notifies_only_the_challenge_community_admins_and_super_admins(): void
+    {
+        $communityAdmin = User::factory()->create();
+        $communityAdmin->brandRoles()->attach(brand()->id, ['role' => 'admin']);
+        $superAdmin = User::factory()->create(['is_admin' => true]);
+        $otherBrand = $this->otherBrand();
+        $otherAdmin = User::factory()->create();
+        $otherAdmin->brandRoles()->attach($otherBrand->id, ['role' => 'admin']);
+        $learner = User::factory()->create(['source' => null]);
+        $challenge = $this->challenge($communityAdmin, 'Notification Challenge');
+
+        self::assertSame(ChallengeEnrollmentService::PENDING_REVIEW, app(ChallengeEnrollmentService::class)->request($challenge, $learner));
+
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $communityAdmin->id]);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $superAdmin->id]);
+        $this->assertDatabaseMissing('notifications', ['notifiable_id' => $otherAdmin->id]);
+    }
+
     public function test_webhook_account_is_auto_approved(): void
     {
         $user = User::factory()->create(['source' => 'webhook']);
@@ -157,6 +175,19 @@ final class ChallengeEnrollmentServiceTest extends TestCase
             'leader_id' => $owner->id,
             'status' => 'active',
             'price' => 0,
+        ]);
+    }
+
+    private function otherBrand(): Brand
+    {
+        return Brand::create([
+            'name' => 'Other Community',
+            'slug' => 'other-community-notification',
+            'domain' => 'other-community-notification.test',
+            'status' => 'active',
+            'theme_primary' => '#1F77BE',
+            'theme_accent' => '#E1F4F7',
+            'theme_bg' => '#F7FAFC',
         ]);
     }
 }
