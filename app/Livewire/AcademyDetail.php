@@ -4,18 +4,18 @@ namespace App\Livewire;
 
 use App\Models\Course;
 use App\Models\CourseEnrollment;
-use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\LessonTask;
 use App\Models\TaskSubmission;
 use App\Models\User;
-use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Modules\Commerce\Application\CourseEnrollmentOutcome;
 use Modules\Commerce\Application\CourseEnrollmentService;
+use Modules\Learning\Application\CourseLearningService;
+use Modules\Learning\Application\CourseLessonCompletionOutcome;
 
 class AcademyDetail extends Component
 {
@@ -126,19 +126,18 @@ class AcademyDetail extends Component
 
         $this->validate();
 
-        $task = LessonTask::findOrFail($this->activeTaskId);
-
-        TaskSubmission::updateOrCreate(
-            ['lesson_task_id' => $task->id, 'user_id' => $user->id],
-            ['content' => $this->taskAnswer, 'status' => 'pending', 'submitted_at' => now()]
+        $result = app(CourseLearningService::class)->submitTask(
+            $this->course,
+            $this->activeTaskId,
+            $user,
+            $this->taskAnswer,
         );
+        if (! $result->accepted) {
+            return;
+        }
 
         $this->resetTaskForm();
-
-        // Check if lesson auto-completes
-        if ($task->lesson instanceof Lesson) {
-            $this->checkLessonAutoComplete($task->lesson);
-        }
+        $this->applyLessonCompletion($result->completion);
     }
 
     public function completeLesson(int $lessonId): void
@@ -148,59 +147,17 @@ class AcademyDetail extends Component
             return;
         }
 
-        $lesson = $this->course->modules->flatMap(fn ($m) => $m->lessons)->firstWhere('id', $lessonId);
-        if (! $lesson || ! $lesson->isUnlockedFor($user)) {
-            return;
-        }
-
-        $already = LessonProgress::where('user_id', $user->id)
-            ->where('lesson_id', $lessonId)
-            ->whereNotNull('completed_at')
-            ->exists();
-
-        if ($already) {
-            return;
-        }
-
-        LessonProgress::updateOrCreate(
-            ['user_id' => $user->id, 'lesson_id' => $lessonId],
-            ['completed_at' => now()]
-        );
-
-        if ($lesson->xp_reward > 0) {
-            app(XpService::class)->award($user, 'lesson_complete', 1.0, 'Hoàn thành bài: '.$lesson->title, $lesson);
-        }
-
-        $this->completedLessons++;
-
-        // Check course completion
-        if ($this->completedLessons >= $this->totalLessons && $this->totalLessons > 0) {
-            CourseEnrollment::where('user_id', Auth::id())
-                ->where('course_id', $this->course->id)
-                ->update(['completed_at' => now()]);
-
-            if ($this->course->xp_reward > 0) {
-                app(XpService::class)->award($user, 'course_complete', 1.0, 'Hoàn thành khóa học: '.$this->course->title, $this->course);
-            }
-
-            $this->dispatch('toast', message: 'Chúc mừng! Bạn đã hoàn thành khóa học!', type: 'success');
-        }
+        $outcome = app(CourseLearningService::class)->complete($this->course, $lessonId, $user);
+        $this->applyLessonCompletion($outcome);
     }
 
-    private function checkLessonAutoComplete(Lesson $lesson): void
+    private function applyLessonCompletion(CourseLessonCompletionOutcome $outcome): void
     {
-        $requiredTaskIds = $lesson->tasks()->where('is_required', true)->pluck('id');
-        if ($requiredTaskIds->isEmpty()) {
-            return;
+        if (in_array($outcome, [CourseLessonCompletionOutcome::Completed, CourseLessonCompletionOutcome::CourseCompleted], true)) {
+            $this->completedLessons++;
         }
-
-        $submittedCount = TaskSubmission::where('user_id', Auth::id())
-            ->whereIn('lesson_task_id', $requiredTaskIds)
-            ->whereIn('status', ['pending', 'approved'])
-            ->count();
-
-        if ($submittedCount >= $requiredTaskIds->count()) {
-            $this->completeLesson($lesson->id);
+        if ($outcome === CourseLessonCompletionOutcome::CourseCompleted) {
+            $this->dispatch('toast', message: 'Chúc mừng! Bạn đã hoàn thành khóa học!', type: 'success');
         }
     }
 
