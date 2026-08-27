@@ -104,6 +104,49 @@ class RevitToolLicenseTest extends TestCase
         $this->assertNotNull(ToolSession::withoutGlobalScopes()->firstOrFail()->revoked_at);
     }
 
+    public function test_v1_revit_api_uses_the_standard_response_contract_without_changing_legacy_routes(): void
+    {
+        $user = User::factory()->create();
+        $tool = $this->tool('dscons-v1-tool');
+        ProductPurchase::create([
+            'brand_id' => brand()->id,
+            'user_id' => $user->id,
+            'digital_product_id' => $tool->id,
+            'status' => 'active',
+            'amount_paid' => 0,
+            'paid_at' => now(),
+        ]);
+        $device = $this->device('v1');
+        $start = $this->postJson('/api/v1/revit/device/start', $device)
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('status', 201);
+        $code = $start->json('data.authorization_code');
+        $browserCode = basename(parse_url($start->json('data.verification_url'), PHP_URL_PATH));
+
+        $this->actingAs($user)->post(route('revit.authorization.approve', $browserCode))->assertRedirect();
+        $poll = $this->postJson('/api/v1/revit/device/poll', ['authorization_code' => $code])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'approved');
+        $token = $poll->json('data.access_token');
+
+        $this->withToken($token)->getJson('/api/v1/revit/tools/dscons-v1-tool/manifest')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.tool_key', 'dscons-v1-tool');
+        $this->withToken($token)->postJson('/api/v1/revit/heartbeat', ['revit_version' => '2024'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'active');
+        $this->withToken($token)->postJson('/api/v1/revit/logout')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'logged_out');
+
+        $this->postJson('/api/revit/device/start', $this->device('legacy'))->assertCreated();
+    }
+
     private function tool(string $key): DigitalProduct
     {
         return DigitalProduct::withoutGlobalScopes()->create([
