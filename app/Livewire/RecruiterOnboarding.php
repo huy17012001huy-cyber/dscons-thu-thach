@@ -4,9 +4,9 @@ namespace App\Livewire;
 
 use App\Models\RecruiterProfile;
 use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\Recruitment\Application\RecruiterOnboardingService;
 
 class RecruiterOnboarding extends Component
 {
@@ -46,15 +46,12 @@ class RecruiterOnboarding extends Component
         ]);
 
         $user = $this->currentUser();
-        $user->update(['account_type' => 'recruiter']);
-        RecruiterProfile::updateOrCreate(['brand_id' => brand()->id, 'user_id' => $user->id], [
-            'company_name' => $data['companyName'],
-            'company_slug' => Str::slug($data['companyName']).'-'.$user->id,
-            'business_email' => $data['businessEmail'] ?: $user->email,
+        app(RecruiterOnboardingService::class)->save(brand(), $user, [
+            'companyName' => $data['companyName'],
+            'businessEmail' => $data['businessEmail'] ?: null,
             'website' => $data['website'] ?: null,
             'industry' => $data['industry'],
             'description' => $data['description'] ?: null,
-            'verification_status' => 'pending',
         ]);
 
         $this->redirect(community_route('recruiter.dashboard'), navigate: true);
