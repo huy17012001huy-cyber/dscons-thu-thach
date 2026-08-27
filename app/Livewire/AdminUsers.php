@@ -3,12 +3,13 @@
 namespace App\Livewire;
 
 use App\Mail\WelcomeMemberMail;
-use App\Models\Membership;
 use App\Models\CommunityRoleAudit;
+use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -23,13 +24,18 @@ class AdminUsers extends Component
 
     // ─── Tạo thành viên mới ───────────────────────────────
     public bool $showCreateModal = false;
+
     public string $newName = '';
+
     public string $newEmail = '';
+
     public string $newRole = 'member'; // member | mod | admin
 
     public function openCreateModal(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! Auth::user()?->is_admin) {
+            return;
+        }
         $this->reset(['newName', 'newEmail']);
         $this->newRole = 'member';
         $this->resetValidation();
@@ -38,43 +44,45 @@ class AdminUsers extends Component
 
     public function createUser(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! Auth::user()?->is_admin) {
+            return;
+        }
 
         $this->validate([
-            'newName'     => 'required|min:2|max:50',
-            'newEmail'    => 'required|email|unique:users,email',
-            'newRole'     => 'required|in:member,mod,admin',
+            'newName' => 'required|min:2|max:50',
+            'newEmail' => 'required|email|unique:users,email',
+            'newRole' => 'required|in:member,mod,admin',
         ], [], [
-            'newName'     => 'họ tên',
-            'newEmail'    => 'email',
-            'newRole'     => 'vai trò',
+            'newName' => 'họ tên',
+            'newEmail' => 'email',
+            'newRole' => 'vai trò',
         ]);
 
         // Sinh username duy nhất từ họ tên (transliterate Việt → ASCII)
-        $ascii    = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($this->newName));
-        $username = preg_replace('/[^a-z0-9._]/', '', preg_replace('/\s+/', '.', $ascii));
+        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($this->newName)) ?: '';
+        $username = preg_replace('/[^a-z0-9._]/', '', preg_replace('/\s+/', '.', $ascii) ?: '') ?: '';
         if ($username === '') {
             $username = 'user';
         }
         $base = $username;
-        $i    = 1;
+        $i = 1;
         while (User::where('username', $username)->exists()) {
-            $username = $base . $i++;
+            $username = $base.$i++;
         }
 
         $user = User::create([
-            'name'     => $this->newName,
-            'email'    => $this->newEmail,
+            'name' => $this->newName,
+            'email' => $this->newEmail,
             'username' => $username,
-            'source'   => 'admin',
-            'level'    => 1,
-            'xp'       => 0,
-            'aip'      => 0,
-            'streak'   => 0,
+            'source' => 'admin',
+            'level' => 1,
+            'xp' => 0,
+            'aip' => 0,
+            'streak' => 0,
         ]);
 
         // is_admin / is_moderator không nằm trong $fillable → set trực tiếp
-        $user->is_admin     = $this->newRole === 'admin';
+        $user->is_admin = $this->newRole === 'admin';
         $user->is_moderator = $this->newRole === 'mod';
         $user->save();
 
@@ -82,9 +90,9 @@ class AdminUsers extends Component
         $user->markEmailAsVerified();
 
         Membership::create([
-            'user_id'    => $user->id,
-            'status'     => 'active',
-            'plan'       => 'lifetime',
+            'user_id' => $user->id,
+            'status' => 'active',
+            'plan' => 'lifetime',
             'expires_at' => '2099-12-31',
         ]);
         $user->brandRoles()->syncWithoutDetaching([
@@ -94,9 +102,9 @@ class AdminUsers extends Component
         // Email chào mừng hướng dẫn Google login (không chặn việc tạo nếu mail lỗi).
         try {
             Mail::to($user->email)->send(new WelcomeMemberMail(
-                name:      $user->name,
-                email:     $user->email,
-                loginUrl:  route('login'),
+                name: $user->name,
+                email: $user->email,
+                loginUrl: route('login'),
                 brandName: config('app.name'),
             ));
         } catch (\Throwable $e) {
@@ -106,22 +114,28 @@ class AdminUsers extends Component
         $this->showCreateModal = false;
         $this->reset(['newName', 'newEmail']);
         $this->resetPage();
-        $this->dispatch('toast', message: 'Đã tạo thành viên ' . $user->name, type: 'success');
+        $this->dispatch('toast', message: 'Đã tạo thành viên '.$user->name, type: 'success');
     }
 
     public function toggleAdmin(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! Auth::user()?->is_admin) {
+            return;
+        }
         $user = User::findOrFail($id);
-        $user->is_admin = !$user->is_admin;
+        $user->is_admin = ! $user->is_admin;
         $user->save();
     }
 
     public function toggleModerator(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! Auth::user()?->is_admin) {
+            return;
+        }
         $user = User::findOrFail($id);
-        if ($user->isSuperAdmin()) return;
+        if ($user->isSuperAdmin()) {
+            return;
+        }
 
         $currentRole = $user->communityRole(brand()->id);
         $nextRole = $currentRole === 'moderator' ? 'member' : 'moderator';
@@ -140,19 +154,25 @@ class AdminUsers extends Component
 
     public function banUser(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
-        if ($id === Auth::id()) return; // Can't ban yourself
+        if (! Auth::user()?->is_admin) {
+            return;
+        }
+        if ($id === Auth::id()) {
+            return;
+        } // Can't ban yourself
         $user = User::findOrFail($id);
         $membership = $user->membership;
         if ($membership) {
             $membership->update(['status' => 'banned']);
-            $this->dispatch('toast', message: $user->name . ' đã bị ban', type: 'success');
+            $this->dispatch('toast', message: $user->name.' đã bị ban', type: 'success');
         }
     }
 
     public function unbanUser(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! Auth::user()?->is_admin) {
+            return;
+        }
         $user = User::findOrFail($id);
         $membership = $user->membership;
         if ($membership && $membership->status === 'banned') {
@@ -162,12 +182,18 @@ class AdminUsers extends Component
 
     public function exportCsv(): ?StreamedResponse
     {
-        if (!Auth::user()?->is_admin) return null;
+        if (! Auth::user()?->is_admin) {
+            return null;
+        }
 
-        $filename = 'members-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'members-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () {
             $handle = fopen('php://output', 'w');
+            if (! is_resource($handle)) {
+                return;
+            }
+
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, ['Họ tên', 'Email'], ',', '"', '', "\n");
 
@@ -181,19 +207,20 @@ class AdminUsers extends Component
         ]);
     }
 
+    /** @return Builder<User> */
     private function usersQuery(): Builder
     {
         $query = User::query();
 
         if ($this->search) {
-            $term = '%' . $this->search . '%';
-            $query->where(fn($q) => $q->where('name', 'ilike', $term)->orWhere('email', 'ilike', $term)->orWhere('username', 'ilike', $term));
+            $term = '%'.$this->search.'%';
+            $query->where(fn ($q) => $q->where('name', 'ilike', $term)->orWhere('email', 'ilike', $term)->orWhere('username', 'ilike', $term));
         }
 
         return $query;
     }
 
-    public function render()
+    public function render(): View
     {
         $query = $this->usersQuery()
             ->with('membership')

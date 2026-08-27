@@ -1,0 +1,5 @@
+{
+  "name": "RevitTools",
+  "provider": "Modules\\RevitTools\\Providers\\RevitToolsServiceProvider",
+  "depends": ["Commerce"]
+}

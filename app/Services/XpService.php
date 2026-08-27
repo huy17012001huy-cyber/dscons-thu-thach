@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Comment;
+use App\Models\CommunityUserStat;
+use App\Models\Post;
 use App\Models\User;
 use App\Models\XpTransaction;
 use App\Notifications\GenericNotification;
+use Illuminate\Database\Eloquent\Model;
 
 class XpService
 {
@@ -15,54 +19,56 @@ class XpService
      */
     const REWARDS = [
         // Engagement (content creator receives)
-        'post_liked'           => 2,
-        'post_commented'       => 3,
-        'post_bookmarked'      => 1,
-        'comment_liked'        => 1,
-        'best_answer'          => 25,
-        'cot'                  => 50,
+        'post_liked' => 2,
+        'post_commented' => 3,
+        'post_bookmarked' => 1,
+        'comment_liked' => 1,
+        'best_answer' => 25,
+        'cot' => 50,
 
         // Base actions (minimal or zero)
-        'post'                 => 0,   // No EXP for posting
-        'comment'              => 1,
-        'login'                => 1,
+        'post' => 0,   // No EXP for posting
+        'comment' => 1,
+        'login' => 1,
 
         // Expedition & Academy
-        'expedition_checkin'   => 5,
-        'expedition_complete'  => 100,
-        'expedition_captain'   => 200,
-        'lesson_complete'      => 10,
-        'course_complete'      => 50,
-        'challenge'            => 25,
-        'affiliate'            => 100,
-        'quiz_correct'         => 2,   // Per quiz question answered correctly (first time only)
+        'expedition_checkin' => 5,
+        'expedition_complete' => 100,
+        'expedition_captain' => 200,
+        'lesson_complete' => 10,
+        'course_complete' => 50,
+        'challenge' => 25,
+        'affiliate' => 100,
+        'quiz_correct' => 2,   // Per quiz question answered correctly (first time only)
     ];
 
-    public function award(User $user, string $type, float $multiplier = 1.0, ?string $description = null, $reference = null): int
+    public function award(User $user, string $type, float $multiplier = 1.0, ?string $description = null, ?Model $reference = null): int
     {
         $base = self::REWARDS[$type] ?? 0;
-        if ($base === 0) return 0;
+        if ($base === 0) {
+            return 0;
+        }
 
-        $stats = app(CommunityStatsService::class)->for($user);
-        $streak = $stats?->streak ?? $user->streak;
+        $stats = $this->communityStats($user);
+        $streak = $stats instanceof CommunityUserStat ? $stats->streak : $user->streak;
 
-        $streakMultiplier = match(true) {
+        $streakMultiplier = match (true) {
             $streak >= 90 => 1.5,
             $streak >= 30 => 1.2,
-            $streak >= 7  => 1.1,
-            default             => 1.0,
+            $streak >= 7 => 1.1,
+            default => 1.0,
         };
 
         $total = (int) round($base * $multiplier * $streakMultiplier);
 
         XpTransaction::create([
-            'user_id'        => $user->id,
-            'amount'         => $total,
-            'type'           => $type,
+            'user_id' => $user->id,
+            'amount' => $total,
+            'type' => $type,
             'reference_type' => $reference ? get_class($reference) : null,
-            'reference_id'   => $reference?->id,
-            'multiplier'     => $multiplier * $streakMultiplier,
-            'description'    => $description,
+            'reference_id' => $reference?->getKey(),
+            'multiplier' => $multiplier * $streakMultiplier,
+            'description' => $description,
         ]);
 
         if ($stats) {
@@ -81,10 +87,12 @@ class XpService
         ])->saveQuietly();
 
         // Power symbol fragments
-        if (in_array($type, ['cot', 'post_liked', 'post_commented']) && $reference && method_exists($reference, 'getAttribute')) {
-            $pillar = $reference->pillar ?? $reference->post?->pillar ?? null;
+        if (in_array($type, ['cot', 'post_liked', 'post_commented'], true) && $reference) {
+            $pillar = $this->referencePillar($reference);
             if ($pillar) {
-                $fragments = match ($type) { 'cot' => 3, default => 1 };
+                $fragments = match ($type) {
+                    'cot' => 3, default => 1
+                };
                 app(PowerSymbolService::class)->addFragments($user, $pillar, $fragments);
             }
         }
@@ -98,16 +106,18 @@ class XpService
     {
         $leveled = false;
 
-        $stats = app(CommunityStatsService::class)->for($user);
-        $currentLevel = $stats?->level ?? (int) $user->level;
+        $stats = $this->communityStats($user);
+        $currentLevel = $stats instanceof CommunityUserStat ? $stats->level : (int) $user->level;
 
         while (true) {
             $nextLevel = $currentLevel + 1;
-            if ($nextLevel > 300) break;
+            if ($nextLevel > 300) {
+                break;
+            }
 
             $cumulative = $this->cumulativeExpForLevel($nextLevel);
 
-            $currentXp = $stats?->xp ?? (int) $user->xp;
+            $currentXp = $stats instanceof CommunityUserStat ? $stats->xp : (int) $user->xp;
             if ($currentXp >= $cumulative) {
                 $currentLevel++;
                 if ($stats) {
@@ -116,7 +126,7 @@ class XpService
                     $user->increment('level');
                 }
                 $user->setAttribute('level', $currentLevel);
-                $user->notify(new GenericNotification('🎉', 'Chúc mừng! Bạn đã lên Level ' . $nextLevel . '!', route('profile', $user->username ?? $user->id)));
+                $user->notify(new GenericNotification('🎉', 'Chúc mừng! Bạn đã lên Level '.$nextLevel.'!', route('profile', $user->username ?? $user->id)));
                 $leveled = true;
             } else {
                 break;
@@ -126,12 +136,31 @@ class XpService
         return $leveled;
     }
 
+    private function communityStats(User $user): ?CommunityUserStat
+    {
+        return app(CommunityStatsService::class)->for($user);
+    }
+
+    private function referencePillar(Model $reference): ?string
+    {
+        if ($reference instanceof Post) {
+            return $reference->pillar;
+        }
+
+        if ($reference instanceof Comment) {
+            return $reference->post?->pillar;
+        }
+
+        return null;
+    }
+
     public function expRequiredForLevel(int $level): int
     {
         $table = config('exp_table');
         if (isset($table[$level])) {
             return $table[$level];
         }
+
         return (int) round(158340 * pow(1.08, $level - 60));
     }
 
@@ -141,28 +170,35 @@ class XpService
         for ($i = 1; $i < $level; $i++) {
             $total += $this->expRequiredForLevel($i);
         }
+
         return $total;
     }
 
     public function expToNextLevel(User $user): int
     {
-        $stats = app(CommunityStatsService::class)->for($user);
-        $level = $stats?->level ?? $user->level;
-        $xp = $stats?->xp ?? $user->xp;
+        $stats = $this->communityStats($user);
+        $level = $stats instanceof CommunityUserStat ? $stats->level : $user->level;
+        $xp = $stats instanceof CommunityUserStat ? $stats->xp : $user->xp;
         $nextLevel = $level + 1;
-        if ($nextLevel > 300) return 0;
+        if ($nextLevel > 300) {
+            return 0;
+        }
+
         return max(0, $this->cumulativeExpForLevel($nextLevel) - $xp);
     }
 
     public function expProgressPct(User $user): float
     {
-        $stats = app(CommunityStatsService::class)->for($user);
-        $level = $stats?->level ?? $user->level;
-        $xp = $stats?->xp ?? $user->xp;
+        $stats = $this->communityStats($user);
+        $level = $stats instanceof CommunityUserStat ? $stats->level : $user->level;
+        $xp = $stats instanceof CommunityUserStat ? $stats->xp : $user->xp;
         $currentLevelExp = $this->cumulativeExpForLevel($level);
-        $nextLevelExp    = $this->cumulativeExpForLevel($level + 1);
+        $nextLevelExp = $this->cumulativeExpForLevel($level + 1);
         $range = $nextLevelExp - $currentLevelExp;
-        if ($range === 0) return 100;
+        if ($range === 0) {
+            return 100;
+        }
+
         return min(100, max(0, round(($xp - $currentLevelExp) / $range * 100, 1)));
     }
 }

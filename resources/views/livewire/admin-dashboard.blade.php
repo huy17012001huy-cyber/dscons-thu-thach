@@ -101,6 +101,15 @@
                 </div>
             </div>
         </a>
+        <a href="{{ route('admin.tool-licenses') }}" class="card" style="text-decoration:none; border-color:#B8D7E6; background:#F7FCFD;">
+            <div class="flex items-center gap-3">
+                <span style="width:1.5rem;height:1.5rem;display:grid;place-items:center;color:#1F77BE;"><x-icon name="layers" size="22" /></span>
+                <div>
+                    <p style="font-size:0.9rem; font-weight:700; color:#1A1A1A;">License Revit</p>
+                    <p style="font-size:0.75rem; color:#5C5C66;">Kiểm tra thiết bị, heartbeat và mở khóa license</p>
+                </div>
+            </div>
+        </a>
         <a href="{{ route('admin.challenges') }}" class="card" style="text-decoration:none;">
             <div class="flex items-center gap-3">
                 <span style="font-size:1.5rem;">⚔️</span>

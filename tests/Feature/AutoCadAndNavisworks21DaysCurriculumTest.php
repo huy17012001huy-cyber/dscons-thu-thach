@@ -100,8 +100,11 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
                 $evidence = $task->instruction_payload['evidence_requirements'] ?? [];
                 $hasVideo = collect($evidence)->contains(fn ($item) => str_contains(strtolower($item), 'video'));
 
+                $videoDays = $challenge->slug === '21-ngay-lam-tool-revit-voi-ai-agent'
+                    ? [21]
+                    : [7, 14, 21];
                 $this->assertSame(
-                    in_array($task->day_number, [7, 14, 21], true),
+                    in_array($task->day_number, $videoDays, true),
                     $hasVideo,
                     "Unexpected video evidence on {$challenge->slug} day {$task->day_number}"
                 );
@@ -125,12 +128,12 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
                 ->test(\App\Livewire\ChallengeDetail::class, ['slug' => $slug])
                 ->assertSee($appName)
                 ->assertSee('Prompt copy vào AI Agent')
-                ->assertSee('SOP thực hiện')
+                ->assertSee('Hướng dẫn thực hiện')
                 ->assertDontSee('Bạn đã yêu cầu AI làm gì?')
-                ->assertSee('Checklist học viên tự kiểm tra')
+                ->assertSee('Checklist trước khi nộp')
                 ->assertSee('Đạt từ 70/100');
 
-            $this->assertSame(21, substr_count($component->html(), 'SOP — Hướng dẫn'));
+            $this->assertSame(21, substr_count($component->html(), 'SOP — CÁC BƯỚC'));
         }
     }
 

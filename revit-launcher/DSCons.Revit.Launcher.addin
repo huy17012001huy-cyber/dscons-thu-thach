@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>DSCons Revit Launcher</Name>
+    <Assembly>DSCons.Revit.Launcher.dll</Assembly>
+    <AddInId>8B4F7C0D-7970-4A5F-9B8B-8B2A1D4D1352</AddInId>
+    <FullClassName>DSCons.Revit.Launcher.App</FullClassName>
+    <VendorId>DSCONS</VendorId>
+    <VendorDescription>DSCons Viet Nam</VendorDescription>
+  </AddIn>
+</RevitAddIns>

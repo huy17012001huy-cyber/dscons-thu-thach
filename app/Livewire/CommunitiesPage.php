@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Brand;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class CommunitiesPage extends Component
@@ -16,12 +18,13 @@ class CommunitiesPage extends Component
 
         $community = Brand::query()->where('status', 'active')->findOrFail($brandId);
         $user = Auth::user();
+        abort_unless($user instanceof User, 403);
 
         $user->brandRoles()->syncWithoutDetaching([$community->id => ['role' => 'member']]);
         $this->dispatch('toast', message: 'Đã tham gia '.$community->name.'.', type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         $query = Brand::query()->where('status', 'active')->withCount('users')->with('owner:id,name');
         if (filled($this->search)) {
@@ -32,8 +35,8 @@ class CommunitiesPage extends Component
         $communities = $query->orderByDesc('users_count')->orderBy('name')->get();
         $joinedIds = collect();
 
-        if (Auth::check()) {
-            $roleIds = Auth::user()->brandRoles()
+        if ($user = Auth::user()) {
+            $roleIds = $user->brandRoles()
                 ->whereIn('brand_user.role', ['member', 'moderator', 'admin', 'owner'])
                 ->pluck('brands.id');
 

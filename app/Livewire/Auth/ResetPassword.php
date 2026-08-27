@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
@@ -28,6 +29,12 @@ class ResetPassword extends Component
 
     public function mount(string $token): void
     {
+        if (brand()->registration_mode !== 'open') {
+            $this->redirect(route('login'), navigate: true);
+
+            return;
+        }
+
         $this->token = $token;
         $this->email = (string) request()->query('email', '');
     }
@@ -36,23 +43,24 @@ class ResetPassword extends Component
     {
         $this->validate();
 
-        $key = 'reset-password|' . request()->ip();
+        $key = 'reset-password|'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->error = 'Bạn đã thử quá nhiều lần. Vui lòng đợi ' . RateLimiter::availableIn($key) . ' giây.';
+            $this->error = 'Bạn đã thử quá nhiều lần. Vui lòng đợi '.RateLimiter::availableIn($key).' giây.';
+
             return;
         }
         RateLimiter::hit($key, 60);
 
         $status = Password::reset(
             [
-                'email'                 => $this->email,
-                'password'              => $this->password,
+                'email' => $this->email,
+                'password' => $this->password,
                 'password_confirmation' => $this->password_confirmation,
-                'token'                 => $this->token,
+                'token' => $this->token,
             ],
             function (User $user, string $password) {
                 $user->forceFill([
-                    'password'       => Hash::make($password),
+                    'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
@@ -64,6 +72,7 @@ class ResetPassword extends Component
             RateLimiter::clear($key);
             session()->flash('status', 'Đặt lại mật khẩu thành công. Đăng nhập bằng mật khẩu mới nhé.');
             $this->redirect(route('login'), navigate: true);
+
             return;
         }
 
@@ -74,9 +83,9 @@ class ResetPassword extends Component
             : 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới.';
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.auth.reset-password')
-            ->layout('layouts.guest', ['title' => 'Đặt lại mật khẩu — ' . brand()->name]);
+            ->layout('layouts.guest', ['title' => 'Đặt lại mật khẩu — '.brand()->name]);
     }
 }

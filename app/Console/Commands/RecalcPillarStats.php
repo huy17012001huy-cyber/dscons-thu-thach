@@ -2,14 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Brand;
 use App\Models\PillarStat;
 use App\Models\Post;
-use App\Models\Brand;
 use Illuminate\Console\Command;
 
 class RecalcPillarStats extends Command
 {
     protected $signature = 'aip:recalc-pillar-stats';
+
     protected $description = 'Recalculate pillar post counts and burning zone';
 
     public function handle(): void
@@ -47,7 +48,7 @@ class RecalcPillarStats extends Command
                         'post_count_7d' => $counts[$pillar],
                         'post_pct' => $pct,
                         'is_burning' => $isBurning,
-                        'burning_started_at' => $isBurning ? ($previous?->burning_started_at ?? now()) : null,
+                        'burning_started_at' => $isBurning ? ($previous->burning_started_at ?? now()) : null,
                         'last_calculated_at' => now(),
                     ]
                 );

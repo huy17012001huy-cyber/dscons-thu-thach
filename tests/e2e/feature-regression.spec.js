@@ -59,11 +59,13 @@ test.describe('QA member feature regression', () => {
         });
     });
 
-    test('opens the account menu and member account pages', async ({ page }) => {
+    test('opens the account menu and member account pages', async ({ page }, testInfo) => {
         const app = new QaAppPage(page);
 
         await app.goto('/feed');
-        const trigger = page.locator('#user-panel:visible, #mobile-nav button[aria-label="Mở menu tài khoản"]:visible').first();
+        const trigger = testInfo.project.name === 'mobile-chromium'
+            ? page.locator('#mobile-account-trigger')
+            : page.locator('#user-panel:visible').last();
         await trigger.click();
         const menu = page.locator('.account-menu:visible').last();
         await expect(menu.getByText('Hồ sơ của bạn')).toBeVisible();

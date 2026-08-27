@@ -10,12 +10,14 @@ use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class MessagesPage extends Component
 {
     public ?int $activeConversationId = null;
+
     public ?int $startWithUserId = null;
 
     #[Rule('required|min:1|max:2000')]
@@ -23,21 +25,26 @@ class MessagesPage extends Component
 
     public function mount(?int $conversation = null): void
     {
+        $user = $this->currentUser();
+        if (! $user) {
+            return;
+        }
+
         $userId = request()->query('user');
-        if ($userId && (int)$userId !== Auth::id()) {
+        if ($userId && (int) $userId !== $user->id) {
             $target = User::find((int) $userId);
             if ($target?->isRecruiter()) {
                 $request = $this->acceptedRecruitmentRequest((int) $userId);
                 $conv = $request ? Conversation::where('contact_request_id', $request->id)->first() : null;
                 $this->activeConversationId = $conv?->id;
             } else {
-                $conv = Conversation::findOrCreateBetween(Auth::id(), (int)$userId);
+                $conv = Conversation::findOrCreateBetween($user->id, (int) $userId);
                 $this->activeConversationId = $conv->id;
             }
         } elseif ($conversation) {
             // Verify current user is a participant
             $conv = Conversation::find($conversation);
-            if ($conv && ($conv->user_one_id === Auth::id() || $conv->user_two_id === Auth::id())) {
+            if ($conv && ($conv->user_one_id === $user->id || $conv->user_two_id === $user->id)) {
                 $this->activeConversationId = $conversation;
             }
         }
@@ -46,31 +53,37 @@ class MessagesPage extends Component
     public function openConversation(int $id): void
     {
         $conv = Conversation::findOrFail($id);
-        if (($conv->user_one_id !== Auth::id() && $conv->user_two_id !== Auth::id()) || ! $this->canUseConversation($conv)) return;
+        $user = $this->currentUser();
+        if (! $user || ($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) || ! $this->canUseConversation($conv)) {
+            return;
+        }
         $this->activeConversationId = $id;
         $this->markAsRead($id);
     }
 
     public function sendMessage(): void
     {
-        if (!Auth::check() || !$this->activeConversationId) return;
+        $user = $this->currentUser();
+        if (! $user || ! $this->activeConversationId) {
+            return;
+        }
         $this->validate();
 
-        $throttleKey = 'send-message:' . Auth::id();
+        $throttleKey = 'send-message:'.$user->id;
         if (RateLimiter::tooManyAttempts($throttleKey, 10)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
-                'newMessage' => "Bạn đang gửi tin nhắn quá nhanh. Vui lòng thử lại sau $seconds giây."
+                'newMessage' => "Bạn đang gửi tin nhắn quá nhanh. Vui lòng thử lại sau $seconds giây.",
             ]);
         }
 
         RateLimiter::hit($throttleKey);
 
         $conv = Conversation::findOrFail($this->activeConversationId);
-        $user = Auth::user();
-
         // Verify user is participant
-        if (($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) || ! $this->canUseConversation($conv)) return;
+        if (($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) || ! $this->canUseConversation($conv)) {
+            return;
+        }
 
         DirectMessage::create([
             'conversation_id' => $conv->id,
@@ -83,7 +96,7 @@ class MessagesPage extends Component
         // Notify other user
         $other = $conv->getOtherUser($user->id);
         $other->notify(new GenericNotification(
-            '💬', $user->name . ' gửi tin nhắn cho bạn',
+            '💬', $user->name.' gửi tin nhắn cho bạn',
             route('messages', ['conversation' => $conv->id])
         ));
 
@@ -92,15 +105,22 @@ class MessagesPage extends Component
 
     private function markAsRead(int $conversationId): void
     {
+        $user = $this->currentUser();
+        if (! $user) {
+            return;
+        }
+
         DirectMessage::where('conversation_id', $conversationId)
-            ->where('sender_id', '!=', Auth::id())
+            ->where('sender_id', '!=', $user->id)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
     }
 
-    public function render()
+    public function render(): View
     {
-        $userId = Auth::id();
+        $user = $this->currentUser();
+        abort_unless($user instanceof User, 403);
+        $userId = $user->id;
 
         $conversations = Conversation::where(function ($query) use ($userId) {
             $query->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
@@ -136,15 +156,30 @@ class MessagesPage extends Component
 
     private function acceptedRecruitmentRequest(int $otherUserId): ?RecruitmentContactRequest
     {
-        return RecruitmentContactRequest::query()->where('status', 'accepted')->where(function ($query) use ($otherUserId) {
-            $query->where('recruiter_id', Auth::id())->where('engineer_id', $otherUserId)
-                ->orWhere('recruiter_id', $otherUserId)->where('engineer_id', Auth::id());
+        $user = $this->currentUser();
+        if (! $user) {
+            return null;
+        }
+
+        return RecruitmentContactRequest::query()->where('status', 'accepted')->where(function ($query) use ($otherUserId, $user) {
+            $query->where('recruiter_id', $user->id)->where('engineer_id', $otherUserId)
+                ->orWhere('recruiter_id', $otherUserId)->where('engineer_id', $user->id);
         })->latest()->first();
     }
 
     private function canUseConversation(Conversation $conversation): bool
     {
-        if ($conversation->conversation_type !== 'recruitment') return true;
+        if ($conversation->conversation_type !== 'recruitment') {
+            return true;
+        }
+
         return $conversation->contactRequest?->status === 'accepted';
+    }
+
+    private function currentUser(): ?User
+    {
+        $user = Auth::user();
+
+        return $user instanceof User ? $user : null;
     }
 }

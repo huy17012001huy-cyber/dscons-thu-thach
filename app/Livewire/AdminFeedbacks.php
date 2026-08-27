@@ -3,7 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Feedback;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -12,6 +15,7 @@ class AdminFeedbacks extends Component
     use WithPagination;
 
     public string $filterType = '';
+
     public string $filterStatus = 'pending';
 
     public function updatedFilterType(): void
@@ -50,7 +54,7 @@ class AdminFeedbacks extends Component
         $this->dispatch('toast', message: 'Đã xóa.', type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         $feedbacks = $this->feedbackQuery()
             ->when($this->filterType, fn ($q) => $q->where('type', $this->filterType))
@@ -64,10 +68,12 @@ class AdminFeedbacks extends Component
 
     private function authorizeAdmin(): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(app()->bound('brand') ? brand()->id : null), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isBrandAdmin(app()->bound('brand') ? brand()->id : null), 403);
     }
 
-    private function feedbackQuery()
+    /** @return Builder<Feedback> */
+    private function feedbackQuery(): Builder
     {
         return Feedback::with(['user', 'brand'])
             ->when(app()->bound('brand'), fn ($query) => $query->where('brand_id', brand()->id));

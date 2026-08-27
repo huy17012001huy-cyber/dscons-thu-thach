@@ -13,11 +13,13 @@ class ChallengeTaskReview extends Model
 
     protected $casts = ['rubric_payload' => 'array', 'created_at' => 'datetime', 'score' => 'integer'];
 
+    /** @return BelongsTo<ChallengeTaskCompletion, $this> */
     public function completion(): BelongsTo
     {
         return $this->belongsTo(ChallengeTaskCompletion::class, 'completion_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewer_id');

@@ -34,7 +34,9 @@ class RecruiterContactService
                 ->whereIn('status', ['pending', 'accepted'])
                 ->lockForUpdate()
                 ->first();
-            if ($existing) return $existing;
+            if ($existing) {
+                return $existing;
+            }
 
             $entitlement = RecruiterEntitlement::query()
                 ->where('brand_id', brand()->id)
@@ -44,7 +46,7 @@ class RecruiterContactService
                 ->orderBy('expires_at')
                 ->lockForUpdate()
                 ->first();
-            abort_unless($entitlement, 402, 'Bạn cần một credit liên hệ còn hiệu lực.');
+            abort_unless($entitlement instanceof RecruiterEntitlement, 402, 'Báº¡n cáº§n má»™t credit liÃªn há»‡ cÃ²n hiá»‡u lá»±c.');
 
             $entitlement->increment('credits_reserved');
             RecruiterCreditLedger::create([
@@ -67,11 +69,14 @@ class RecruiterContactService
                 'reserved_at' => now(),
             ]);
 
-            $engineer->user->notify(new RecruitmentNotification(
-                'Yêu cầu liên hệ tuyển dụng mới',
-                'Bạn có một yêu cầu liên hệ tuyển dụng mới trên '.brand()->name.'.',
+            $engineerUser = $engineer->user;
+            abort_unless($engineerUser instanceof User, 500);
+            $engineerUser->notify(new RecruitmentNotification(
+                'YÃªu cáº§u liÃªn há»‡ tuyá»ƒn dá»¥ng má»›i',
+                'Báº¡n cÃ³ má»™t yÃªu cáº§u liÃªn há»‡ tuyá»ƒn dá»¥ng má»›i trÃªn '.brand()->name.'.',
                 community_route('engineer.cv')
             ));
+
             return $request;
         });
     }
@@ -81,7 +86,7 @@ class RecruiterContactService
         DB::transaction(function () use ($request, $accepted, $engineer): void {
             $request = RecruitmentContactRequest::query()->lockForUpdate()->findOrFail($request->id);
             abort_unless($request->engineer_id === $engineer->id && $request->status === 'pending', 403);
-            abort_unless(!app()->bound('brand') || (int) $request->brand_id === (int) brand()->id, 403);
+            abort_unless(! app()->bound('brand') || (int) $request->brand_id === (int) brand()->id, 403);
 
             $request->update([
                 'status' => $accepted ? 'accepted' : 'rejected',
@@ -113,9 +118,11 @@ class RecruiterContactService
                 );
             }
 
-            $request->recruiter->notify(new RecruitmentNotification(
-                $accepted ? 'Ứng viên đã chấp thuận' : 'Yêu cầu liên hệ đã bị từ chối',
-                $accepted ? 'Ứng viên đã chấp thuận yêu cầu liên hệ của bạn.' : 'Ứng viên đã từ chối yêu cầu liên hệ của bạn.',
+            $recruiter = $request->recruiter;
+            abort_unless($recruiter instanceof User, 500);
+            $recruiter->notify(new RecruitmentNotification(
+                $accepted ? 'á»¨ng viÃªn Ä‘Ã£ cháº¥p thuáº­n' : 'YÃªu cáº§u liÃªn há»‡ Ä‘Ã£ bá»‹ tá»« chá»‘i',
+                $accepted ? 'á»¨ng viÃªn Ä‘Ã£ cháº¥p thuáº­n yÃªu cáº§u liÃªn há»‡ cá»§a báº¡n.' : 'á»¨ng viÃªn Ä‘Ã£ tá»« chá»‘i yÃªu cáº§u liÃªn há»‡ cá»§a báº¡n.',
                 community_route('recruiter.dashboard')
             ));
         });

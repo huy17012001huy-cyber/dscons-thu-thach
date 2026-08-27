@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
@@ -14,15 +15,24 @@ class ForgotPassword extends Component
     public string $email = '';
 
     public bool $sent = false;
+
     public string $error = '';
+
+    public function mount(): void
+    {
+        if (brand()->registration_mode !== 'open') {
+            $this->redirect(route('login'), navigate: true);
+        }
+    }
 
     public function submit(): void
     {
         $this->validate();
 
-        $key = 'forgot-password|' . Str::lower($this->email) . '|' . request()->ip();
+        $key = 'forgot-password|'.Str::lower($this->email).'|'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->error = 'Bạn đã thử quá nhiều lần. Vui lòng đợi ' . RateLimiter::availableIn($key) . ' giây.';
+            $this->error = 'Bạn đã thử quá nhiều lần. Vui lòng đợi '.RateLimiter::availableIn($key).' giây.';
+
             return;
         }
         RateLimiter::hit($key, 60);
@@ -40,9 +50,9 @@ class ForgotPassword extends Component
         $this->sent = true;
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.auth.forgot-password')
-            ->layout('layouts.guest', ['title' => 'Quên mật khẩu — ' . brand()->name]);
+            ->layout('layouts.guest', ['title' => 'Quên mật khẩu — '.brand()->name]);
     }
 }

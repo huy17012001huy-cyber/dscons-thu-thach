@@ -1,35 +1,44 @@
-# Ngày 2 — Lập kế hoạch trước khi cho AI viết code
+# Ngày 2 — Giao việc cho AI theo từng bước
 
-**Hình thức:** Video ngắn · **Thời lượng:** 45 phút
+**Hình thức:** Tự thực hành · **Thời lượng:** 35 phút
 
 ## Hôm nay làm gì?
 
-Học viên biết AI Agent có thể đọc/sửa/build trong workspace, nhưng phải lập kế hoạch trước và chờ xác nhận.
+Bạn học cách nói rõ mục tiêu, yêu cầu AI lập kế hoạch trước và chỉ bắt đầu sau khi bạn đồng ý.
 
 ## Kết quả cần đạt
 
-Lập kế hoạch có phê duyệt trước khi code
+Có một kế hoạch làm tool mà bạn hiểu và có thể kiểm tra.
 
 ## AI làm gì?
 
-- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
-- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+- Đọc mục tiêu và những gì đang có trước khi thực hiện.
+- Đề xuất kế hoạch, file cần thay đổi, lệnh build và cách kiểm tra.
+- Thực hiện phần kỹ thuật sau khi học viên xác nhận và báo lại kết quả.
 
 ## Học viên kiểm tra gì?
 
-- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
-- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+- Chọn đúng phiên bản Revit và cung cấp thông tin công việc cho AI.
+- Đọc kế hoạch, xác nhận trước thay đổi và không đưa dữ liệu mật lên AI.
+- Mở Revit bằng model mẫu/bản sao, chạy thử và đối chiếu kết quả.
 
-## SOP duy nhất
+## SOP từng bước
 
-1. Mở workspace và đọc AGENTS.md/SETUP.md nếu có.
-2. Dán prompt lập kế hoạch, yêu cầu AI chưa được sửa file.
-3. Đọc kế hoạch: mục tiêu, giả định, file ảnh hưởng, lệnh build và cách rollback.
-4. Nếu AI hỏi lại, trả lời phiên bản Revit, đường dẫn workspace và capstone dự kiến; không đoán API.
+1. Mở công cụ hoặc model được ghi trong bài và dùng bản sao an toàn.
+2. Copy toàn bộ prompt bên dưới, dán vào AI Agent và điền các phần trong ngoặc vuông.
+3. Khi AI hỏi lại, trả lời phiên bản Revit, mục tiêu và model kiểm thử; nếu chưa biết thì nói rõ “chưa biết”, không đoán.
+4. Đọc kế hoạch AI: mục tiêu, việc sẽ làm, file sẽ sửa, lệnh chạy và cách quay lại. Chỉ xác nhận khi bạn hiểu.
+5. Nói cho AI một mục tiêu bằng câu đời thường: “Tôi muốn làm tool để…”.
+6. Yêu cầu AI ghi rõ việc sẽ làm, việc không làm, cách build và cách quay lại nếu sai.
+7. Chỉ nhắn “đồng ý thực hiện” sau khi bạn đọc được kế hoạch và thấy đúng mục tiêu.
+8. Để AI thực hiện, build/chạy theo hướng dẫn, rồi mở Revit để kiểm tra kết quả thật.
+9. Chụp bằng chứng, trả lời ba câu reflection và nộp bài trên website. Nếu lỗi, gửi đoạn log từ ERROR/exception đến phần summary.
 
 ## Minh chứng cần nộp
 
-- Ảnh màn hình kết quả của ngày 2.
+- Ảnh màn hình kết quả thật của ngày 2.
+- AI đưa ra kế hoạch trước khi thực hiện, không sửa mù.
+- Ba câu ngắn: Tôi yêu cầu AI làm gì? AI đã làm gì? Tôi kiểm tra kết quả thế nào?
 
 ## Điều kiện Đạt
 
@@ -37,5 +46,6 @@ Lập kế hoạch có phê duyệt trước khi code
 
 ## Lỗi thường gặp
 
-- Bấm “làm luôn” khi chưa đọc file.
-- Cho AI sửa cả model hoặc thư mục không liên quan.
+- Chỉ gửi ảnh code hoặc câu trả lời của AI mà chưa chạy trong Revit.
+- Dùng sai phiên bản, sai model hoặc quên kiểm tra kết quả độc lập.
+- Cho AI sửa quá nhiều thứ cùng lúc hoặc sửa model gốc.

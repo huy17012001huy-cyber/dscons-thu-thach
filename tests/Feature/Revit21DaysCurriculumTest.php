@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
+use App\Livewire\ChallengeLessonPage;
 use Database\Seeders\Revit21DaysSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -69,11 +70,54 @@ class Revit21DaysCurriculumTest extends TestCase
         $component = Livewire::actingAs($admin)
             ->test(\App\Livewire\ChallengeDetail::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent'])
             ->assertSee('Prompt copy vào AI Agent')
-            ->assertSee('SOP thực hiện')
-            ->assertDontSee('Bạn đã yêu cầu AI làm gì?')
-            ->assertSee('Checklist học viên tự kiểm tra')
+            ->assertSee('Hướng dẫn thực hiện')
+            ->assertDontSee('AI thực hiện')
+            ->assertDontSee('Học viên kiểm tra')
+            ->assertDontSee('Nền tảng chung')
+            ->assertSee('Checklist trước khi nộp')
             ->assertSee('Đạt từ 70/100');
 
-        $this->assertSame(21, substr_count($component->html(), 'SOP — Hướng dẫn'));
+        $this->assertSame(21, substr_count($component->html(), 'SOP — CÁC BƯỚC'));
+    }
+
+    public function test_curriculum_has_ai_first_content_modes_and_only_requires_video_on_final_day(): void
+    {
+        app(Revit21DaysSeeder::class)->run();
+
+        $tasks = ChallengeTask::query()
+            ->whereHas('expedition', fn ($query) => $query->where('slug', '21-ngay-lam-tool-revit-voi-ai-agent'))
+            ->orderBy('day_number')
+            ->get();
+
+        $this->assertSame('inline', $tasks->firstWhere('day_number', 1)->instruction_payload['content_mode']);
+        $this->assertSame('inline', $tasks->firstWhere('day_number', 2)->instruction_payload['content_mode']);
+        foreach ([7, 12, 15, 18, 20, 21] as $day) {
+            $this->assertSame('landing', $tasks->firstWhere('day_number', $day)->instruction_payload['content_mode']);
+        }
+        $this->assertNotEmpty($tasks->firstWhere('day_number', 7)->instruction_payload['feed_activity']);
+        $this->assertNotEmpty($tasks->firstWhere('day_number', 21)->instruction_payload['feed_activity']);
+
+        foreach ($tasks->where('day_number', '<', 21) as $task) {
+            $this->assertStringNotContainsString('Video tổng kết', implode(' ', $task->instruction_payload['evidence_requirements']));
+        }
+        $this->assertStringContainsString('Video tổng kết', implode(' ', $tasks->firstWhere('day_number', 21)->instruction_payload['evidence_requirements']));
+    }
+
+    public function test_seeding_preserves_admin_video_and_meeting_data_and_landing_renders_for_admin(): void
+    {
+        app(Revit21DaysSeeder::class)->run();
+        $task = ChallengeTask::query()->where('day_number', 1)->firstOrFail();
+        $task->update(['video_url' => 'https://example.test/recording', 'meeting_at' => now()->addDay()]);
+
+        app(Revit21DaysSeeder::class)->run();
+        $this->assertSame('https://example.test/recording', $task->fresh()->video_url);
+        $this->assertNotNull($task->fresh()->meeting_at);
+
+        $admin = \App\Models\User::query()->where('is_admin', true)->firstOrFail();
+        Livewire::actingAs($admin)
+            ->test(ChallengeLessonPage::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent', 'day' => 1])
+            ->assertSee('Chọn và cài AI Agent để bắt đầu')
+            ->assertSee('Prompt copy vào AI Agent')
+            ->assertSee('Sao chép prompt');
     }
 }

@@ -7,13 +7,12 @@
     .community-manage-kicker svg { width: 15px; height: 15px; }
     .community-manage-header h1 { margin: 0; color: var(--text); font-size: clamp(25px, 3vw, 30px); font-weight: 800; letter-spacing: -.035em; line-height: 1.15; text-wrap: balance; }
     .community-manage-header p { max-width: 620px; margin: 8px 0 0; color: var(--text-muted); font-size: 14px; line-height: 1.65; }
-    .community-manage-command-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; padding: 8px; border: 1px solid #C9DEE8; border-radius: 16px; background: #F0F8FA; box-shadow: 0 4px 12px rgba(18,59,89,.045); }
-    .community-manage-command-group { display: flex; align-items: center; gap: 7px; min-width: 0; }
-    .community-manage-command-group.is-content { flex: 1 1 auto; }
-    .community-manage-command-group.is-navigation { flex: 0 0 auto; }
+    .community-manage-command-bar { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px 18px; margin-top: 18px; padding: 8px; border: 1px solid #C9DEE8; border-radius: 16px; background: #F0F8FA; box-shadow: 0 4px 12px rgba(18,59,89,.045); }
+    .community-manage-command-group { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; min-width: 0; }
+    .community-manage-command-group.is-navigation { justify-content: flex-end; }
     .community-manage-command { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 0 13px; border: 1px solid #AFCFDF; border-radius: 11px; background: #fff; color: #125A96; font-size: 13px; font-weight: 750; line-height: 1; text-decoration: none; white-space: nowrap; touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease; }
     .community-manage-command svg { width: 17px; height: 17px; flex: 0 0 auto; }
-    .community-manage-command.is-content { flex: 1 1 0; min-width: 0; }
+    .community-manage-command.is-content { min-width: 0; }
     .community-manage-command.is-content:hover { border-color: #1F77BE; background: #1F77BE; color: #fff; box-shadow: 0 5px 12px rgba(31,119,190,.18); }
     .community-manage-command.is-secondary { background: #fff; color: #125A96; }
     .community-manage-command.is-secondary:hover { border-color: #1F77BE; background: #E1F4F7; color: #125A96; }
@@ -62,13 +61,22 @@
     .community-manage-url { margin: 15px 0 0; padding-top: 14px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; }
     .community-manage-url strong { display: block; margin-top: 4px; overflow: hidden; color: var(--text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
     .community-manage-plans { padding: 20px 22px; }
-    .community-manage-plans-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .community-manage-plans-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
     .community-manage-plans h2 { margin: 0; color: var(--text); font-size: 18px; letter-spacing: -.02em; }
-    .community-manage-plans-heading span { color: var(--text-muted); font-size: 11px; }
-    .community-manage-plan { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0; border-top: 1px solid #E6EEF2; }
-    .community-manage-plan-name { min-width: 0; color: var(--text); font-size: 14px; font-weight: 750; }
-    .community-manage-plan-status { display: inline-flex; margin-top: 4px; padding: 3px 7px; border-radius: 999px; background: var(--green-light); color: var(--green); font-size: 10px; font-weight: 800; text-transform: uppercase; }
-    .community-manage-plan-price { flex: 0 0 auto; color: var(--green); font-size: 14px; font-weight: 800; }
+    .community-manage-plans-heading p { margin: 4px 0 0; color: var(--text-muted); font-size: 11px; line-height: 1.45; }
+    .community-manage-plan-count { display: inline-flex; flex: 0 0 auto; min-height: 25px; align-items: center; padding: 0 8px; border-radius: 999px; background: #E1F4F7; color: #125A96; font-size: 10px; font-weight: 800; }
+    .community-manage-plan { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 13px 0; border-top: 1px solid #E6EEF2; }
+    .community-manage-plan:first-of-type { border-top: 0; }
+    .community-manage-plan-name { min-width: 0; color: var(--text); font-size: 14px; font-weight: 800; }
+    .community-manage-plan-detail { display: block; margin-top: 3px; color: var(--text-muted); font-size: 11px; font-weight: 550; line-height: 1.45; }
+    .community-manage-plan-status { display: inline-flex; width: fit-content; align-items: center; gap: 4px; margin-top: 7px; padding: 4px 7px; border-radius: 999px; background: #EAF5FB; color: #125A96; font-size: 10px; font-weight: 800; }
+    .community-manage-plan-status::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ''; }
+    .community-manage-plan-status.is-free { background: #F3F7F9; color: #61798A; }
+    .community-manage-plan-status.is-draft { background: #FFF5DF; color: #9A5B00; }
+    .community-manage-plan-price { align-self: start; color: #125A96; font-size: 14px; font-weight: 850; text-align: right; white-space: nowrap; }
+    .community-manage-plan-duration { display: block; margin-top: 4px; color: var(--text-muted); font-size: 10px; font-weight: 650; }
+    .community-manage-plans-action { display: inline-flex; min-height: 34px; align-items: center; gap: 5px; margin-top: 10px; color: #125A96; font-size: 11px; font-weight: 800; text-decoration: none; }
+    .community-manage-plans-action:hover { color: #1F77BE; text-decoration: underline; }
     .community-manage-empty { margin: 14px 0 0; color: var(--text-muted); font-size: 13px; line-height: 1.55; }
     .community-manage-members { margin-top: 16px; padding: 20px 22px; }
     .community-manage-members-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
@@ -78,8 +86,8 @@
     .community-manage-member img { width: 36px; height: 36px; flex: 0 0 auto; border: 1px solid #D8E6EC; border-radius: 50%; object-fit: cover; }
     .community-manage-member strong { display: block; overflow: hidden; color: var(--text); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
     .community-manage-member span { display: block; margin-top: 2px; color: var(--text-muted); font-size: 12px; }
-    @media (max-width: 900px) { .community-manage-layout { grid-template-columns: 1fr; } .community-manage-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } .community-manage-command-bar { align-items: stretch; flex-direction: column; } .community-manage-command-group { width: 100%; } .community-manage-command-group.is-navigation { justify-content: flex-end; } }
-    @media (max-width: 620px) { .community-manage { padding: 20px 14px 44px; } .community-manage-header-main { display: block; } .community-manage-command-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .community-manage-command-group.is-navigation { justify-content: stretch; } .community-manage-command.is-content:last-child { grid-column: span 2; } .community-manage-command { width: 100%; padding: 0 10px; } .community-manage-card-header, .community-manage-form, .community-manage-summary, .community-manage-plans, .community-manage-members { padding-left: 16px; padding-right: 16px; } .community-manage-upload-grid, .community-manage-current-assets, .community-manage-side { grid-template-columns: 1fr; } .community-manage-actions .ds-btn { width: 100%; } }
+    @media (max-width: 1060px) { .community-manage-command-bar { grid-template-columns: 1fr; } .community-manage-command-group.is-navigation { justify-content: flex-start; } .community-manage-layout { grid-template-columns: 1fr; } .community-manage-side { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 620px) { .community-manage { padding: 20px 14px 44px; } .community-manage-header-main { display: block; } .community-manage-command-bar, .community-manage-command-group { grid-template-columns: repeat(2, minmax(0, 1fr)); } .community-manage-command-group { display: grid; width: 100%; } .community-manage-command.is-content:last-child { grid-column: span 2; } .community-manage-command { width: 100%; padding: 0 10px; } .community-manage-card-header, .community-manage-form, .community-manage-summary, .community-manage-plans, .community-manage-members { padding-left: 16px; padding-right: 16px; } .community-manage-upload-grid, .community-manage-current-assets, .community-manage-side { grid-template-columns: 1fr; } .community-manage-actions .ds-btn { width: 100%; } }
 </style>
 
     <header class="community-manage-header">
@@ -227,16 +235,32 @@
             </section>
 
             <section class="community-manage-card community-manage-plans">
-                <div class="community-manage-plans-heading"><h2>Gói thành viên</h2><span>{{ $plans->count() }} gói</span></div>
+                <div class="community-manage-plans-heading">
+                    <div><h2>Gói thành viên</h2><p>Membership chỉ mở quyền mua challenge và khóa học của community.</p></div>
+                    <span class="community-manage-plan-count">{{ $plans->count() }} gói</span>
+                </div>
                 @forelse($plans as $plan)
-                    @php($planStatus = ['draft' => 'Bản nháp', 'pending_review' => 'Chờ duyệt', 'published' => 'Đang hiển thị', 'archived' => 'Đã lưu trữ'][$plan->status] ?? $plan->status)
+                    @php
+                        $isFreePlan = $plan->tier !== 'premium' || $plan->price === 0;
+                        $planStatus = $isFreePlan
+                            ? 'Mặc định cho thành viên'
+                            : (['draft' => 'Chưa mở bán', 'pending_review' => 'Chờ duyệt', 'published' => 'Đang mở bán', 'archived' => 'Đã lưu trữ'][$plan->status] ?? $plan->status);
+                        $planDetail = $isFreePlan
+                            ? 'Tham gia cộng đồng và đăng bài, không cần mua membership.'
+                            : 'Mở quyền mua mọi challenge và khóa học trong '.$community->name.'.';
+                    @endphp
                     <div class="community-manage-plan">
-                        <div class="community-manage-plan-name">{{ $plan->name }}<span class="community-manage-plan-status">{{ $planStatus }}</span></div>
-                        <strong class="community-manage-plan-price">{{ $plan->price ? number_format($plan->price).'đ' : 'Miễn phí' }}</strong>
+                        <div class="community-manage-plan-name">
+                            {{ $plan->name }}
+                            <span class="community-manage-plan-detail">{{ $planDetail }}</span>
+                            <span class="community-manage-plan-status {{ $isFreePlan ? 'is-free' : ($plan->status === 'published' ? '' : 'is-draft') }}">{{ $planStatus }}</span>
+                        </div>
+                        <strong class="community-manage-plan-price">{{ $isFreePlan ? 'Không cần mua' : number_format($plan->price).'đ' }}<span class="community-manage-plan-duration">{{ $plan->duration_days ? $plan->duration_days.' ngày' : 'Không giới hạn' }}</span></strong>
                     </div>
                 @empty
                     <p class="community-manage-empty">Chưa có gói thành viên được tạo.</p>
                 @endforelse
+                <a class="community-manage-plans-action" href="{{ community_route('membership') }}"><x-icon name="arrow-right" size="14" />Xem trang gói thành viên</a>
             </section>
         </aside>
     </div>

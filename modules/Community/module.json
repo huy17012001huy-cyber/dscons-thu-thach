@@ -1,0 +1,5 @@
+{
+  "name": "Community",
+  "provider": "Modules\\Community\\Providers\\CommunityServiceProvider",
+  "depends": []
+}

@@ -3,14 +3,17 @@
 namespace App\Livewire;
 
 use App\Models\AffiliateEarning;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AffiliatePage extends Component
 {
-    public function render()
+    public function render(): View
     {
         $user = Auth::user();
+        abort_unless($user instanceof User, 403);
         $referralLink = route('referral', $user->username ?? $user->id);
         $referralCount = $user->referrals()->count();
         $earnings = AffiliateEarning::where('referrer_id', $user->id)

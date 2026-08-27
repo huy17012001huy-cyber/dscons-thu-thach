@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Expedition;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,7 @@ class BotApiController extends Controller
      * GET /api/bot/member?q=email_or_username
      * Lookup member info: name, level, XP, class, membership, streak
      */
-    public function lookupMember(Request $request)
+    public function lookupMember(Request $request): JsonResponse
     {
         if (! $this->verify($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -74,7 +75,7 @@ class BotApiController extends Controller
      * GET /api/bot/challenge-progress?q=email_or_username&challenge=slug_or_id
      * Check member's challenge progress
      */
-    public function challengeProgress(Request $request)
+    public function challengeProgress(Request $request): JsonResponse
     {
         if (! $this->verify($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -175,7 +176,7 @@ class BotApiController extends Controller
      * GET /api/bot/pending-submissions?challenge=slug_or_id
      * List pending submissions for admin review
      */
-    public function pendingSubmissions(Request $request)
+    public function pendingSubmissions(Request $request): JsonResponse
     {
         if (! $this->verify($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);

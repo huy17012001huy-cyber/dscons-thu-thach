@@ -40,6 +40,10 @@
 
             <div class="flex flex-wrap gap-3">
                 <div>
+                    <label style="font-size:0.75rem; font-weight:600; color:#5C5C66;">Loại sản phẩm</label>
+                    <select wire:model.live="productKind" class="input" style="width:150px;"><option value="resource">Tài nguyên</option><option value="revit_tool">Revit Tool</option></select>
+                </div>
+                <div>
                     <label style="font-size:0.75rem; font-weight:600; color:#5C5C66;">Giá (VND)</label>
                     <input wire:model="price" type="number" class="input" min="0" step="1000" style="width:150px;">
                     <p style="font-size:0.65rem; color:#5C5C66;">0 = miễn phí</p>
@@ -62,6 +66,14 @@
                     </select>
                 </div>
             </div>
+
+            @if($productKind === 'revit_tool')
+            <div style="padding:14px;border:1px solid #B8D7E6;border-radius:10px;background:#F3FAFD">
+                <p style="margin:0 0 10px;color:#123B59;font-size:.78rem;font-weight:800">Cấu hình DSCons Revit Tool</p>
+                <div class="flex flex-wrap gap-3"><div><label style="font-size:.72rem;color:#5C5C66">Tool key *</label><input wire:model="toolKey" class="input" placeholder="dscons-test-1" style="width:180px">@error('toolKey')<p style="color:#DC2626;font-size:.68rem">{{ $message }}</p>@enderror</div><div><label style="font-size:.72rem;color:#5C5C66">Revit đã test runtime</label><input wire:model="supportedRevitVersions" class="input" placeholder="Ví dụ: 2024, 2025" style="width:230px"><p style="margin:4px 0 0;color:#61798A;font-size:.64rem">Chỉ nhập phiên bản đã cài và chạy thử thật; build thành công chưa đủ.</p></div><div><label style="font-size:.72rem;color:#5C5C66">Manifest version</label><input wire:model="toolManifestVersion" class="input" style="width:130px"></div></div>
+                <label style="display:flex;gap:7px;align-items:center;margin-top:10px;font-size:.75rem;color:#456477"><input wire:model="isLicenseRequired" type="checkbox"> Yêu cầu license DSCons một thiết bị</label>
+            </div>
+            @endif
 
             <div>
                 <label style="font-size:0.75rem; font-weight:600; color:#5C5C66;">File upload</label>
@@ -125,7 +137,7 @@
                         {{ $product->price > 0 ? number_format($product->price, 0, ',', '.') . 'đ' : 'Miễn phí' }}
                     </td>
                     <td style="padding:0.5rem; color:#5C5C66;">
-                        {{ match($product->delivery_type) { 'file' => '▫ File', 'link' => '◎ Link', 'both' => '▫+◎', default => '—' } }}
+                        {{ $product->product_kind === 'revit_tool' ? 'Revit Tool · '.$product->tool_key : match($product->delivery_type) { 'file' => '▫ File', 'link' => '◎ Link', 'both' => '▫+◎', default => '—' } }}
                     </td>
                     <td style="padding:0.5rem; font-weight:600;">{{ $product->purchases_count }}</td>
                     <td style="padding:0.5rem;">

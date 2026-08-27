@@ -13,11 +13,13 @@ class CommunityApplication extends Model
         'proposed_sepay_account', 'proposed_sepay_bank', 'status', 'reviewed_by', 'review_note',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function applicant(): BelongsTo
     {
         return $this->belongsTo(User::class, 'applicant_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');

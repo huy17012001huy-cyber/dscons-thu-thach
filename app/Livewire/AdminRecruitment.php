@@ -2,20 +2,27 @@
 
 namespace App\Livewire;
 
-use App\Models\RecruiterPlan;
-use App\Models\RecruiterProfile;
 use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
+use App\Models\RecruiterPlan;
+use App\Models\RecruiterProfile;
 use App\Models\RecruitmentContactRequest;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AdminRecruitment extends Component
 {
     public bool $isGlobalAdmin = false;
+
     public string $planName = '';
+
     public string $planDescription = '';
+
     public int $planCredits = 0;
+
     public ?int $planDuration = null;
+
     public int $planPrice = 0;
 
     public function mount(): void
@@ -46,11 +53,15 @@ class AdminRecruitment extends Component
         $plan->update(['is_active' => ! $plan->is_active]);
     }
 
-    public function render()
+    public function render(): View
     {
         $pendingRecruiters = $this->recruiterProfilesQuery()->with('user')
             ->where('verification_status', 'pending')
             ->latest()
+            ->get();
+        $verifiedRecruiters = $this->recruiterProfilesQuery()->with('user')
+            ->where('verification_status', 'verified')
+            ->latest('verified_at')
             ->get();
 
         $plans = $this->recruiterPlansQuery()->latest()->get();
@@ -74,31 +85,36 @@ class AdminRecruitment extends Component
             ->get()
             ->keyBy('user_id');
 
-        return view('livewire.admin-recruitment', compact('pendingRecruiters', 'plans', 'connections', 'engineerCvs', 'cvProfiles'))
+        return view('livewire.admin-recruitment', compact('pendingRecruiters', 'verifiedRecruiters', 'plans', 'connections', 'engineerCvs', 'cvProfiles'))
             ->layout('layouts.app', ['title' => 'Quản lý tuyển dụng']);
     }
 
-    private function recruiterProfilesQuery()
+    /** @return Builder<RecruiterProfile> */
+    private function recruiterProfilesQuery(): Builder
     {
         return $this->isGlobalAdmin ? RecruiterProfile::withoutGlobalScopes() : RecruiterProfile::query();
     }
 
-    private function recruiterPlansQuery()
+    /** @return Builder<RecruiterPlan> */
+    private function recruiterPlansQuery(): Builder
     {
         return $this->isGlobalAdmin ? RecruiterPlan::withoutGlobalScopes() : RecruiterPlan::query();
     }
 
-    private function contactRequestsQuery()
+    /** @return Builder<RecruitmentContactRequest> */
+    private function contactRequestsQuery(): Builder
     {
         return $this->isGlobalAdmin ? RecruitmentContactRequest::withoutGlobalScopes() : RecruitmentContactRequest::query();
     }
 
-    private function engineerCvsQuery()
+    /** @return Builder<EngineerCv> */
+    private function engineerCvsQuery(): Builder
     {
         return $this->isGlobalAdmin ? EngineerCv::withoutGlobalScopes() : EngineerCv::query();
     }
 
-    private function engineerProfilesQuery()
+    /** @return Builder<EngineerProfile> */
+    private function engineerProfilesQuery(): Builder
     {
         return $this->isGlobalAdmin ? EngineerProfile::withoutGlobalScopes() : EngineerProfile::query();
     }

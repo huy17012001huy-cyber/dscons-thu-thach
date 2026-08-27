@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>DSCons-Revit-Launcher-Setup</AssemblyName>
+    <RootNamespace>DSCons.Revit.Installer</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('Payload')">
+    <EmbeddedResource Include="Payload\**\*" />
+  </ItemGroup>
+</Project>

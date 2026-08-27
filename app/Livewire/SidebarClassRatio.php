@@ -1,11 +1,17 @@
 <?php
+
 namespace App\Livewire;
+
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Livewire\Component;
-class SidebarClassRatio extends Component {
-    public function render() {
+
+class SidebarClassRatio extends Component
+{
+    public function render(): View
+    {
         $brandId = app()->bound('brand') ? (int) brand()->id : 0;
         $classes = app()->bound('brand') ? brand()->classProfiles() : config('communities.classes.default', []);
         $data = Cache::remember("sidebar_class_ratio:{$brandId}", 600, function () use ($brandId, $classes) {
@@ -24,6 +30,7 @@ class SidebarClassRatio extends Component {
                 $count = (int) ($counts[$class] ?? 0);
                 $ratios[$class] = ['count' => $count, 'pct' => $total > 0 ? round($count / $total * 100) : 0];
             }
+
             return ['ratios' => $ratios, 'total' => $total, 'classes' => $classes];
         });
 

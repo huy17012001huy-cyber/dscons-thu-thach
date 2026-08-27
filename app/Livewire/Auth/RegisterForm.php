@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
@@ -28,9 +29,11 @@ class RegisterForm extends Component
     // Set bởi inline JS trong view trước khi user nhấn nút Đăng ký.
     public string $fingerprint = '';
 
-    public function mount()
+    public function mount(): void
     {
-        // If ref code in session, keep it
+        if (brand()->registration_mode !== 'open') {
+            $this->redirect(route('login'), navigate: true);
+        }
     }
 
     public function register(): void
@@ -38,26 +41,28 @@ class RegisterForm extends Component
         // Block registration on invite-only or closed brands
         if (brand()->registration_mode !== 'open') {
             $this->addError('email', 'Cộng đồng này chỉ dành cho thành viên được mời.');
+
             return;
         }
 
         $this->validate();
 
-        $throttleKey = 'register|' . request()->ip();
+        $throttleKey = 'register|'.request()->ip();
         if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
             $seconds = RateLimiter::availableIn($throttleKey);
-            $this->addError('email', 'Vui lòng đợi ' . $seconds . ' giây trước khi đăng ký tài khoản mới.');
+            $this->addError('email', 'Vui lòng đợi '.$seconds.' giây trước khi đăng ký tài khoản mới.');
+
             return;
         }
 
         // Transliterate Vietnamese → ASCII before creating username
-        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($this->name));
-        $username = preg_replace('/\s+/', '.', $ascii);
-        $username = preg_replace('/[^a-z0-9._]/', '', $username);
-        $base     = $username;
-        $i        = 1;
+        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($this->name)) ?: '';
+        $username = preg_replace('/\s+/', '.', $ascii) ?: '';
+        $username = preg_replace('/[^a-z0-9._]/', '', $username) ?: '';
+        $base = $username;
+        $i = 1;
         while (User::where('username', $username)->exists()) {
-            $username = $base . $i++;
+            $username = $base.$i++;
         }
 
         $referrer = null;
@@ -67,24 +72,24 @@ class RegisterForm extends Component
         }
 
         $user = User::create([
-            'name'        => $this->name,
-            'email'       => $this->email,
-            'username'    => $username,
-            'password'    => Hash::make($this->password),
-            'level'       => 1,
-            'xp'          => 0,
-            'aip'         => 0,
-            'streak'      => 0,
+            'name' => $this->name,
+            'email' => $this->email,
+            'username' => $username,
+            'password' => Hash::make($this->password),
+            'level' => 1,
+            'xp' => 0,
+            'aip' => 0,
+            'streak' => 0,
             'referred_by' => $referrer?->id,
         ]);
 
         // Create active membership
         Membership::create([
-            'user_id'       => $user->id,
-            'status'        => 'active',
-            'plan'          => 'lifetime',
-            'expires_at'    => '2099-12-31',
-            'referred_by'   => $referrer?->id,
+            'user_id' => $user->id,
+            'status' => 'active',
+            'plan' => 'lifetime',
+            'expires_at' => '2099-12-31',
+            'referred_by' => $referrer?->id,
         ]);
         $user->brandRoles()->syncWithoutDetaching([
             brand()->id => ['role' => 'member'],
@@ -105,6 +110,7 @@ class RegisterForm extends Component
         if (Setting::get('email_verification_required', '1') === '0') {
             $user->markEmailAsVerified();
             $this->redirect(route('feed'), navigate: true);
+
             return;
         }
 
@@ -113,9 +119,9 @@ class RegisterForm extends Component
         $this->redirect(route('verification.notice'), navigate: true);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.auth.register-form')
-            ->layout('layouts.guest', ['title' => 'Đăng ký — ' . brand()->name]);
+            ->layout('layouts.guest', ['title' => 'Đăng ký — '.brand()->name]);
     }
 }

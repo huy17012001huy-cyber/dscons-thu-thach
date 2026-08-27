@@ -3,21 +3,29 @@
 namespace App\Livewire;
 
 use App\Models\RecruiterProfile;
+use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class RecruiterOnboarding extends Component
 {
     public string $companyName = '';
+
     public string $businessEmail = '';
+
     public string $website = '';
+
     public string $industry = 'BIM/MEP';
+
     public string $description = '';
 
     public function mount(): void
     {
         $profile = RecruiterProfile::where('user_id', auth()->id())->first();
-        if (! $profile) return;
+        if (! $profile) {
+            return;
+        }
         $this->fill([
             'companyName' => $profile->company_name,
             'businessEmail' => $profile->business_email ?? '',
@@ -37,7 +45,7 @@ class RecruiterOnboarding extends Component
             'description' => 'nullable|string|max:2000',
         ]);
 
-        $user = auth()->user();
+        $user = $this->currentUser();
         $user->update(['account_type' => 'recruiter']);
         RecruiterProfile::updateOrCreate(['brand_id' => brand()->id, 'user_id' => $user->id], [
             'company_name' => $data['companyName'],
@@ -52,8 +60,16 @@ class RecruiterOnboarding extends Component
         $this->redirect(community_route('recruiter.dashboard'), navigate: true);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.recruiter-onboarding')->layout('layouts.recruiter', ['title' => 'Đăng ký nhà tuyển dụng']);
+    }
+
+    private function currentUser(): User
+    {
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }

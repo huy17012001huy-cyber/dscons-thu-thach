@@ -18,12 +18,14 @@ class TelegramService
         self::send($message, config('services.telegram.completion_topic_id'));
     }
 
-    private static function send(string $message, $topicId = null): void
+    private static function send(string $message, int|string|null $topicId = null): void
     {
         $token = config('services.telegram.bot_token');
         $chatId = config('services.telegram.admin_chat_id');
 
-        if (!$token || !$chatId) return;
+        if (! $token || ! $chatId) {
+            return;
+        }
 
         $payload = [
             'chat_id' => $chatId,
@@ -40,7 +42,7 @@ class TelegramService
         try {
             Http::timeout(5)->post("https://api.telegram.org/bot{$token}/sendMessage", $payload);
         } catch (\Throwable $e) {
-            Log::warning('Telegram notification failed: ' . $e->getMessage());
+            Log::warning('Telegram notification failed: '.$e->getMessage());
         }
     }
 }

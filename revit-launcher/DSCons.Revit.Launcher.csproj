@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework Condition="'$(RevitTargetFramework)' != ''">$(RevitTargetFramework)</TargetFramework>
+    <TargetFramework Condition="'$(RevitTargetFramework)' == ''">net48</TargetFramework>
+    <UseWPF>true</UseWPF><ImplicitUsings>disable</ImplicitUsings><Nullable>enable</Nullable><LangVersion>latest</LangVersion>
+    <AssemblyName>DSCons.Revit.Launcher</AssemblyName><RootNamespace>DSCons.Revit.Launcher</RootNamespace><Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="RevitAPI"><HintPath>$(RevitApiPath)</HintPath><Private>false</Private></Reference>
+    <Reference Include="RevitAPIUI"><HintPath>$(RevitApiUiPath)</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net47' Or '$(TargetFramework)' == 'net48'" />
+    <Reference Include="System.Security" Condition="'$(TargetFramework)' == 'net47' Or '$(TargetFramework)' == 'net48'" />
+  </ItemGroup>
+  <Target Name="ValidateRevitBuildInputs" BeforeTargets="CoreCompile">
+    <Error Condition="'$(RevitVersion)' == ''" Text="RevitVersion is required." />
+    <Error Condition="'$(RevitApiPath)' == '' or !Exists('$(RevitApiPath)')" Text="RevitApiPath is required." />
+    <Error Condition="'$(RevitApiUiPath)' == '' or !Exists('$(RevitApiUiPath)')" Text="RevitApiUiPath is required." />
+  </Target>
+</Project>

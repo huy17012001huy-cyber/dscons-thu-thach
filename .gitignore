@@ -20,6 +20,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/phpstan
 /vendor
 Homestead.json
 Homestead.yaml
@@ -31,3 +32,9 @@ Thumbs.db
 /output/
 /menu-active.png
 /compose-*.png
+/revit-launcher/bin/
+/revit-launcher/obj/
+/revit-launcher/dist/
+/revit-installer/Payload/
+/revit-installer/bin/
+/revit-installer/obj/

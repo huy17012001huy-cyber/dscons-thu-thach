@@ -17,9 +17,10 @@ class LoginLog extends Model
 
     protected $casts = [
         'created_at' => 'datetime',
-        'via_admin'  => 'boolean',
+        'via_admin' => 'boolean',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Expedition;
@@ -10,50 +11,69 @@ use App\Models\ExpeditionMember;
 use App\Models\User;
 use App\Notifications\EventNotification;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminEvents extends Component
 {
     public bool $showForm = false;
+
     public ?int $editingEventId = null;
+
     public ?int $selectedEventId = null;
 
     public string $title = '';
+
     public string $description = '';
+
     public string $eventType = 'workshop';
+
     public string $format = 'online';
+
     public ?int $courseId = null;
+
     public ?int $expeditionId = null;
+
     public string $startsAt = '';
+
     public string $endsAt = '';
+
     public string $meetingUrl = '';
+
     public string $location = '';
+
     public string $capacity = '';
+
     public string $status = 'draft';
 
-    public function updatedCourseId($value): void
+    public function updatedCourseId(int|string|null $value): void
     {
-        if (filled($value)) $this->expeditionId = null;
+        if (filled($value)) {
+            $this->expeditionId = null;
+        }
     }
 
-    public function updatedExpeditionId($value): void
+    public function updatedExpeditionId(int|string|null $value): void
     {
-        if (filled($value)) $this->courseId = null;
+        if (filled($value)) {
+            $this->courseId = null;
+        }
     }
 
     public function openCreate(): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         $this->resetForm();
         $this->showForm = true;
     }
 
     public function openEdit(int $id): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         $event = Event::query()->findOrFail($id);
         $this->editingEventId = $event->id;
         $this->title = $event->title;
@@ -62,8 +82,8 @@ class AdminEvents extends Component
         $this->format = $event->format;
         $this->courseId = $event->course_id;
         $this->expeditionId = $event->expedition_id;
-        $this->startsAt = $event->starts_at?->timezone('Asia/Ho_Chi_Minh')->format('Y-m-d\\TH:i') ?? '';
-        $this->endsAt = $event->ends_at?->timezone('Asia/Ho_Chi_Minh')->format('Y-m-d\\TH:i') ?? '';
+        $this->startsAt = $event->starts_at ? $event->starts_at->timezone('Asia/Ho_Chi_Minh')->format('Y-m-d\\TH:i') : '';
+        $this->endsAt = $event->ends_at ? $event->ends_at->timezone('Asia/Ho_Chi_Minh')->format('Y-m-d\\TH:i') : '';
         $this->meetingUrl = $event->meeting_url ?? '';
         $this->location = $event->location ?? '';
         $this->capacity = $event->capacity !== null ? (string) $event->capacity : '';
@@ -73,15 +93,15 @@ class AdminEvents extends Component
 
     public function saveEvent(): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
 
         $this->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:10000',
             'eventType' => 'required|in:workshop,live,mentor,offline,other',
             'format' => 'required|in:online,offline',
-            'courseId' => 'nullable|integer|exists:courses,id',
-            'expeditionId' => 'nullable|integer|exists:expeditions,id',
+            'courseId' => ['nullable', 'integer', Rule::exists('courses', 'id')->where('brand_id', brand()->id)],
+            'expeditionId' => ['nullable', 'integer', Rule::exists('expeditions', 'id')->where('brand_id', brand()->id)],
             'startsAt' => 'required|date',
             'endsAt' => 'required|date',
             'meetingUrl' => 'nullable|url|max:2000',
@@ -92,6 +112,7 @@ class AdminEvents extends Component
 
         if (($this->courseId ? 1 : 0) + ($this->expeditionId ? 1 : 0) !== 1) {
             $this->addError('courseId', 'Hãy chọn đúng một khóa học hoặc Challenge.');
+
             return;
         }
 
@@ -99,14 +120,17 @@ class AdminEvents extends Component
         $ends = Carbon::parse($this->endsAt, 'Asia/Ho_Chi_Minh')->utc();
         if ($ends->lessThanOrEqualTo($starts)) {
             $this->addError('endsAt', 'Thời gian kết thúc phải sau thời gian bắt đầu.');
+
             return;
         }
         if ($this->format === 'online' && $this->meetingUrl === '') {
             $this->addError('meetingUrl', 'Sự kiện online cần có link meeting.');
+
             return;
         }
         if ($this->format === 'offline' && $this->location === '') {
             $this->addError('location', 'Sự kiện offline cần có địa điểm.');
+
             return;
         }
 
@@ -125,20 +149,23 @@ class AdminEvents extends Component
             'status' => $this->status,
         ];
 
-        $event = $this->editingEventId ? Event::query()->findOrFail($this->editingEventId) : new Event();
+        $event = $this->editingEventId ? Event::query()->findOrFail($this->editingEventId) : new Event;
         $wasPublished = $event->exists && $event->status === 'published';
         $scheduleChanged = $event->exists && (
-            !$event->starts_at?->equalTo($starts) || !$event->ends_at?->equalTo($ends)
+            ! $event->starts_at
+            || ! $event->starts_at->equalTo($starts)
+            || ! $event->ends_at
+            || ! $event->ends_at->equalTo($ends)
         );
 
-        if (!$event->exists) {
-            $event->created_by = Auth::id();
-            $event->slug = Str::slug($this->title) . '-' . Str::lower(Str::random(6));
+        if (! $event->exists) {
+            $event->created_by = (int) Auth::id();
+            $event->slug = Str::slug($this->title).'-'.Str::lower(Str::random(6));
         }
         $event->fill($data);
         $event->save();
 
-        if ($event->status === 'published' && (!$wasPublished || $scheduleChanged)) {
+        if ($event->status === 'published' && (! $wasPublished || $scheduleChanged)) {
             $this->notifyEligibleLearners($event, $wasPublished ? 'Lịch sự kiện đã được cập nhật' : 'Sự kiện mới đã được công bố');
         }
 
@@ -149,9 +176,11 @@ class AdminEvents extends Component
 
     public function publishEvent(int $id): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         $event = Event::query()->findOrFail($id);
-        if (!$event->course_id && !$event->expedition_id) return;
+        if (! $event->course_id && ! $event->expedition_id) {
+            return;
+        }
         $event->update(['status' => 'published']);
         $this->notifyEligibleLearners($event, 'Sự kiện mới đã được công bố');
         $this->dispatch('toast', message: 'Đã publish sự kiện.', type: 'success');
@@ -159,21 +188,21 @@ class AdminEvents extends Component
 
     public function cancelEvent(int $id): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         Event::query()->whereKey($id)->update(['status' => 'cancelled']);
         $this->dispatch('toast', message: 'Đã hủy sự kiện.', type: 'success');
     }
 
     public function completeEvent(int $id): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         Event::query()->whereKey($id)->update(['status' => 'completed']);
         $this->dispatch('toast', message: 'Đã đánh dấu hoàn thành.', type: 'success');
     }
 
     public function deleteEvent(int $id): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         $event = Event::query()->findOrFail($id);
         if (in_array($event->status, ['draft', 'cancelled'], true)) {
             $event->delete();
@@ -183,7 +212,7 @@ class AdminEvents extends Component
 
     public function markAttendance(int $registrationId): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         $registration = EventRegistration::query()->findOrFail($registrationId);
         $registration->update([
             'attended_at' => $registration->attended_at ? null : now(),
@@ -191,15 +220,18 @@ class AdminEvents extends Component
         ]);
     }
 
-    public function exportCsv(int $eventId)
+    public function exportCsv(int $eventId): StreamedResponse
     {
-        abort_unless(Auth::user()?->isBrandAdmin(), 403);
+        $this->authorizeAdmin();
         $event = Event::query()->findOrFail($eventId);
         $rows = EventRegistration::query()->with('user:id,name,email')->where('event_id', $event->id)->where('status', 'registered')->latest('registered_at')->get();
 
         return response()->streamDownload(function () use ($event, $rows): void {
-            echo "\\xEF\\xBB\\xBF";
+            echo "\xEF\xBB\xBF";
             $handle = fopen('php://output', 'wb');
+            if ($handle === false) {
+                return;
+            }
             fputcsv($handle, ['Sự kiện', $event->title]);
             fputcsv($handle, ['Họ tên', 'Email', 'Đăng ký lúc', 'Đã tham dự']);
             foreach ($rows as $row) {
@@ -211,13 +243,13 @@ class AdminEvents extends Component
                 ]);
             }
             fclose($handle);
-        }, Str::slug($event->title) . '-registrations.csv');
+        }, Str::slug($event->title).'-registrations.csv');
     }
 
     private function notifyEligibleLearners(Event $event, string $prefix): void
     {
         $userIds = $event->course_id
-            ? \App\Models\CourseEnrollment::query()->where('course_id', $event->course_id)->where('status', 'active')->pluck('user_id')
+            ? CourseEnrollment::query()->where('course_id', $event->course_id)->where('status', 'active')->pluck('user_id')
             : ExpeditionMember::query()->where('expedition_id', $event->expedition_id)->whereIn('status', ['approved', 'paid'])->whereNull('kicked_at')->pluck('user_id');
 
         User::query()->whereIn('id', $userIds->unique())->get()->each(function (User $user) use ($event, $prefix): void {
@@ -225,7 +257,7 @@ class AdminEvents extends Component
                 ? community_route('events')
                 : route('events');
             $name = app()->bound('brand') ? brand()->name : 'DSCons';
-            $user->notify(new EventNotification($prefix . ' — ' . $name, $prefix . ': ' . $event->title, $url));
+            $user->notify(new EventNotification($prefix.' — '.$name, $prefix.': '.$event->title, $url));
         });
     }
 
@@ -238,11 +270,17 @@ class AdminEvents extends Component
         $this->resetValidation();
     }
 
-    public function render()
+    private function authorizeAdmin(): void
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isCommunityAdmin(brand()->id), 403);
+    }
+
+    public function render(): View
     {
         $events = Event::query()
             ->with(['course:id,title', 'expedition:id,title'])
-            ->withCount(['registrations as registered_count' => fn($q) => $q->where('status', 'registered')])
+            ->withCount(['registrations as registered_count' => fn ($q) => $q->where('status', 'registered')])
             ->latest('starts_at')
             ->get();
 

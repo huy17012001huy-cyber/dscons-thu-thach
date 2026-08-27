@@ -3,12 +3,27 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasBrand;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property int $brand_id
+ * @property int|null $course_id
+ * @property int|null $expedition_id
+ * @property int $created_by
+ * @property string $title
+ * @property string $status
+ * @property CarbonInterface|null $starts_at
+ * @property CarbonInterface|null $ends_at
+ * @property int|null $capacity
+ * @property-read Course|null $course
+ * @property-read Expedition|null $expedition
+ */
 class Event extends Model
 {
     use HasBrand;
@@ -28,24 +43,55 @@ class Event extends Model
     protected static function booted(): void
     {
         static::creating(function (self $event): void {
-            if (!$event->slug) {
-                $event->slug = Str::slug($event->title) . '-' . Str::lower(Str::random(6));
+            if (! $event->slug) {
+                $event->slug = Str::slug($event->title).'-'.Str::lower(Str::random(6));
             }
         });
     }
 
-    public function course(): BelongsTo { return $this->belongsTo(Course::class); }
-    public function expedition(): BelongsTo { return $this->belongsTo(Expedition::class); }
-    public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
-    public function registrations(): HasMany { return $this->hasMany(EventRegistration::class); }
+    /** @return BelongsTo<Course, $this> */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
 
+    /** @return BelongsTo<Expedition, $this> */
+    public function expedition(): BelongsTo
+    {
+        return $this->belongsTo(Expedition::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** @return HasMany<EventRegistration, $this> */
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
+
+    /**
+     * @param  Builder<Event>  $query
+     *
+     * @phpstan-return Builder<Event>
+     */
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', 'published');
     }
 
-    public function isUpcoming(): bool { return $this->starts_at?->isFuture() ?? false; }
-    public function isFinished(): bool { return $this->ends_at?->isPast() ?? false; }
+    public function isUpcoming(): bool
+    {
+        return $this->starts_at?->isFuture() ?? false;
+    }
+
+    public function isFinished(): bool
+    {
+        return $this->ends_at?->isPast() ?? false;
+    }
 
     public function getDurationMinutesAttribute(): int
     {
@@ -66,6 +112,7 @@ class Event extends Model
         return $this->capacity !== null && $this->registered_count >= $this->capacity;
     }
 
+    /** @return array<string, string> */
     public static function typeLabels(): array
     {
         return [
@@ -77,6 +124,7 @@ class Event extends Model
         ];
     }
 
+    /** @return array<string, string> */
     public static function statusLabels(): array
     {
         return [

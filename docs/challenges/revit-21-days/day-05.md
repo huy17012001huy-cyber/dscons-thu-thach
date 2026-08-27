@@ -1,35 +1,44 @@
-# Ngày 5 — Đọc Parameter của phần tử MEP
+# Ngày 5 — Xem thông tin của phần tử MEP
 
-**Hình thức:** Video ngắn · **Thời lượng:** 45 phút
+**Hình thức:** Tự thực hành · **Thời lượng:** 45 phút
 
 ## Hôm nay làm gì?
 
-Biết yêu cầu AI xuất dữ liệu có ngữ cảnh: Category, Family, Type, Level, System, Size, Mark và Comments.
+Bạn yêu cầu AI xem Category, Family, Type, Level, System, Size, Mark và Comments của phần tử.
 
 ## Kết quả cần đạt
 
-Đọc Parameter có thể truy nguyên về ElementId
+Có bảng thông tin dễ đọc của 5–10 phần tử.
 
 ## AI làm gì?
 
-- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
-- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+- Đọc mục tiêu và những gì đang có trước khi thực hiện.
+- Đề xuất kế hoạch, file cần thay đổi, lệnh build và cách kiểm tra.
+- Thực hiện phần kỹ thuật sau khi học viên xác nhận và báo lại kết quả.
 
 ## Học viên kiểm tra gì?
 
-- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
-- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+- Chọn đúng phiên bản Revit và cung cấp thông tin công việc cho AI.
+- Đọc kế hoạch, xác nhận trước thay đổi và không đưa dữ liệu mật lên AI.
+- Mở Revit bằng model mẫu/bản sao, chạy thử và đối chiếu kết quả.
 
-## SOP duy nhất
+## SOP từng bước
 
-1. Chọn một Category và 5–10 phần tử.
-2. Dán prompt yêu cầu AI trả bảng có ElementId, Category, Family, Type, Level và các Parameter MEP.
-3. Nếu Parameter không tồn tại, yêu cầu AI ghi “missing” thay vì đoán.
-4. Đối chiếu từng dòng trong Revit Properties.
+1. Mở công cụ hoặc model được ghi trong bài và dùng bản sao an toàn.
+2. Copy toàn bộ prompt bên dưới, dán vào AI Agent và điền các phần trong ngoặc vuông.
+3. Khi AI hỏi lại, trả lời phiên bản Revit, mục tiêu và model kiểm thử; nếu chưa biết thì nói rõ “chưa biết”, không đoán.
+4. Đọc kế hoạch AI: mục tiêu, việc sẽ làm, file sẽ sửa, lệnh chạy và cách quay lại. Chỉ xác nhận khi bạn hiểu.
+5. Chọn 5–10 phần tử cùng một nhóm để dễ kiểm tra.
+6. Yêu cầu AI trả bảng có Category, Level, System, Size và thông tin còn lại; thiếu thì ghi “chưa có”.
+7. Mở Properties/Schedule để kiểm tra tối thiểu 5 giá trị, không chỉ tin câu trả lời AI.
+8. Để AI thực hiện, build/chạy theo hướng dẫn, rồi mở Revit để kiểm tra kết quả thật.
+9. Chụp bằng chứng, trả lời ba câu reflection và nộp bài trên website. Nếu lỗi, gửi đoạn log từ ERROR/exception đến phần summary.
 
 ## Minh chứng cần nộp
 
-- Ảnh màn hình kết quả của ngày 5.
+- Ảnh màn hình kết quả thật của ngày 5.
+- Ít nhất 5 thông tin được kiểm tra lại trong Properties hoặc Schedule.
+- Ba câu ngắn: Tôi yêu cầu AI làm gì? AI đã làm gì? Tôi kiểm tra kết quả thế nào?
 
 ## Điều kiện Đạt
 
@@ -37,5 +46,6 @@ Biết yêu cầu AI xuất dữ liệu có ngữ cảnh: Category, Family, Type
 
 ## Lỗi thường gặp
 
-- Nhầm Type với Family.
-- Dùng giá trị hiển thị đã format thay cho giá trị thật.
+- Chỉ gửi ảnh code hoặc câu trả lời của AI mà chưa chạy trong Revit.
+- Dùng sai phiên bản, sai model hoặc quên kiểm tra kết quả độc lập.
+- Cho AI sửa quá nhiều thứ cùng lúc hoặc sửa model gốc.

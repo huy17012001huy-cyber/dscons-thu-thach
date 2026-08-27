@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Post;
 use App\Models\Question;
 use App\Models\User;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -13,7 +14,7 @@ class SearchResults extends Component
     #[Url]
     public string $q = '';
 
-    public function render()
+    public function render(): View
     {
         $posts = collect();
         $users = collect();

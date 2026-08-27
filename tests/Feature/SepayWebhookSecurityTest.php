@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CommerceWebhookEvent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -48,6 +49,23 @@ class SepayWebhookSecurityTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+    }
+
+    public function test_webhook_event_is_idempotent_by_provider_event_id(): void
+    {
+        config(['services.sepay.webhook_token' => 'secret-token']);
+        $payload = [
+            'id' => 'sepay-event-1001',
+            'transferType' => 'in',
+            'content' => 'UNMATCHED',
+            'transferAmount' => 1000,
+        ];
+
+        $this->postJson(route('webhook.sepay'), $payload, ['Authorization' => 'Apikey secret-token'])->assertOk();
+        $this->postJson(route('webhook.sepay'), $payload, ['Authorization' => 'Apikey secret-token'])->assertOk();
+
+        $this->assertSame(1, CommerceWebhookEvent::query()->where('provider', 'sepay')->count());
+        $this->assertSame('ignored', CommerceWebhookEvent::query()->value('status'));
     }
 
     public function test_bot_api_requires_authorization_header(): void

@@ -3,14 +3,17 @@
 namespace App\Livewire;
 
 use App\Models\Topic;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class AdminTopics extends Component
 {
     public bool $showForm = false;
+
     public ?int $editingId = null;
 
     #[Rule('required|max:60')]
@@ -29,41 +32,51 @@ class AdminTopics extends Component
 
     public function updatedName(string $value): void
     {
-        if (!$this->editingId) {
+        if (! $this->editingId) {
             $this->slug = Str::slug($value);
         }
     }
 
     public function openCreate(): void
     {
+        if (! $this->currentUser()?->isCommunityAdmin()) {
+            return;
+        }
+
         $this->reset(['name', 'emoji', 'slug', 'sort_order', 'editingId']);
         $this->is_active = true;
-        $this->showForm  = true;
+        $this->showForm = true;
     }
 
     public function openEdit(int $id): void
     {
-        $topic            = Topic::findOrFail($id);
-        $this->editingId  = $id;
-        $this->name       = $topic->name;
-        $this->emoji      = $topic->emoji ?? '';
-        $this->slug       = $topic->slug;
+        if (! $this->currentUser()?->isCommunityAdmin()) {
+            return;
+        }
+
+        $topic = Topic::findOrFail($id);
+        $this->editingId = $id;
+        $this->name = $topic->name;
+        $this->emoji = $topic->emoji ?? '';
+        $this->slug = $topic->slug;
         $this->sort_order = $topic->sort_order;
-        $this->is_active  = $topic->is_active;
-        $this->showForm   = true;
+        $this->is_active = $topic->is_active;
+        $this->showForm = true;
     }
 
     public function save(): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! $this->currentUser()?->isCommunityAdmin()) {
+            return;
+        }
         $this->validate();
 
         $data = [
-            'name'       => $this->name,
-            'emoji'      => $this->emoji ?: null,
-            'slug'       => $this->slug,
+            'name' => $this->name,
+            'emoji' => $this->emoji ?: null,
+            'slug' => $this->slug,
             'sort_order' => $this->sort_order,
-            'is_active'  => $this->is_active,
+            'is_active' => $this->is_active,
         ];
 
         if ($this->editingId) {
@@ -79,17 +92,28 @@ class AdminTopics extends Component
 
     public function toggleActive(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
-        Topic::findOrFail($id)->update(['is_active' => !Topic::findOrFail($id)->is_active]);
+        if (! $this->currentUser()?->isCommunityAdmin()) {
+            return;
+        }
+        Topic::findOrFail($id)->update(['is_active' => ! Topic::findOrFail($id)->is_active]);
     }
 
     public function delete(int $id): void
     {
-        if (!Auth::user()?->is_admin) return;
+        if (! $this->currentUser()?->isCommunityAdmin()) {
+            return;
+        }
         Topic::findOrFail($id)->delete();
     }
 
-    public function render()
+    private function currentUser(): ?User
+    {
+        $user = Auth::user();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    public function render(): View
     {
         return view('livewire.admin-topics', [
             'topics' => Topic::orderBy('sort_order')->orderBy('name')->get(),

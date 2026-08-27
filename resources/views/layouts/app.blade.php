@@ -1359,12 +1359,12 @@ body.dscons-shell .membership-cta:hover { background: #125A96 !important; }
         <x-icon name="target" size="18" />
         Challenge
     </a>
-    <button type="button" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}" @click="accountOpen = !accountOpen" :aria-expanded="accountOpen.toString()" aria-haspopup="true" aria-label="Mở menu tài khoản">
+    <button id="mobile-account-trigger" type="button" class="mob-nav-btn {{ request()->routeIs('profile')?'active':'' }}" @click="accountOpen = !accountOpen" :aria-expanded="accountOpen.toString()" aria-haspopup="true" aria-label="Mở menu tài khoản" aria-controls="mobile-account-menu">
         <img src="{{ auth()->user()->avatar_url }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" alt="">
         Tôi
     </button>
 </nav>
-<div class="account-menu account-menu-mobile" x-cloak x-show="accountOpen" x-transition.origin.bottom.right @click.stop>
+<div id="mobile-account-menu" class="account-menu account-menu-mobile" x-cloak x-show="accountOpen" x-transition.origin.bottom.right @click.stop>
     @include('components.account-menu')
 </div>
 @endauth

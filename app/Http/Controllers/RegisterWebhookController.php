@@ -6,13 +6,14 @@ use App\Mail\WelcomeMemberMail;
 use App\Models\Membership;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class RegisterWebhookController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): JsonResponse
     {
         // Verify shared secret — ưu tiên secret cấu hình ở /admin/settings (DB),
         // fallback về .env để không vỡ cấu hình cũ.
@@ -45,13 +46,13 @@ class RegisterWebhookController extends Controller
         }
 
         // Generate username from name
-        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($validated['name']));
-        $username = preg_replace('/\s+/', '.', $ascii);
-        $username = preg_replace('/[^a-z0-9._]/', '', $username);
+        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($validated['name'])) ?: '';
+        $username = preg_replace('/\s+/', '.', $ascii) ?: '';
+        $username = preg_replace('/[^a-z0-9._]/', '', $username) ?: '';
         $base = $username;
         $i = 1;
         while (User::where('username', $username)->exists()) {
-            $username = $base . $i++;
+            $username = $base.$i++;
         }
 
         $referrer = null;
@@ -60,26 +61,26 @@ class RegisterWebhookController extends Controller
         }
 
         $user = User::create([
-            'name'        => $validated['name'],
-            'email'       => $validated['email'],
-            'username'    => $username,
-            'level'       => 1,
-            'xp'          => 0,
-            'aip'         => 0,
-            'streak'      => 0,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'username' => $username,
+            'level' => 1,
+            'xp' => 0,
+            'aip' => 0,
+            'streak' => 0,
             'referred_by' => $referrer?->id,
             // Luôn đóng dấu nguồn để nhận diện tài khoản tạo qua webhook (auto-duyệt Challenge).
             // Funnel có thể gửi source riêng; nếu không gửi thì mặc định 'webhook'.
-            'source'      => filled($validated['source'] ?? null) ? $validated['source'] : 'webhook',
+            'source' => filled($validated['source'] ?? null) ? $validated['source'] : 'webhook',
         ]);
 
         // Đăng ký qua webhook (server-to-server) → coi như đã xác minh email
         $user->markEmailAsVerified();
 
         Membership::create([
-            'user_id'    => $user->id,
-            'status'     => 'active',
-            'plan'       => 'lifetime',
+            'user_id' => $user->id,
+            'status' => 'active',
+            'plan' => 'lifetime',
             'expires_at' => '2099-12-31',
             'referred_by' => $referrer?->id,
         ]);
@@ -97,9 +98,9 @@ class RegisterWebhookController extends Controller
         // không làm hỏng việc tạo tài khoản (đã tạo xong ở trên rồi).
         try {
             Mail::to($user->email)->send(new WelcomeMemberMail(
-                name:      $user->name,
-                email:     $user->email,
-                loginUrl:  route('login'),
+                name: $user->name,
+                email: $user->email,
+                loginUrl: route('login'),
                 brandName: config('app.name'),
             ));
         } catch (\Throwable $e) {

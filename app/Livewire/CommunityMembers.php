@@ -28,6 +28,7 @@ class CommunityMembers extends Component
         abort_unless(in_array($role, ['member', 'moderator', 'admin'], true), 422);
 
         $actor = Auth::user();
+        abort_unless($actor instanceof User, 403);
         $target = User::query()->findOrFail($userId);
         abort_if($target->isSuperAdmin(), 403, 'Không thể thay đổi quyền Super Admin.');
 
@@ -60,13 +61,13 @@ class CommunityMembers extends Component
 
     public function transferOwnership(int $userId): void
     {
-        abort_unless(Auth::user()?->isCommunityOwner($this->community->id), 403);
+        $currentOwner = Auth::user();
+        abort_unless($currentOwner instanceof User && $currentOwner->isCommunityOwner($this->community->id), 403);
 
         $target = User::query()->findOrFail($userId);
         abort_if($target->isSuperAdmin(), 403, 'Không thể chuyển quyền cho Super Admin.');
         abort_if($target->id === Auth::id(), 422, 'Bạn đã là Owner của community này.');
 
-        $currentOwner = Auth::user();
         DB::transaction(function () use ($target, $currentOwner): void {
             $this->community->update(['owner_id' => $target->id]);
             $this->community->users()->syncWithoutDetaching([
@@ -104,10 +105,11 @@ class CommunityMembers extends Component
 
     private function authorizeAdmin(): void
     {
-        abort_unless(Auth::user()?->isCommunityAdmin($this->community->id), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isCommunityAdmin($this->community->id), 403);
     }
 
-    public function render()
+    public function render(): \Illuminate\Contracts\View\View
     {
         $members = $this->community->users()
             ->withPivot('role')

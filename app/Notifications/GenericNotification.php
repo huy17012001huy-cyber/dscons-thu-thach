@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use Illuminate\Notifications\Notification;
 
 class GenericNotification extends Notification
@@ -13,12 +14,14 @@ class GenericNotification extends Notification
         private ?int $postId = null,
     ) {}
 
-    public function via($notifiable): array
+    /** @return list<'database'> */
+    public function via(User $notifiable): array
     {
         return ['database'];
     }
 
-    public function toDatabase($notifiable): array
+    /** @return array{icon: string, message: string, url: string|null, post_id: int|null} */
+    public function toDatabase(User $notifiable): array
     {
         return [
             'icon' => $this->icon,

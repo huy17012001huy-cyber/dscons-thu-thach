@@ -4,9 +4,11 @@ namespace App\Livewire;
 
 use App\Models\Answer;
 use App\Models\Question;
+use App\Models\User;
 use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -36,13 +38,16 @@ class QaPage extends Component
     public string $answerBody = '';
 
     public ?int $editingAnswerId = null;
+
     public string $editingAnswerBody = '';
 
     public ?int $editingQuestionId = null;
+
     public string $editingQuestionTitle = '';
+
     public string $editingQuestionBody = '';
 
-    public function setFilter(string $f)
+    public function setFilter(string $f): void
     {
         $this->filter = $f;
         $this->resetPage();
@@ -56,14 +61,15 @@ class QaPage extends Component
 
     public function submitAnswer(): void
     {
-        if (! Auth::check() || ! $this->openQuestionId || blank($this->answerBody)) {
+        $user = $this->authenticatedUser();
+        if (! $user || ! $this->openQuestionId || blank($this->answerBody)) {
             return;
         }
         $this->validate(['answerBody' => 'required|min:3|max:5000']);
         $q = Question::findOrFail($this->openQuestionId);
 
         // Anti-spam: max 1 answer per question per user
-        $existing = Answer::where('question_id', $q->id)->where('user_id', Auth::id())->exists();
+        $existing = Answer::where('question_id', $q->id)->where('user_id', $user->id)->exists();
         if ($existing) {
             $this->addError('answerBody', 'Bạn đã trả lời câu hỏi này rồi.');
 
@@ -71,7 +77,7 @@ class QaPage extends Component
         }
 
         // Anti-spam: max 10 answers per hour
-        $recentCount = Answer::where('user_id', Auth::id())
+        $recentCount = Answer::where('user_id', $user->id)
             ->where('created_at', '>=', now()->subHour())->count();
         if ($recentCount >= 10) {
             $this->addError('answerBody', 'Bạn đã trả lời quá nhiều. Vui lòng đợi 1 giờ.');
@@ -79,11 +85,11 @@ class QaPage extends Component
             return;
         }
 
-        Answer::create(['question_id' => $q->id, 'user_id' => Auth::id(), 'body' => $this->answerBody]);
+        Answer::create(['question_id' => $q->id, 'user_id' => $user->id, 'body' => $this->answerBody]);
         if ($q->status === 'open') {
             $q->update(['status' => 'answered']);
         }
-        app(XpService::class)->award(Auth::user(), 'comment', 1.0, 'Trả lời câu hỏi', $q);
+        app(XpService::class)->award($user, 'comment', 1.0, 'Trả lời câu hỏi', $q);
         $this->answerBody = '';
     }
 
@@ -196,11 +202,21 @@ class QaPage extends Component
         ]);
         RateLimiter::hit($throttleKey, 3600); // 5 questions per hour
 
-        app(XpService::class)->award(Auth::user(), 'post', 0.33, 'Đặt câu hỏi', $q);
+        $user = $this->authenticatedUser();
+        if ($user) {
+            app(XpService::class)->award($user, 'post', 0.33, 'Đặt câu hỏi', $q);
+        }
         $this->reset(['title', 'body', 'pillar', 'isAnonymous', 'showAsk']);
     }
 
-    public function render()
+    private function authenticatedUser(): ?User
+    {
+        $user = Auth::user();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    public function render(): View
     {
         $query = Question::with(['user', 'answers.user'])->withCount('answers');
         match ($this->filter) {

@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Modules\RevitTools\Http\Controllers\V1;
+
+use App\Http\Responses\ApiResponse;
+use App\Services\ToolLicenseService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Modules\RevitTools\Http\Resources\ToolEntitlementResource;
+
+final class RevitEntitlementController
+{
+    public function __invoke(Request $request, ToolLicenseService $licenses): JsonResponse
+    {
+        $session = $licenses->sessionFromToken($request->bearerToken());
+
+        if (! $session) {
+            return ApiResponse::error('Token Revit không hợp lệ hoặc đã hết hạn.', 401);
+        }
+
+        return ApiResponse::success([
+            'tools' => ToolEntitlementResource::collection($licenses->getEntitlements($session->installation))->resolve($request),
+        ], 'Danh sách tool đã được tải.');
+    }
+}

@@ -5,11 +5,12 @@ namespace App\Livewire;
 use App\Models\Post;
 use App\Models\Report;
 use App\Models\User;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AdminDashboard extends Component
 {
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin-dashboard', [
             'totalUsers' => User::count(),

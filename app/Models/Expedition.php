@@ -1,54 +1,128 @@
 <?php
+
 namespace App\Models;
+
+use App\Models\Concerns\HasBrand;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use App\Models\Concerns\HasBrand;
 
-class Expedition extends Model {
+/**
+ * @property int $brand_id
+ * @property int $required_days
+ * @property string $difficulty
+ * @property bool $is_featured
+ * @property \Illuminate\Support\Carbon|null $freeze_starts_at
+ * @property \Illuminate\Support\Carbon|null $freeze_ends_at
+ * @property int|null $freeze_from_day
+ * @property-read Collection<int, ChallengeTask> $tasks
+ * @property-read Collection<int, ExpeditionMember> $members
+ * @property-read int $active_members_count
+ * @property-read int $tasks_count
+ * @property-read Brand|null $brand
+ */
+class Expedition extends Model
+{
     use HasBrand;
+
     protected $fillable = [
-        'title','slug','description','cover_path','boss_name','difficulty','required_days','max_members',
-        'created_by','leader_id','status','deposit_aip','starts_at','ends_at','price','access_tier','brand_id','is_featured',
-        'freeze_from_day','freeze_starts_at','freeze_ends_at',
+        'title', 'slug', 'description', 'cover_path', 'boss_name', 'difficulty', 'required_days', 'max_members',
+        'created_by', 'leader_id', 'status', 'deposit_aip', 'starts_at', 'ends_at', 'price', 'access_tier', 'brand_id', 'is_featured',
+        'freeze_from_day', 'freeze_starts_at', 'freeze_ends_at',
     ];
+
     protected $casts = [
-        'starts_at'=>'datetime','ends_at'=>'datetime','price'=>'decimal:2',
-        'freeze_starts_at'=>'datetime','freeze_ends_at'=>'datetime','is_featured'=>'boolean',
+        'starts_at' => 'datetime', 'ends_at' => 'datetime', 'price' => 'decimal:2',
+        'freeze_starts_at' => 'datetime', 'freeze_ends_at' => 'datetime', 'is_featured' => 'boolean',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (self $exp) {
-            if (!$exp->slug) {
+            if (! $exp->slug) {
                 $exp->slug = Str::slug($exp->title) ?: 'challenge';
             }
         });
     }
 
-    public function getRouteKeyName(): string { return 'slug'; }
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 
-    public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
-    public function leader(): BelongsTo { return $this->belongsTo(User::class, 'leader_id'); }
-    public function members(): HasMany { return $this->hasMany(ExpeditionMember::class); }
-    public function checkins(): HasMany { return $this->hasMany(ExpeditionCheckin::class); }
-    public function tasks(): HasMany { return $this->hasMany(ChallengeTask::class); }
-    public function events(): HasMany { return $this->hasMany(Event::class); }
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
-    public function activeMembersCount(): int { return $this->members()->whereNull('kicked_at')->count(); }
-    public function uniqueClassCount(): int {
+    /** @return BelongsTo<User, $this> */
+    public function leader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'leader_id');
+    }
+
+    /** @return HasMany<ExpeditionMember, $this> */
+    public function members(): HasMany
+    {
+        return $this->hasMany(ExpeditionMember::class);
+    }
+
+    /** @return HasMany<ExpeditionCheckin, $this> */
+    public function checkins(): HasMany
+    {
+        return $this->hasMany(ExpeditionCheckin::class);
+    }
+
+    /** @return HasMany<ChallengeTask, $this> */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(ChallengeTask::class);
+    }
+
+    /** @return HasMany<Event, $this> */
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class);
+    }
+
+    /** @var array<int, int> */
+    private array $_hoursToDayMap = [];
+
+    public function activeMembersCount(): int
+    {
+        return $this->members()->whereNull('kicked_at')->count();
+    }
+
+    public function uniqueClassCount(): int
+    {
         return $this->members()->whereNull('kicked_at')->distinct('class_at_join')->count('class_at_join');
     }
-    public function getXpBonusMultiplier(): float {
+
+    public function getXpBonusMultiplier(): float
+    {
         $classes = $this->uniqueClassCount();
-        return match(true) { $classes >= 5 => 1.5, $classes >= 3 => 1.2, default => 1.0 };
+
+        return match (true) {
+            $classes >= 5 => 1.5, $classes >= 3 => 1.2, default => 1.0
+        };
     }
-    public function getDifficultyLabelAttribute(): string {
-        return match($this->difficulty) { 'normal'=>'Thường','hard'=>'Khó','chaos'=>'Hỗn loạn',default=>$this->difficulty };
+
+    public function getDifficultyLabelAttribute(): string
+    {
+        return match ($this->difficulty) {
+            'normal' => 'Thường','hard' => 'Khó','chaos' => 'Hỗn loạn',default => $this->difficulty
+        };
     }
-    public function getDifficultyColorAttribute(): string {
-        return match($this->difficulty) { 'normal'=>'blue','hard'=>'amber','chaos'=>'red',default=>'gray' };
+
+    public function getDifficultyColorAttribute(): string
+    {
+        return match ($this->difficulty) {
+            'normal' => 'blue','hard' => 'amber','chaos' => 'red',default => 'gray'
+        };
     }
 
     /**
@@ -58,11 +132,13 @@ class Expedition extends Model {
      */
     public function getAdjustedHoursForMember(ExpeditionMember $member): int
     {
-        if (!$member->personal_starts_at) return 0;
+        if (! $member->personal_starts_at) {
+            return 0;
+        }
 
         $hours = (int) $member->personal_starts_at->diffInHours(now());
 
-        if (!$this->freeze_starts_at || !$this->freeze_ends_at) {
+        if (! $this->freeze_starts_at || ! $this->freeze_ends_at) {
             return $hours;
         }
 
@@ -86,7 +162,9 @@ class Expedition extends Model {
      */
     public function getCurrentDayForMember(ExpeditionMember $member): int
     {
-        if (!$member->personal_starts_at) return 0;
+        if (! $member->personal_starts_at) {
+            return 0;
+        }
 
         $now = now();
         $day = 0;
@@ -148,11 +226,14 @@ class Expedition extends Model {
      * Freeze shift (applies AFTER cascade): if the final deadline lands during the freeze window,
      * push it past freeze_ends so nobody is marked late during the rest period.
      */
-    public function getDeadlineForMemberAtDay(ExpeditionMember $member, int $dayNumber): \Carbon\Carbon
+    public function getDeadlineForMemberAtDay(ExpeditionMember $member, int $dayNumber): Carbon
     {
+        if (! $member->personal_starts_at) {
+            return now();
+        }
         // Precompute cumulative hours map once per (Expedition instance) — avoid O(T²) re-scan
         // when getDeadlineForMemberAtDay is called inside outer foreach loops.
-        if (!isset($this->_hoursToDayMap)) {
+        if ($this->_hoursToDayMap === []) {
             $map = [0 => 0];
             $cum = 0;
             foreach ($this->tasks->sortBy('day_number') as $t) {
@@ -160,10 +241,12 @@ class Expedition extends Model {
                 $map[(int) $t->day_number] = $cum;
             }
             $this->_hoursToDayMap = $map;
-            $this->_hoursToDayMaxDay = empty($map) ? 0 : max(array_keys($map));
         }
         $hoursToDay = function (int $n): int {
-            if ($n <= 0) return 0;
+            if ($n <= 0) {
+                return 0;
+            }
+
             return $this->_hoursToDayMap[$n] ?? ($n * 24);
         };
 
@@ -186,7 +269,9 @@ class Expedition extends Model {
         $result = $natural;
 
         foreach ($this->tasks as $t) {
-            if (!$t->deadline_override_at || $t->day_number > $dayNumber) continue;
+            if (! $t->deadline_override_at || $t->day_number > $dayNumber) {
+                continue;
+            }
 
             $anchorVN = $t->deadline_override_at->copy()->setTimezone($tz);
             $rounded = $anchorVN->copy()->setTime($memberStart->hour, $memberStart->minute, 0);
@@ -203,12 +288,15 @@ class Expedition extends Model {
 
         // Per-member deadline overrides: admin can pin a specific day's deadline for one member
         // (cascades 24h/day forward like task-level overrides, but isolated to this member only).
-        if (!empty($member->deadline_overrides) && is_array($member->deadline_overrides)) {
-            foreach ($member->deadline_overrides as $overrideDay => $overrideAt) {
+        $overrides = $member->deadline_overrides;
+        if ($overrides) {
+            foreach ($overrides as $overrideDay => $overrideAt) {
                 $overrideDay = (int) $overrideDay;
-                if ($overrideDay < 1 || $overrideDay > $dayNumber) continue;
+                if ($overrideDay < 1 || $overrideDay > $dayNumber) {
+                    continue;
+                }
                 $extraHours = $hoursToDay($dayNumber) - $hoursToDay($overrideDay);
-                $cascaded = \Carbon\Carbon::parse($overrideAt)->addHours($extraHours);
+                $cascaded = Carbon::parse($overrideAt)->addHours($extraHours);
                 if ($cascaded->greaterThan($result)) {
                     $result = $cascaded;
                 }
@@ -220,7 +308,9 @@ class Expedition extends Model {
 
     public function isTaskLateForMember(ExpeditionMember $member, int $dayNumber): bool
     {
-        if (!$member->personal_starts_at) return false;
+        if (! $member->personal_starts_at) {
+            return false;
+        }
 
         $contestEnd = $this->getContestEndForMemberAtDay($member, $dayNumber);
         if ($contestEnd) {
@@ -235,12 +325,16 @@ class Expedition extends Model {
      * Only set when the task is a contest with contest_duration_hours configured.
      * Returns null otherwise → callers fall back to day deadline.
      */
-    public function getContestEndForMemberAtDay(ExpeditionMember $member, int $dayNumber): ?\Carbon\Carbon
+    public function getContestEndForMemberAtDay(ExpeditionMember $member, int $dayNumber): ?Carbon
     {
-        if (!$member->personal_starts_at) return null;
+        if (! $member->personal_starts_at) {
+            return null;
+        }
 
         $task = $this->tasks->where('day_number', $dayNumber)->first();
-        if (!$task || !$task->is_contest || !$task->contest_duration_hours) return null;
+        if (! $task || ! $task->is_contest || ! $task->contest_duration_hours) {
+            return null;
+        }
 
         $dayOpensAt = $dayNumber === 1
             ? $member->personal_starts_at->copy()
@@ -249,8 +343,11 @@ class Expedition extends Model {
         return $dayOpensAt->copy()->addHours((int) $task->contest_duration_hours);
     }
 
-    public function start(): void {
-        if ($this->status !== 'open') return;
+    public function start(): void
+    {
+        if ($this->status !== 'open') {
+            return;
+        }
         $this->update([
             'status' => 'active',
             'starts_at' => now(),
@@ -258,13 +355,19 @@ class Expedition extends Model {
         ]);
     }
 
-    public function complete(): void {
-        if ($this->status !== 'active') return;
+    public function complete(): void
+    {
+        if ($this->status !== 'active') {
+            return;
+        }
         $this->update(['status' => 'completed']);
     }
 
-    public function fail(): void {
-        if ($this->status !== 'active') return;
+    public function fail(): void
+    {
+        if ($this->status !== 'active') {
+            return;
+        }
         $this->update(['status' => 'failed']);
     }
 }

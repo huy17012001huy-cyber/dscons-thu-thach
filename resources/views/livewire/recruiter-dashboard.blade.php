@@ -1,8 +1,11 @@
 <section class="talent-dashboard" x-data>
+    @if($isAdminPreview)
+        <div class="talent-admin-preview" role="status"><div><strong>Chế độ xem trước của admin</strong><span>Bạn đang xem giao diện nhà tuyển dụng với dữ liệu ẩn danh. Không thể gửi yêu cầu liên hệ hoặc dùng credit từ màn hình này.</span></div><a href="{{ community_route('manage.recruitment') }}">Quay lại quản lý Talent</a></div>
+    @endif
     @php($connectionByEngineer = $connections->keyBy('engineer_id'))
     <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.15rem;">
         <div><div class="talent-kicker">{{ brand()->name }} · Talent</div><h1 class="talent-heading">Tìm ứng viên phù hợp</h1><p class="talent-subtitle" style="margin:.45rem 0 0;">Chọn tiêu chí nhanh, xem năng lực ẩn danh và gửi yêu cầu khi bạn sẵn sàng.</p></div>
-        <div style="display:flex;gap:.45rem;flex-wrap:wrap;align-items:center;"><span class="talent-status"><x-icon name="check-circle" size="13" /> Recruiter đã xác minh</span><a href="{{ community_route('recruiter.plans') }}" class="talent-btn talent-btn-secondary" style="min-height:36px;"><x-icon name="credit-card" size="15" /> {{ $creditSummary['available'] }} credit</a></div>
+        <div style="display:flex;gap:.45rem;flex-wrap:wrap;align-items:center;"><span class="talent-status"><x-icon name="check-circle" size="13" /> Recruiter đã xác minh</span>@if($isAdminPreview)<span class="talent-btn talent-btn-secondary" style="min-height:36px;"><x-icon name="credit-card" size="15" /> {{ $creditSummary['available'] }} credit</span>@else<a href="{{ community_route('recruiter.plans') }}" class="talent-btn talent-btn-secondary" style="min-height:36px;"><x-icon name="credit-card" size="15" /> {{ $creditSummary['available'] }} credit</a>@endif</div>
     </div>
 
     <div class="talent-card" style="padding:.45rem;margin-bottom:.9rem;display:flex;gap:.35rem;align-items:center;">
@@ -50,7 +53,9 @@
                 <div style="border-top:1px solid var(--talent-line);padding-top:.85rem;"><strong style="font-size:.8rem;">Kinh nghiệm</strong>@forelse($selected['experiences'] as $experience)<p style="font-size:.76rem;line-height:1.5;color:#365568;margin:.45rem 0 0;">{{ is_array($experience) ? implode(' · ', array_filter([$experience['role'] ?? '',$experience['project'] ?? '',$experience['summary'] ?? ''])) : $experience }}</p>@empty<p style="font-size:.76rem;color:var(--talent-muted);">Ứng viên chưa thêm chi tiết.</p>@endforelse</div>
                 <div style="margin-top:.9rem;padding:.75rem;border-radius:10px;background:#F5FAFC;"><strong style="font-size:.78rem;display:block;">Quyền riêng tư</strong><p style="font-size:.72rem;line-height:1.5;color:var(--talent-muted);margin:.25rem 0 0;">Tên, email, số điện thoại và avatar thật chỉ mở sau khi kỹ sư chấp thuận.</p></div>
                 @php($selectedConnection = $connectionByEngineer->get($selected['id']))
-                @if(!$selectedConnection || $selectedConnection->status === 'rejected')
+                @if($isAdminPreview)
+                    <span style="display:block;margin-top:.8rem;padding:.7rem;border-radius:10px;background:#EAF6FB;color:#174D70;font-size:.75rem;font-weight:750;">Chế độ xem trước: yêu cầu liên hệ và credit được khóa.</span>
+                @elseif(!$selectedConnection || $selectedConnection->status === 'rejected')
                     <textarea wire:model="contactMessage" class="talent-input" rows="3" style="margin-top:.8rem;resize:vertical;" placeholder="Lời nhắn ngắn cho kỹ sư (không bắt buộc)"></textarea>
                     <button type="button" wire:click="requestContact({{ $selected['id'] }})" class="talent-btn talent-btn-primary" style="width:100%;margin-top:.55rem;"><x-icon name="link" size="15" /> Gửi yêu cầu liên hệ · 1 credit</button>
                 @elseif($selectedConnection->status === 'accepted')
@@ -76,8 +81,9 @@
         </div>
     @endif
     <style>
+        .talent-admin-preview{display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin:0 0 1rem;padding:.8rem .9rem;border:1px solid #A8CDE1;border-radius:12px;background:#EAF6FB;color:#174D70;font-size:.78rem;line-height:1.45}.talent-admin-preview strong,.talent-admin-preview span{display:block}.talent-admin-preview strong{font-size:.84rem}.talent-admin-preview span{margin-top:.1rem}.talent-admin-preview a{color:#125A96;font-weight:800;text-decoration:none;white-space:nowrap}.talent-admin-preview a:hover{text-decoration:underline}
         .talent-results-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:1rem}.talent-candidate-card{transition:border-color .18s,box-shadow .18s}.talent-candidate-card:hover{border-color:#9CC9DF}.talent-detail-panel{min-height:320px}
         @media(max-width:980px){.talent-results-grid{grid-template-columns:minmax(0,1fr) 310px}}
-        @media(max-width:760px){.talent-dashboard form[style*="repeat(6"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}.talent-dashboard form[style*="repeat(6"] button{grid-column:span 2}.talent-results-grid{grid-template-columns:1fr}.talent-detail-panel{position:static}.talent-card>span[style*="margin-left:auto"]{display:none}}
+        @media(max-width:760px){.talent-dashboard form[style*="repeat(6"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}.talent-dashboard form[style*="repeat(6"] button{grid-column:span 2}.talent-results-grid{grid-template-columns:1fr}.talent-detail-panel{position:static}.talent-card>span[style*="margin-left:auto"]{display:none}.talent-admin-preview{align-items:flex-start;flex-direction:column}}
     </style>
 </section>

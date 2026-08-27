@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
 
 class GoogleAuthController extends Controller
 {
@@ -27,7 +28,10 @@ class GoogleAuthController extends Controller
             );
         }
 
-        return Socialite::driver('google')
+        /** @var GoogleProvider $provider */
+        $provider = Socialite::driver('google');
+
+        return $provider
             ->scopes(['openid', 'profile', 'email'])
             ->redirect();
     }
@@ -41,14 +45,32 @@ class GoogleAuthController extends Controller
 
             $membership = $user->membership;
             $hasAccess = $membership && ($membership->isActive() || $membership->isTrial());
-            if (!$membership || $membership->status === 'banned' || !$hasAccess) {
+            if (! $membership || $membership->status === 'banned' || ! $hasAccess) {
                 return $this->rejectLogin($request, 'Tài khoản của bạn đã bị khóa hoặc hết quyền truy cập.');
+            }
+
+            if ($user->isSuperAdmin() && config('admin-security.two_factor_enforced')) {
+                if ($user->two_factor_confirmed_at === null) {
+                    return $this->rejectLogin($request, 'Super Admin phải đăng ký xác thực hai lớp trước khi đăng nhập.');
+                }
+
+                $request->session()->put([
+                    'admin_2fa_pending_user_id' => $user->id,
+                    'admin_2fa_redirect' => $request->session()->pull('auth_redirect', route('admin.dashboard')),
+                ]);
+
+                return redirect()->route('admin.two-factor.challenge');
             }
 
             Auth::login($user);
             $request->session()->regenerate();
 
+            if ($user->isSuperAdmin() && $user->two_factor_confirmed_at !== null) {
+                $request->session()->put('admin_2fa_verified_at', now()->toIso8601String());
+            }
+
             $redirect = $request->session()->pull('auth_redirect');
+
             return $redirect ? redirect()->to($redirect) : redirect()->route($user->class ? 'feed' : 'onboarding');
         } catch (GoogleAuthException $exception) {
             return redirect()->route('login')->with('error', $exception->getMessage());

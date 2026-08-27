@@ -10,10 +10,15 @@
     .challenge-curriculum h4 { margin:.8rem 0 .3rem; color:#125A96; font-size:.75rem; font-weight:800; }
     .challenge-curriculum p, .challenge-curriculum li { color:#456477; font-size:.76rem; line-height:1.55; }
     .challenge-curriculum ul, .challenge-curriculum ol { margin:.3rem 0 0; padding-left:1.15rem; }
-    .challenge-sop-kicker { display:flex; align-items:center; gap:.4rem; color:#18794E; font-size:.72rem; font-weight:850; }
+    .challenge-sop-kicker { display:flex; align-items:center; gap:.4rem; color:#125A96; font-size:.72rem; font-weight:850; letter-spacing:.03em; }
     .challenge-sop-section { margin-top:.75rem; }
     .challenge-sop-section:first-of-type { margin-top:0; }
     .challenge-sop-section p { margin:.15rem 0 0; }
+    .challenge-timing-note { margin:.85rem 0; padding:.75rem .85rem; border:1px solid #BBD9E8; border-left:3px solid #F39402; border-radius:9px; background:#F5FAFC; }
+    .challenge-timing-note h4 { margin-top:0; }
+    .challenge-timing-note p { margin-top:.5rem; }
+    .challenge-ai-tip { margin-top:.85rem; padding:.75rem .85rem; border:1px solid #BBD9E8; border-left:3px solid #1F77BE; border-radius:9px; background:#EAF6FB; }
+    .challenge-ai-tip h4 { margin-top:0; }
     .challenge-sop-section p strong { color:#125A96; }
     .challenge-sop-section ul, .challenge-sop-section ol { margin-top:.2rem; }
     .challenge-sop-steps { padding-top:.55rem; border-top:1px solid #D7E5EE; }
@@ -54,6 +59,13 @@
     .challenge-detail-page [style*="#059669"] { color:#147F96 !important; }
     .challenge-detail-page [style*="#F7F5F3"] { background:#F1F6F8 !important; }
     .challenge-detail-page [style*="#D1FAE5"] { background:#E6F6F8 !important; color:#147F96 !important; }
+    .challenge-detail-page [style*="#E8F5E9"] { background:#EAF6FB !important; color:#125A96 !important; }
+    .challenge-detail-page [style*="#F0FDF4"] { background:#F3FAFD !important; border-color:#BBD9E8 !important; }
+    .challenge-detail-page [style*="#059669"] { color:#125A96 !important; }
+    .challenge-detail-page [style*="#065F46"] { color:#125A96 !important; }
+    .challenge-detail-page [style*="#d17856"] { color:#F39402 !important; }
+    .challenge-lesson-link { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:7px 10px; border:1px solid #A9D0E4; border-radius:8px; color:#125A96; background:#EAF6FB; font-size:.72rem; font-weight:800; text-decoration:none; }
+    .challenge-lesson-link:hover { border-color:#1F77BE; background:#DDF1FA; }
     .challenge-detail-page [style*="#FEF3C7"] { background:#FFF8E9 !important; border-color:#F5D58A !important; }
     @media (max-width: 640px) {
         .challenge-detail-page > .card { padding: 16px !important; border-radius: 15px; }
@@ -326,7 +338,10 @@
                     @endif
                     <div style="flex:1;">
                         <div class="flex items-center gap-2" style="flex-wrap:wrap;">
-                            <span style="font-size:0.7rem; font-weight:600; color:#d17856; background:#E8F5E9; padding:0.125rem 0.5rem; border-radius:999px;">Ngày {{ $task->day_number }}</span>
+                            <span style="font-size:0.7rem; font-weight:700; color:#125A96; background:#EAF6FB; padding:0.2rem 0.55rem; border-radius:999px;">Ngày {{ $task->day_number }}</span>
+                            @if(is_array($task->instruction_payload) && !empty($task->instruction_payload['modality']))
+                            <span style="font-size:0.65rem; font-weight:700; color:#456477; background:#F5FAFC; border:1px solid #D5E5ED; padding:0.2rem 0.5rem; border-radius:999px;">{{ $task->instruction_payload['modality'] === 'live' ? 'Livestream' : 'Tự thực hành' }} · {{ $task->instruction_payload['estimated_minutes'] ?? 0 }} phút</span>
+                            @endif
                             @if($task->is_contest && $statusApproved)
                             <span style="font-size:0.65rem; font-weight:700; color:#78350F; background:#FFF1D6; padding:0.15rem 0.55rem; border-radius:999px; border:1px solid #F59E0B; box-shadow:0 1px 2px rgba(245,158,11,0.2);">
                                 Mini-game
@@ -362,6 +377,10 @@
                         </div>
                         @if($isUnlocked || $isCompleted)
                         <p style="font-size:0.825rem; font-weight:600; color:#1A1A1A; margin-top:0.25rem;">{{ $task->title }}</p>
+                        @if(is_array($task->instruction_payload) && ($task->instruction_payload['content_mode'] ?? null) === 'landing')
+                        @php $lessonRoute = request()->routeIs('community.*') ? community_route('challenge.lesson', ['slug' => $expedition->slug, 'day' => $task->day_number]) : route('challenge.lesson', ['slug' => $expedition->slug, 'day' => $task->day_number]); @endphp
+                        <a href="{{ $lessonRoute }}" class="challenge-lesson-link" @click.stop>Đọc hướng dẫn đầy đủ <span aria-hidden="true">→</span></a>
+                        @endif
                         @elseif($isFrozen)
                         <p style="font-size:0.825rem; font-weight:500; color:#5C5C66; margin-top:0.25rem; font-style:italic;">Nhiệm vụ tạm dừng, mở lại {{ $expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y') }}</p>
                         @else
@@ -473,7 +492,7 @@
                          field for old tasks/data, but do not render it a second time. --}}
                     @if($task->sop_content && empty($task->instruction_payload))
                     <div style="background:#F7F5F3; border-radius:0.5rem; padding:0.75rem; margin-bottom:0.75rem; border-left:3px solid #d17856;">
-                        <p style="font-size:0.7rem; font-weight:700; color:#1B5E20; margin-bottom:0.375rem;">▤ SOP — Hướng dẫn</p>
+                        <p style="font-size:0.7rem; font-weight:800; color:#125A96; margin-bottom:0.375rem;">SOP — CÁC BƯỚC</p>
                         <div class="prose-task" style="font-size:0.8rem; color:#2E2E2E; line-height:1.6;">{!! Str::markdown($task->sop_content, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}</div>
                     </div>
                     @endif
@@ -488,25 +507,30 @@
                         $myTaskStatus = $myCompletions[$task->id]->status ?? null;
                         $modalityLabel = match ($curriculum['modality'] ?? '') {
                             'live' => 'Livestream',
-                            'video' => 'Video ngắn',
+                            'practice' => 'Tự thực hành',
                             'assignment' => 'Bài thực hành',
                             default => 'Bài học',
-                        };
-                        $trackLabel = match ($curriculum['track'] ?? 'common') {
-                            'common' => 'Nền tảng chung',
-                            'capstone' => 'Tool của bạn',
-                            'wpf', 'ui' => 'Giao diện tool',
-                            default => 'Thực hành',
                         };
                     @endphp
                     @if($curriculum)
                     <section class="challenge-curriculum" aria-labelledby="curriculum-{{ $task->id }}">
                         <div class="challenge-curriculum-head">
-                            <div class="challenge-sop-kicker">▤ SOP — Hướng dẫn</div>
+                            <div class="challenge-sop-kicker">SOP — CÁC BƯỚC</div>
                             <span class="challenge-eyebrow">{{ $modalityLabel }} · {{ $curriculum['estimated_minutes'] ?? 0 }} phút</span>
                             <h3 id="curriculum-{{ $task->id }}">{{ $task->title }}</h3>
-                            <span class="challenge-track">{{ $trackLabel }}</span>
                         </div>
+
+                        @if($task->day_number === 1)
+                        <div class="challenge-sop-section challenge-timing-note">
+                            <h4>Lưu ý về thời gian mở bài &amp; deadline</h4>
+                            <ul>
+                                <li>Ngày 1 mở ngay khi bạn bấm <strong>Bắt đầu thử thách</strong>. Từ đó, mỗi nhiệm vụ có 24 giờ để hoàn thành.</li>
+                                <li>Trong 24 giờ, bạn có thể nộp hoặc nộp lại mà chưa bị tính trễ.</li>
+                                <li>Nhiệm vụ tiếp theo chỉ mở khi đã đủ 24 giờ và bài hiện tại đã được nộp. Nếu bài bị từ chối, bạn cần sửa và nộp lại.</li>
+                            </ul>
+                            <p><strong>Ví dụ:</strong> Bạn bắt đầu lúc 22:00 thì deadline là 22:00 ngày hôm sau. Sau thời điểm đó, hệ thống mới xét mở ngày tiếp theo.</p>
+                        </div>
+                        @endif
 
                         <div class="challenge-sop-section">
                             <h4>Hôm nay học gì?</h4>
@@ -525,26 +549,15 @@
                             @endif
                         </div>
 
+                        @if(!empty($curriculum['prerequisites']))
                         <div class="challenge-sop-section">
-                            <h4>AI thực hiện</h4>
-                            <ul>
-                                @foreach($curriculum['ai_actions'] ?? [] as $action)
-                                <li>{{ $action }}</li>
-                                @endforeach
-                            </ul>
+                            <h4>Chuẩn bị trước khi bắt đầu</h4>
+                            <ul>@foreach($curriculum['prerequisites'] as $item)<li>{{ $item }}</li>@endforeach</ul>
                         </div>
-
-                        <div class="challenge-sop-section">
-                            <h4>Học viên kiểm tra</h4>
-                            <ul>
-                                @foreach($curriculum['student_actions'] ?? [] as $action)
-                                <li>{{ $action }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
+                        @endif
 
                         <div class="challenge-sop-section challenge-sop-steps">
-                            <h4>SOP thực hiện</h4>
+                            <h4>Hướng dẫn thực hiện</h4>
                             <ol>
                                 @foreach($curriculum['sop_steps'] ?? [] as $step)
                                 <li>{{ $step }}</li>
@@ -563,7 +576,7 @@
                         @endif
                         @if(!$isCompleted || $myTaskStatus === 'rejected')
                         <div class="challenge-submission-guide">
-                            <h4>Checklist học viên tự kiểm tra</h4>
+                            <h4>Checklist trước khi nộp</h4>
                             @foreach($curriculum['verification_checklist'] ?? [] as $index => $check)
                             <label><input type="checkbox" value="{{ $index }}" wire:model="structuredSubmission.{{ $task->id }}.checklist.{{ $index }}"> <span>{{ $check }}</span></label>
                             @endforeach
@@ -571,9 +584,34 @@
                             <p class="challenge-evidence-hint">Nộp ảnh hoặc dán link ảnh ở ô bên dưới. Ảnh phải cho thấy kết quả thật trong phần mềm, không chỉ là code.</p>
                         </div>
                         @endif
-                        @if(!empty($curriculum['share_to_feed']))
-                        <p class="challenge-share-note"><strong>Chia sẻ lên Bảng tin:</strong> {{ $curriculum['share_to_feed'] }}</p>
+                        @if(!empty($curriculum['feed_activity']) || !empty($curriculum['share_to_feed']))
+                        <p class="challenge-share-note"><strong>Chia sẻ lên Bảng tin:</strong> {{ $curriculum['feed_activity'] ?? $curriculum['share_to_feed'] }}</p>
                         @endif
+                        @if(!empty($curriculum['homework']['instructions']))
+                        <div class="challenge-sop-section">
+                            <h4>Bài tập hôm nay</h4>
+                            <p><strong>{{ $curriculum['homework']['title'] ?? 'Bài thực hành' }}</strong></p>
+                            <ul>@foreach($curriculum['homework']['instructions'] as $item)<li>{{ $item }}</li>@endforeach</ul>
+                        </div>
+                        @endif
+                        @if(!empty($curriculum['common_errors']))
+                        <div class="challenge-sop-section">
+                            <h4>Lỗi thường gặp</h4>
+                            <ul>@foreach($curriculum['common_errors'] as $item)<li>{{ $item }}</li>@endforeach</ul>
+                        </div>
+                        @endif
+                        <div class="challenge-sop-section">
+                            <h4>Được duyệt khi</h4>
+                            <ul>
+                                <li>Có đủ bằng chứng được yêu cầu.</li>
+                                <li>Kết quả chạy thật trong Revit có thể đối chiếu.</li>
+                                <li>Bạn nói được mình đã yêu cầu AI làm gì và đã kiểm tra kết quả ở đâu.</li>
+                            </ul>
+                        </div>
+                        <div class="challenge-sop-section challenge-ai-tip">
+                            <h4>Mẹo AI-First</h4>
+                            <p>Đừng cố tự viết code. Hãy nói rõ mục tiêu, đọc kế hoạch AI, xác nhận từng bước và dùng Revit để kiểm tra kết quả. Khi bị kẹt, gửi phần lỗi liên quan cho AI thay vì đoán lệnh.</p>
+                        </div>
                         <div class="challenge-rubric-preview">
                             <strong>Đạt từ {{ $curriculum['pass_score'] ?? 70 }}/100</strong>
                             <span>Đủ bằng chứng 30</span><span>Kết quả đúng 40</span><span>Cá nhân hóa 15</span><span>Kiểm chứng 15</span>

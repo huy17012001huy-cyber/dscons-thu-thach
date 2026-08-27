@@ -2,11 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 class ProfileEditPage extends Component
@@ -14,15 +17,19 @@ class ProfileEditPage extends Component
     use WithFileUploads;
 
     public string $editName = '';
+
     public string $editUsername = '';
+
     public string $editBio = '';
+
     public string $location = '';
-    public $avatarUpload;
+
+    public ?TemporaryUploadedFile $avatarUpload = null;
 
     public function mount(): void
     {
         abort_unless(Auth::check(), 403);
-        $user = Auth::user();
+        $user = $this->currentUser();
         $this->fill([
             'editName' => $user->name,
             'editUsername' => $user->username ?: Str::slug($user->name, '-'),
@@ -46,10 +53,12 @@ class ProfileEditPage extends Component
         $key = 'save-profile:'.Auth::id();
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $this->addError('editName', 'Bạn cập nhật quá nhanh. Vui lòng thử lại sau.');
+
             return;
         }
 
-        Auth::user()->update([
+        $user = $this->currentUser();
+        $user->update([
             'name' => trim($this->editName),
             'username' => strtolower(trim($this->editUsername)),
             'bio' => trim($this->editBio) ?: null,
@@ -58,13 +67,17 @@ class ProfileEditPage extends Component
         RateLimiter::hit($key, 3600);
 
         session()->flash('profile_saved', 'Đã cập nhật hồ sơ của bạn.');
-        $this->redirect(route('profile', Auth::user()->username), navigate: true);
+        $this->redirect(route('profile', $user->username), navigate: true);
     }
 
     public function updatedAvatarUpload(): void
     {
         $this->validate(['avatarUpload' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048']);
-        $user = Auth::user();
+        if (! $this->avatarUpload instanceof TemporaryUploadedFile) {
+            return;
+        }
+
+        $user = $this->currentUser();
         $path = $this->avatarUpload->store('avatars', 'public');
         if ($user->avatar && ! filter_var($user->avatar, FILTER_VALIDATE_URL)) {
             Storage::disk('public')->delete($user->avatar);
@@ -75,12 +88,21 @@ class ProfileEditPage extends Component
 
     public function cancel(): void
     {
-        $this->redirect(route('profile', Auth::user()->username ?: Auth::id()), navigate: true);
+        $user = $this->currentUser();
+        $this->redirect(route('profile', $user->username ?: $user->id), navigate: true);
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.profile-edit-page', ['user' => Auth::user()])
+        return view('livewire.profile-edit-page', ['user' => $this->currentUser()])
             ->layout('layouts.app', ['title' => 'Sửa hồ sơ · '.brand()->name]);
+    }
+
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }

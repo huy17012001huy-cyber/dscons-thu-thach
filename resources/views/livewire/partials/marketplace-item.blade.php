@@ -7,9 +7,9 @@
             @if($item->image)
                 <img src="{{ $item->image }}" alt="">
             @else
-                <span class="marketplace-item-fallback">{{ $item->kind === 'resource' ? 'DS' : strtoupper(substr($item->kind_label, 0, 2)) }}</span>
+                <span class="marketplace-item-fallback">{{ in_array($item->kind, ['resource', 'revit_tool'], true) ? 'DS' : strtoupper(substr($item->kind_label, 0, 2)) }}</span>
             @endif
-            <span class="marketplace-kind"><x-icon name="{{ $item->kind === 'challenge' ? 'target' : ($item->kind === 'course' ? 'graduation' : 'layers') }}" size="13" />{{ $item->kind_label }}</span>
+            <span class="marketplace-kind"><x-icon name="{{ $item->kind === 'challenge' ? 'target' : ($item->kind === 'course' ? 'graduation' : ($item->kind === 'revit_tool' ? 'tool' : 'layers')) }}" size="13" />{{ $item->kind_label }}</span>
             @if($item->featured)<span class="marketplace-featured"><x-icon name="spark" size="13" />Nổi bật</span>@endif
     @if($item->url)</a>@else</div>@endif
 
@@ -20,7 +20,7 @@
                 @php($difficultyClass = $item->kind === 'challenge' ? match($item->difficulty) { 'Khó' => 'is-difficulty-hard', 'Hỗn loạn' => 'is-difficulty-chaos', default => 'is-difficulty-normal' } : '')
                 <span class="marketplace-tag {{ $difficultyClass }}"><x-icon name="target" size="13" />{{ $item->kind === 'challenge' ? 'Độ khó: ' : '' }}{{ $item->difficulty }}</span>
             @endif
-            @if($item->owned)<span class="marketplace-tag is-owned"><x-icon name="check-circle" size="13" />{{ $item->kind === 'resource' ? 'Đã mua' : 'Đã mở' }}</span>@elseif($item->pending)<span class="marketplace-tag is-pending"><x-icon name="clock" size="13" />Đang chờ thanh toán</span>@endif
+            @if($item->owned)<span class="marketplace-tag is-owned"><x-icon name="check-circle" size="13" />{{ in_array($item->kind, ['resource', 'revit_tool'], true) ? 'Đã mua' : 'Đã mở' }}</span>@elseif($item->pending)<span class="marketplace-tag is-pending"><x-icon name="clock" size="13" />Đang chờ thanh toán</span>@endif
         </div>
         <h3>{{ $item->title }}</h3>
         <p>{{ Str::limit($item->description ?: 'Nội dung được chọn lọc cho hành trình phát triển năng lực.', 96) }}</p>
@@ -31,7 +31,11 @@
             @if($item->url)
                 <a href="{{ $item->url }}" class="marketplace-cta">{{ $item->owned ? 'Mở nội dung' : 'Xem chi tiết' }} <x-icon name="arrow-right" size="15" /></a>
             @elseif($item->owned)
-                <span class="marketplace-state is-owned"><x-icon name="check-circle" size="15" />Đã mua</span>
+                @if($item->kind === 'revit_tool')
+                    <a href="{{ route('account.revit-device') }}" class="marketplace-state is-owned" style="text-decoration:none"><x-icon name="check-circle" size="15" />Kích hoạt Revit</a>
+                @else
+                    <span class="marketplace-state is-owned"><x-icon name="check-circle" size="15" />Đã mua</span>
+                @endif
             @elseif($item->pending)
                 <span class="marketplace-state is-pending"><x-icon name="clock" size="15" />Chờ thanh toán</span>
             @else

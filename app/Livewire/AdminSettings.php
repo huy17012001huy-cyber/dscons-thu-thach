@@ -2,13 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Models\EngineerProfile;
 use App\Models\Setting;
 use App\Support\CommunityBrandSettings;
-use App\Models\EngineerProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
@@ -64,9 +65,12 @@ class AdminSettings extends Component
 
     #[Rule('required|integer|min:28|max:56')]
     public int $memberAvatarSize = 30;
+
     public bool $hasCv = false;
+
     public bool $hasRecruitment = false;
 
+    /** @var array<string, string> */
     public array $levelBands = [
         'newcomer' => 'Level 1–10',
         'practitioner' => 'Level 11–30',
@@ -80,13 +84,13 @@ class AdminSettings extends Component
         $driver = Setting::get('mail_driver', config('mail.default'));
         $this->mailDriver = in_array($driver, ['log', 'resend'], true) ? $driver : 'log';
         $this->resendApiKeySet = filled(Setting::get('resend_api_key')) || filled(config('services.resend.key'));
-        $this->brevoApiKeySet  = filled(Setting::get('brevo_api_key')) || filled(config('services.brevo.key'));
-        $this->mailFromName       = Setting::get('mail_from_name', config('mail.from.name')) ?? '';
-        $this->mailFromAddress    = Setting::get('mail_from_address', config('mail.from.address')) ?? '';
-        $this->webhookSecret      = Setting::get('register_webhook_secret', '') ?? '';
+        $this->brevoApiKeySet = filled(Setting::get('brevo_api_key')) || filled(config('services.brevo.key'));
+        $this->mailFromName = Setting::get('mail_from_name', config('mail.from.name')) ?? '';
+        $this->mailFromAddress = Setting::get('mail_from_address', config('mail.from.address')) ?? '';
+        $this->webhookSecret = Setting::get('register_webhook_secret', '') ?? '';
 
-        $this->sepayBankAccount     = Setting::get('sepay_bank_account', config('services.sepay.bank_account')) ?? '';
-        $this->sepayBankName        = Setting::get('sepay_bank_name', config('services.sepay.bank_name')) ?? '';
+        $this->sepayBankAccount = Setting::get('sepay_bank_account', config('services.sepay.bank_account')) ?? '';
+        $this->sepayBankName = Setting::get('sepay_bank_name', config('services.sepay.bank_name')) ?? '';
         $this->sepayWebhookTokenSet = filled(Setting::get('sepay_webhook_token')) || filled(config('services.sepay.webhook_token'));
 
         $this->membershipLabel = CommunityBrandSettings::membershipLabel(brand());
@@ -99,7 +103,9 @@ class AdminSettings extends Component
 
     public function saveCommunityBranding(): void
     {
-        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+        if (! Auth::user()?->isBrandAdmin(brand()->id)) {
+            return;
+        }
 
         $this->validate([
             'membershipLabel' => 'required|string|max:80',
@@ -131,7 +137,9 @@ class AdminSettings extends Component
 
     public function save(): void
     {
-        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+        if (! Auth::user()?->isBrandAdmin(brand()->id)) {
+            return;
+        }
         $this->validate();
 
         // Xác minh email đã được gỡ bỏ — luôn tắt để thành viên vào thẳng.
@@ -154,35 +162,42 @@ class AdminSettings extends Component
 
         // Áp dụng ngay trong request này để phần "Gửi email thử" dùng đúng cấu hình mới.
         config(['mail.default' => $this->mailDriver]);
-        if ($key = Setting::get('resend_api_key')) config(['services.resend.key' => $key]);
-        if ($key = Setting::get('brevo_api_key'))  config(['services.brevo.key' => $key]);
+        if ($key = Setting::get('resend_api_key')) {
+            config(['services.resend.key' => $key]);
+        }
+        if ($key = Setting::get('brevo_api_key')) {
+            config(['services.brevo.key' => $key]);
+        }
 
         $this->dispatch('toast', message: 'Đã lưu cấu hình email.', type: 'success');
     }
 
     public function sendTest(): void
     {
-        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+        if (! Auth::user()?->isBrandAdmin(brand()->id)) {
+            return;
+        }
 
         $this->validate(
             ['testEmail' => 'required|email'],
             ['testEmail.required' => 'Nhập một email để gửi thử.', 'testEmail.email' => 'Email không hợp lệ.']
         );
 
-        $key = 'send-test-mail|' . Auth::id();
+        $key = 'send-test-mail|'.Auth::id();
         if (RateLimiter::tooManyAttempts($key, 3)) {
-            $this->addError('testEmail', 'Gửi thử quá nhiều lần. Đợi ' . RateLimiter::availableIn($key) . ' giây.');
+            $this->addError('testEmail', 'Gửi thử quá nhiều lần. Đợi '.RateLimiter::availableIn($key).' giây.');
+
             return;
         }
         RateLimiter::hit($key, 60);
 
-        $to        = $this->testEmail;
+        $to = $this->testEmail;
         $brandName = brand()->name;
-        $fromAddr  = $this->mailFromAddress ?: config('mail.from.address');
-        $fromName  = $this->mailFromName ?: $brandName;
-        $body      = "Đây là email thử nghiệm từ {$brandName}.\n\n"
-                   . "Nếu bạn nhận được email này, cấu hình gửi mail đang hoạt động bình thường.\n\n"
-                   . 'Mailer đang dùng: ' . config('mail.default');
+        $fromAddr = $this->mailFromAddress ?: config('mail.from.address');
+        $fromName = $this->mailFromName ?: $brandName;
+        $body = "Đây là email thử nghiệm từ {$brandName}.\n\n"
+                   ."Nếu bạn nhận được email này, cấu hình gửi mail đang hoạt động bình thường.\n\n"
+                   .'Mailer đang dùng: '.config('mail.default');
 
         try {
             Mail::raw($body, function ($message) use ($to, $fromAddr, $fromName, $brandName) {
@@ -190,20 +205,22 @@ class AdminSettings extends Component
                     ->from($fromAddr, $fromName)
                     ->subject("Email thử nghiệm — {$brandName}");
             });
-            $this->dispatch('toast', message: 'Đã gửi email thử tới ' . $to . '.', type: 'success');
+            $this->dispatch('toast', message: 'Đã gửi email thử tới '.$to.'.', type: 'success');
         } catch (\Throwable $e) {
-            $this->addError('testEmail', 'Gửi thất bại: ' . $e->getMessage());
+            $this->addError('testEmail', 'Gửi thất bại: '.$e->getMessage());
         }
     }
 
     // ─── SePay ────────────────────────────────────────────────
     public function saveSepay(): void
     {
-        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+        if (! Auth::user()?->isBrandAdmin(brand()->id)) {
+            return;
+        }
 
         $this->validate([
-            'sepayBankAccount'  => 'nullable|max:50',
-            'sepayBankName'     => 'nullable|max:50',
+            'sepayBankAccount' => 'nullable|max:50',
+            'sepayBankName' => 'nullable|max:50',
             'sepayWebhookToken' => 'nullable|max:200',
         ]);
 
@@ -223,20 +240,24 @@ class AdminSettings extends Component
     // ─── Webhook ──────────────────────────────────────────────
     public function generateWebhookSecret(): void
     {
-        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+        if (! Auth::user()?->isBrandAdmin(brand()->id)) {
+            return;
+        }
         // Sinh tại chỗ để admin xem trước; phải bấm "Lưu webhook" mới có hiệu lực.
-        $this->webhookSecret = 'whk_' . Str::random(48);
+        $this->webhookSecret = 'whk_'.Str::random(48);
     }
 
     public function saveWebhook(): void
     {
-        if (!Auth::user()?->isBrandAdmin(brand()->id)) return;
+        if (! Auth::user()?->isBrandAdmin(brand()->id)) {
+            return;
+        }
 
         $this->validate(
             ['webhookSecret' => 'required|string|min:16|max:200'],
             [
                 'webhookSecret.required' => 'Bấm "Tạo key mới" hoặc dán một secret trước khi lưu.',
-                'webhookSecret.min'      => 'Secret quá ngắn (tối thiểu 16 ký tự).',
+                'webhookSecret.min' => 'Secret quá ngắn (tối thiểu 16 ký tự).',
             ]
         );
 
@@ -244,12 +265,12 @@ class AdminSettings extends Component
         $this->dispatch('toast', message: 'Đã lưu secret webhook. Bên thứ 3 dùng key này để bắn webhook.', type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.admin-settings', [
-            'webhookUrl'      => url('/webhook/register'),
+            'webhookUrl' => url('/webhook/register'),
             'sepayWebhookUrl' => url('/webhook/sepay'),
-            'levelBands'      => $this->levelBands,
+            'levelBands' => $this->levelBands,
         ])->layout('layouts.app');
     }
 }

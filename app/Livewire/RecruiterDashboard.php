@@ -2,16 +2,22 @@
 
 namespace App\Livewire;
 
+use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
 use App\Models\RecruiterEntitlement;
 use App\Models\RecruitmentContactRequest;
+use App\Models\RecruiterProfile;
+use App\Models\User;
 use App\Services\CandidateMatcher;
 use App\Services\JobDescriptionParser;
 use App\Services\RecruiterContactService;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 class RecruiterDashboard extends Component
 {
+    public bool $isAdminPreview = false;
+    public ?int $recruiterUserId = null;
     public string $jobDescription = '';
     public string $discipline = '';
     public string $skill = '';
@@ -21,6 +27,23 @@ class RecruiterDashboard extends Component
     public ?int $selectedCandidate = null;
     public string $contactMessage = '';
     public string $activeTab = 'candidates';
+
+    public function mount(?RecruiterProfile $recruiter = null): void
+    {
+        $this->isAdminPreview = request()->routeIs('community.manage.recruitment.preview.recruiter');
+        $user = auth()->user();
+
+        if ($this->isAdminPreview) {
+            abort_unless($user instanceof User && $user->isCommunityAdmin(brand()->id), 403);
+            abort_unless($recruiter && $recruiter->brand_id === brand()->id && $recruiter->isVerified(), 404);
+            $this->recruiterUserId = (int) $recruiter->user_id;
+
+            return;
+        }
+
+        abort_unless($user instanceof User && $user->isRecruiter(), 403);
+        $this->recruiterUserId = (int) $user->id;
+    }
 
     public function search(): void
     {
@@ -47,49 +70,59 @@ class RecruiterDashboard extends Component
 
     public function requestContact(int $engineerId): void
     {
+        abort_if($this->isAdminPreview, 403);
+        $recruiter = auth()->user();
+        abort_unless($recruiter instanceof User && $recruiter->isRecruiter(), 403);
+
         $profile = EngineerProfile::with(['cv' => fn ($query) => $query->where('status', 'published')])
+            ->where('brand_id', brand()->id)
             ->where('user_id', $engineerId)
             ->where('is_searchable', true)
             ->firstOrFail();
-        abort_unless($profile->cv, 422, 'Ứng viên chưa công khai CV hoàn chỉnh.');
+        $cv = $profile->cv;
+        abort_unless($cv instanceof EngineerCv, 422);
 
         try {
-            app(RecruiterContactService::class)->request(auth()->user(), $profile, $profile->cv, $this->contactMessage ?: null);
+            app(RecruiterContactService::class)->request($recruiter, $profile, $cv, $this->contactMessage ?: null);
             $this->contactMessage = '';
-            $this->dispatch('toast', message: 'Đã gửi yêu cầu. Chờ kỹ sư chấp thuận để mở liên hệ.', type: 'success');
+            $this->dispatch('toast', message: 'ÄÃ£ gá»­i yÃªu cáº§u. Chá» ká»¹ sÆ° cháº¥p thuáº­n Ä‘á»ƒ má»Ÿ liÃªn há»‡.', type: 'success');
         } catch (\Throwable $exception) {
             $this->addError('contact', $exception->getMessage());
         }
     }
 
-    public function render()
+    public function render(): View
     {
         $criteria = app(JobDescriptionParser::class)->parse($this->jobDescription);
         if ($this->discipline !== '') $criteria['discipline'] = $this->discipline;
         if ($this->minYears > 0) $criteria['years'] = $this->minYears;
         if ($this->skill !== '') {
-            $criteria['skills'] = array_values(array_filter(array_map('trim', preg_split('/[,\n]+/', $this->skill))));
+            $skills = preg_split('/[,\n]+/', $this->skill) ?: [];
+            $criteria['skills'] = array_values(array_filter(array_map('trim', $skills)));
         }
 
         $candidates = EngineerProfile::query()
             ->with(['cv' => fn ($query) => $query->where('status', 'published')])
+            ->where('brand_id', brand()->id)
             ->where('is_searchable', true)
             ->whereHas('cv', fn ($query) => $query->where('status', 'published'))
             ->when($criteria['discipline'] ?? null, fn ($query, $value) => $query->whereRaw('LOWER(discipline) LIKE ?', ['%'.strtolower($value).'%']))
-            ->when($criteria['years'] ?? 0, fn ($query, $value) => $query->where('years_experience', '>=', $value))
+            ->when($criteria['years'] > 0, fn ($query, $value) => $query->where('years_experience', '>=', $value))
             ->when($this->workMode !== '', fn ($query) => $query->where('work_mode', $this->workMode))
             ->when($this->availability !== '', fn ($query) => $query->where('availability', $this->availability))
             ->latest('updated_at')
             ->limit(60)
             ->get()
-            ->filter(fn (EngineerProfile $profile) => $profile->cv)
+            ->filter(fn (EngineerProfile $profile): bool => $profile->cv instanceof EngineerCv)
             ->map(function (EngineerProfile $profile) use ($criteria): array {
-                $match = app(CandidateMatcher::class)->score($criteria, $profile->cv);
-                $skills = collect($profile->cv->skills())->map(fn ($skill) => is_array($skill) ? ($skill['name'] ?? '') : $skill)->filter()->take(8)->values()->all();
+                $cv = $profile->cv;
+                assert($cv instanceof EngineerCv);
+                $match = app(CandidateMatcher::class)->score($criteria, $cv);
+                $skills = collect($cv->skills())->map(fn ($skill) => is_array($skill) ? ($skill['name'] ?? '') : $skill)->filter()->take(8)->values()->all();
                 return [
                     'id' => $profile->user_id,
                     'code' => $profile->anonymized_code,
-                    'headline' => $profile->headline ?: 'Kỹ sư BIM/MEP',
+                    'headline' => $profile->headline ?: 'Ká»¹ sÆ° BIM/MEP',
                     'discipline' => $profile->discipline,
                     'years' => $profile->years_experience,
                     'location' => $profile->location,
@@ -99,9 +132,9 @@ class RecruiterDashboard extends Component
                     'skills' => $skills,
                     'score' => $match['score'],
                     'reasons' => $match['reasons'],
-                    'experiences' => collect($profile->cv->experiences())->take(6)->values()->all(),
-                    'projects' => data_get($profile->cv->data, 'projects', []),
-                    'certifications' => data_get($profile->cv->data, 'certifications', []),
+                    'experiences' => collect($cv->experiences())->take(6)->values()->all(),
+                    'projects' => data_get($cv->data, 'projects', []),
+                    'certifications' => data_get($cv->data, 'certifications', []),
                 ];
             })
             ->filter(function (array $candidate): bool {
@@ -113,14 +146,15 @@ class RecruiterDashboard extends Component
             ->values();
 
         $connections = RecruitmentContactRequest::query()
-            ->where('recruiter_id', auth()->id())
             ->where('brand_id', brand()->id)
+            ->where('recruiter_id', $this->currentRecruiterUserId())
             ->with(['engineer.engineerProfile', 'conversation'])
             ->latest()
             ->get();
 
         $creditSummary = RecruiterEntitlement::query()
-            ->where('recruiter_id', auth()->id())
+            ->where('brand_id', brand()->id)
+            ->where('recruiter_id', $this->currentRecruiterUserId())
             ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->get()
             ->reduce(fn (array $summary, $item) => [
@@ -132,6 +166,12 @@ class RecruiterDashboard extends Component
         $selected = $this->selectedCandidate ? $candidates->firstWhere('id', $this->selectedCandidate) : null;
 
         return view('livewire.recruiter-dashboard', compact('candidates', 'criteria', 'connections', 'creditSummary', 'selected'))
-            ->layout('layouts.recruiter', ['title' => 'Tìm ứng viên BIM/MEP']);
+            ->layout('layouts.recruiter', ['title' => 'TÃ¬m á»©ng viÃªn BIM/MEP']);
+    }
+    private function currentRecruiterUserId(): int
+    {
+        abort_unless($this->recruiterUserId !== null, 403);
+
+        return $this->recruiterUserId;
     }
 }

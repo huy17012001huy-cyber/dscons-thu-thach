@@ -80,7 +80,7 @@
         <p>Những gì bạn đã mua gồm sản phẩm, khóa học, Challenge, membership và gói tuyển dụng.</p>
         <div class="settings-orders">
             @forelse($orders as $order)
-                @php($orderIcon = match($order['type']) { 'membership' => 'award', 'course' => 'graduation', 'challenge' => 'target', 'recruiter' => 'briefcase', default => 'layers' })
+                @php($orderIcon = match($order['type']) { 'membership' => 'award', 'course' => 'graduation', 'challenge' => 'target', 'recruiter' => 'briefcase', 'revit_tool' => 'tool', default => 'layers' })
                 <div class="settings-order">
                     <span class="settings-order-icon"><x-icon name="{{ $orderIcon }}" size="17" /></span>
                     <div class="settings-order-main"><strong>{{ $order['title'] }}</strong><span>{{ $order['community']->name }} · {{ $order['date']?->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y') }} · {{ $order['status'] === 'pending_payment' ? 'Chờ thanh toán' : ($order['status'] === 'active' ? 'Đang hoạt động' : ucfirst($order['status'])) }}@if($order['reference']) · {{ $order['reference'] }} @endif</span></div>

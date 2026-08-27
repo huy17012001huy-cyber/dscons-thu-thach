@@ -13,14 +13,19 @@ use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AdminOrders extends Component
 {
     public string $search = '';
+
     public string $grantUserSearch = '';
+
     public string $grantType = 'challenge';
+
     public ?int $grantUserId = null;
+
     public ?int $grantResourceId = null;
 
     public function updatedGrantType(): void
@@ -30,7 +35,9 @@ class AdminOrders extends Component
 
     public function activateOrder(string $type, int $id): void
     {
-        if (!Auth::user()?->isBrandAdmin()) return;
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
 
         $reference = 'ADMIN-ACTIVATE-'.now()->format('YmdHis').'-'.Str::upper(Str::random(5));
         $user = null;
@@ -40,7 +47,8 @@ class AdminOrders extends Component
             if ($type === 'challenge') {
                 $member = ExpeditionMember::with(['user', 'expedition'])->findOrFail($id);
                 $user = $member->user;
-                $label = $member->expedition->title;
+                $expedition = $member->expedition;
+                $label = $expedition ? $expedition->title : 'Challenge đã lưu trữ';
                 $member->update([
                     'status' => 'approved',
                     'approved_at' => now(),
@@ -52,7 +60,8 @@ class AdminOrders extends Component
             } elseif ($type === 'course') {
                 $enrollment = CourseEnrollment::with(['user', 'course'])->findOrFail($id);
                 $user = $enrollment->user;
-                $label = $enrollment->course->title;
+                $course = $enrollment->course;
+                $label = $course ? $course->title : 'Khóa học đã lưu trữ';
                 $enrollment->update([
                     'status' => 'active',
                     'amount_paid' => 0,
@@ -72,13 +81,17 @@ class AdminOrders extends Component
             }
         });
 
-        $user?->notify(new GenericNotification('✓', 'Đơn hàng đã được Admin kích hoạt: '.$label));
+        if ($user instanceof User) {
+            $user->notify(new GenericNotification('✓', 'Đơn hàng đã được Admin kích hoạt: '.$label));
+        }
         $this->dispatch('toast', message: 'Đã kích hoạt '.$label, type: 'success');
     }
 
     public function grantAccess(): void
     {
-        if (!Auth::user()?->isBrandAdmin()) return;
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
 
         $this->validate([
             'grantUserId' => 'required|integer|exists:users,id',
@@ -150,7 +163,7 @@ class AdminOrders extends Component
         $this->dispatch('toast', message: 'Đã tặng quyền cho '.$user->name, type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         $term = trim($this->search);
         $pendingChallenges = ExpeditionMember::with(['user', 'expedition'])

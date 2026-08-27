@@ -19,12 +19,12 @@ class Brand extends Model
 
     protected $casts = [
         'has_expeditions' => 'boolean',
-        'has_academy'     => 'boolean',
+        'has_academy' => 'boolean',
         'has_marketplace' => 'boolean',
-        'has_qa'          => 'boolean',
-        'has_cv'          => 'boolean',
+        'has_qa' => 'boolean',
+        'has_cv' => 'boolean',
         'has_recruitment' => 'boolean',
-        'is_invite_only'  => 'boolean',
+        'is_invite_only' => 'boolean',
         'verified_at' => 'datetime',
     ];
 
@@ -32,37 +32,42 @@ class Brand extends Model
     {
         static::saved(function (self $brand): void {
             foreach (array_unique(array_filter([$brand->domain, $brand->getOriginal('domain')])) as $domain) {
-                Cache::forget('brand:domain:' . strtolower($domain));
+                Cache::forget('brand:domain:'.strtolower($domain));
             }
         });
 
         static::deleted(function (self $brand): void {
             if ($brand->domain) {
-                Cache::forget('brand:domain:' . strtolower($brand->domain));
+                Cache::forget('brand:domain:'.strtolower($brand->domain));
             }
         });
     }
 
+    /** @return BelongsTo<User, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /** @return BelongsToMany<User, $this> */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withPivot('role')->withTimestamps();
     }
 
+    /** @return HasMany<Membership, $this> */
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
     }
 
+    /** @return HasMany<MembershipPlan, $this> */
     public function membershipPlans(): HasMany
     {
         return $this->hasMany(MembershipPlan::class);
     }
 
+    /** @return HasMany<CommunityUserStat, $this> */
     public function stats(): HasMany
     {
         return $this->hasMany(CommunityUserStat::class);
@@ -89,30 +94,34 @@ class Brand extends Model
         });
     }
 
+    /** @return array<string, string|null> */
     public function getThemeVarsAttribute(): array
     {
         return [
-            '--green'  => $this->theme_primary,
+            '--green' => $this->theme_primary,
             '--accent' => $this->theme_accent,
             '--bg-app' => $this->theme_bg,
         ];
     }
 
+    /** @return array<string, mixed> */
     public function classProfiles(): array
     {
-        return config('communities.classes.' . ($this->slug ?: 'default'))
+        return config('communities.classes.'.($this->slug ?: 'default'))
             ?: config('communities.classes.default', []);
     }
 
+    /** @return array<string, mixed> */
     public function stageLabels(): array
     {
-        return config('communities.stages.' . ($this->slug ?: 'default'))
+        return config('communities.stages.'.($this->slug ?: 'default'))
             ?: config('communities.stages.default', []);
     }
 
+    /** @return array<string, mixed> */
     public function pillarProfiles(): array
     {
-        return config('communities.pillars.' . ($this->slug ?: 'default'))
+        return config('communities.pillars.'.($this->slug ?: 'default'))
             ?: config('communities.pillars.default', []);
     }
 
@@ -121,12 +130,14 @@ class Brand extends Model
         return $this->pillarProfiles()[$pillar]['name'] ?? (string) $pillar;
     }
 
-    public function subjects()
+    /** @return HasMany<CommunitySubject, $this> */
+    public function subjects(): HasMany
     {
         return $this->hasMany(CommunitySubject::class)->active();
     }
 
-    public function postTypes()
+    /** @return HasMany<CommunityPostType, $this> */
+    public function postTypes(): HasMany
     {
         return $this->hasMany(CommunityPostType::class)->active();
     }

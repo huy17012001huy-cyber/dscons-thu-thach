@@ -2,14 +2,15 @@
 
 namespace App\Livewire;
 
-use App\Models\Comment;
 use App\Models\Bookmark;
+use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use App\Services\XpService;
 use App\Support\PostContentRenderer;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -60,7 +61,7 @@ class PostPage extends Component
             ->where('slug', $slug)
             ->first();
 
-        abort_unless($this->post, 404);
+        abort_unless($this->post instanceof Post, 404);
         $this->likesCount = (int) $this->post->likes_count;
         $this->isLiked = (bool) $this->post->likes_exists;
         $this->isBookmarked = (bool) $this->post->bookmarks_exists;
@@ -85,32 +86,35 @@ class PostPage extends Component
             return;
         }
 
+        $post = $this->post;
+        $actor = $this->currentUser();
         $this->validate(['newComment' => 'required|max:2000']);
 
-        $recentCount = Comment::where('user_id', Auth::id())
+        $recentCount = Comment::where('user_id', $actor->id)
             ->where('created_at', '>=', now()->subHour())
             ->count();
 
         if ($recentCount >= 20) {
             $this->addError('newComment', 'Bạn đã bình luận quá nhiều. Vui lòng đợi.');
+
             return;
         }
 
         $parentId = $this->replyToId
-            ? $this->post->allComments()->whereKey($this->replyToId)->value('id')
+            ? $post->allComments()->whereKey($this->replyToId)->value('id')
             : null;
 
-        $comment = $this->post->allComments()->create([
-            'user_id' => Auth::id(),
+        $comment = $post->allComments()->create([
+            'user_id' => $actor->id,
             'parent_id' => $parentId,
             'content' => $this->newComment,
         ]);
 
         $wonRune = false;
-        if ($this->post->isRuneActive()) {
-            $affected = Post::whereKey($this->post->id)
+        if ($post->isRuneActive()) {
+            $affected = Post::whereKey($post->id)
                 ->whereNull('rune_first_comment_user_id')
-                ->update(['rune_first_comment_user_id' => Auth::id()]);
+                ->update(['rune_first_comment_user_id' => $actor->id]);
             $wonRune = $affected > 0;
 
             if ($wonRune) {
@@ -119,15 +123,16 @@ class PostPage extends Component
         }
 
         app(XpService::class)->award(
-            Auth::user(),
+            $actor,
             'comment',
             $wonRune ? 2.0 : 1.0,
             $wonRune ? 'Phù văn 2x EXP' : null,
             $comment,
         );
 
-        $owner = $this->post->user;
-        if ($owner->id !== Auth::id()) {
+        $owner = $post->user;
+        abort_unless($owner instanceof User, 500);
+        if ($owner->id !== $actor->id) {
             $alreadyCommented = $this->post->allComments()
                 ->where('user_id', Auth::id())
                 ->whereKeyNot($comment->id)
@@ -138,29 +143,38 @@ class PostPage extends Component
                     $owner,
                     'post_commented',
                     1.0,
-                    Auth::user()->name.' bình luận bài viết',
+                    $actor->name.' bình luận bài viết',
                     $this->post,
                 );
             }
 
             $owner->notify(new GenericNotification(
                 '💬',
-                Auth::user()->name.' bình luận bài viết của bạn',
+                $actor->name.' bình luận bài viết của bạn',
                 null,
-                $this->post->id,
+                $post->id,
             ));
         }
 
-        $this->notifyMentions($comment->content, [Auth::id(), $owner->id]);
+        $this->notifyMentions($comment->content, [$actor->id, $owner->id]);
 
-        $slug = $this->post->slug;
+        if (! is_string($post->slug)) {
+            return;
+        }
+
+        $slug = $post->slug;
         $this->loadPost($slug);
     }
 
+    /** @param array<int> $excludeIds */
     private function notifyMentions(string $content, array $excludeIds): void
     {
+        $actor = $this->currentUser();
+        $post = $this->post;
+        abort_unless($post instanceof Post, 500);
+
         preg_match_all('/@([a-zA-Z0-9._-]+)/', $content, $matches);
-        $usernames = array_unique($matches[1] ?? []);
+        $usernames = array_unique($matches[1]);
 
         if ($usernames === []) {
             return;
@@ -173,7 +187,7 @@ class PostPage extends Component
         foreach ($users as $user) {
             $user->notify(new GenericNotification(
                 '@',
-                Auth::user()->name.' đã nhắc đến bạn trong một bình luận',
+                $actor->name.' đã nhắc đến bạn trong một bình luận',
                 null,
                 $this->post->id,
             ));
@@ -194,11 +208,14 @@ class PostPage extends Component
             return;
         }
 
-        DB::transaction(function (): void {
+        $post = $this->post;
+        $actor = $this->currentUser();
+
+        DB::transaction(function () use ($post, $actor): void {
             $like = Like::withTrashed()
                 ->where('likeable_type', Post::class)
-                ->where('likeable_id', $this->post->id)
-                ->where('user_id', Auth::id())
+                ->where('likeable_id', $post->id)
+                ->where('user_id', $actor->id)
                 ->lockForUpdate()
                 ->first();
 
@@ -206,6 +223,7 @@ class PostPage extends Component
                 $like->delete();
                 $this->likesCount = max(0, $this->likesCount - 1);
                 $this->isLiked = false;
+
                 return;
             }
 
@@ -214,8 +232,8 @@ class PostPage extends Component
             } else {
                 Like::create([
                     'likeable_type' => Post::class,
-                    'likeable_id' => $this->post->id,
-                    'user_id' => Auth::id(),
+                    'likeable_id' => $post->id,
+                    'user_id' => $actor->id,
                 ]);
             }
 
@@ -230,18 +248,21 @@ class PostPage extends Component
             return;
         }
 
+        $post = $this->post;
+        $actor = $this->currentUser();
         $bookmark = Bookmark::query()
-            ->where('user_id', Auth::id())
-            ->where('post_id', $this->post->id)
+            ->where('user_id', $actor->id)
+            ->where('post_id', $post->id)
             ->first();
 
         if ($bookmark) {
             $bookmark->delete();
             $this->isBookmarked = false;
+
             return;
         }
 
-        Bookmark::create(['user_id' => Auth::id(), 'post_id' => $this->post->id]);
+        Bookmark::create(['user_id' => $actor->id, 'post_id' => $post->id]);
         $this->isBookmarked = true;
     }
 
@@ -250,7 +271,15 @@ class PostPage extends Component
         return $this->post ? app(PostContentRenderer::class)->renderPost($this->post) : '';
     }
 
-    public function render()
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
+    }
+
+    public function render(): View
     {
         return view('livewire.post-page')
             ->layout('layouts.app', ['title' => ($this->post?->title ?: 'Bài viết').' — '.brand()->name]);

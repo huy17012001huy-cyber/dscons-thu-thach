@@ -1,35 +1,44 @@
-# Ngày 17 — Đặt giới hạn an toàn và trial/demo
+# Ngày 17 — Bảo vệ model và người dùng
 
-**Hình thức:** Video ngắn · **Thời lượng:** 45 phút
+**Hình thức:** Tự thực hành · **Thời lượng:** 45 phút
 
 ## Hôm nay làm gì?
 
-Bảo vệ model và người dùng: backup, xác nhận trước khi sửa, log thao tác và trial demo đơn giản; không xây license server.
+Bạn thêm backup, xác nhận trước thay đổi hàng loạt, log thao tác và cảnh báo giới hạn.
 
 ## Kết quả cần đạt
 
-Tool an toàn khi chạy thử và có giới hạn minh bạch
+Tool chạy thử an toàn và nói rõ khi nào không nên dùng.
 
 ## AI làm gì?
 
-- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
-- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+- Đọc mục tiêu và những gì đang có trước khi thực hiện.
+- Đề xuất kế hoạch, file cần thay đổi, lệnh build và cách kiểm tra.
+- Thực hiện phần kỹ thuật sau khi học viên xác nhận và báo lại kết quả.
 
 ## Học viên kiểm tra gì?
 
-- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
-- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+- Chọn đúng phiên bản Revit và cung cấp thông tin công việc cho AI.
+- Đọc kế hoạch, xác nhận trước thay đổi và không đưa dữ liệu mật lên AI.
+- Mở Revit bằng model mẫu/bản sao, chạy thử và đối chiếu kết quả.
 
-## SOP duy nhất
+## SOP từng bước
 
-1. Dán prompt yêu cầu AI audit Transaction, destructive action và dữ liệu log.
-2. Thêm confirmation trước batch operation.
-3. Test trên bản sao model với backup.
-4. Nếu có trial, dùng ngày hết hạn cấu hình cục bộ; không hard-code secret.
+1. Mở công cụ hoặc model được ghi trong bài và dùng bản sao an toàn.
+2. Copy toàn bộ prompt bên dưới, dán vào AI Agent và điền các phần trong ngoặc vuông.
+3. Khi AI hỏi lại, trả lời phiên bản Revit, mục tiêu và model kiểm thử; nếu chưa biết thì nói rõ “chưa biết”, không đoán.
+4. Đọc kế hoạch AI: mục tiêu, việc sẽ làm, file sẽ sửa, lệnh chạy và cách quay lại. Chỉ xác nhận khi bạn hiểu.
+5. Yêu cầu AI chỉ ra thao tác nào có thể thay đổi dữ liệu và nơi cần xác nhận người dùng.
+6. Thử tool trên bản sao với backup và kiểm tra log không chứa dữ liệu mật.
+7. Thêm hướng dẫn ngắn về backup, dừng thao tác và khôi phục khi kết quả không đúng.
+8. Để AI thực hiện, build/chạy theo hướng dẫn, rồi mở Revit để kiểm tra kết quả thật.
+9. Chụp bằng chứng, trả lời ba câu reflection và nộp bài trên website. Nếu lỗi, gửi đoạn log từ ERROR/exception đến phần summary.
 
 ## Minh chứng cần nộp
 
-- Ảnh màn hình kết quả của ngày 17.
+- Ảnh màn hình kết quả thật của ngày 17.
+- Có cảnh báo trước thao tác nguy hiểm và hướng dẫn khôi phục.
+- Ba câu ngắn: Tôi yêu cầu AI làm gì? AI đã làm gì? Tôi kiểm tra kết quả thế nào?
 
 ## Điều kiện Đạt
 
@@ -37,5 +46,6 @@ Tool an toàn khi chạy thử và có giới hạn minh bạch
 
 ## Lỗi thường gặp
 
-- Không backup.
-- Ghi nguyên model vào log.
+- Chỉ gửi ảnh code hoặc câu trả lời của AI mà chưa chạy trong Revit.
+- Dùng sai phiên bản, sai model hoặc quên kiểm tra kết quả độc lập.
+- Cho AI sửa quá nhiều thứ cùng lúc hoặc sửa model gốc.

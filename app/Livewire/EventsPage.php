@@ -2,14 +2,18 @@
 
 namespace App\Livewire;
 
+use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Expedition;
 use App\Models\ExpeditionMember;
-use App\Models\CourseEnrollment;
+use App\Models\User;
 use App\Notifications\EventNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -32,27 +36,35 @@ class EventsPage extends Component
 
     public function updatedCourseFilter(): void
     {
-        if ($this->courseFilter !== '') $this->challengeFilter = '';
+        if ($this->courseFilter !== '') {
+            $this->challengeFilter = '';
+        }
     }
 
     public function updatedChallengeFilter(): void
     {
-        if ($this->challengeFilter !== '') $this->courseFilter = '';
+        if ($this->challengeFilter !== '') {
+            $this->courseFilter = '';
+        }
     }
 
     public function registerEvent(int $eventId): void
     {
         $user = Auth::user();
-        if (!$user) return;
+        if (! $user) {
+            return;
+        }
 
         $event = Event::query()->findOrFail($eventId);
-        if (!$this->isEligible($event, $user)) {
+        if (! $this->isEligible($event, $user)) {
             $this->dispatch('toast', message: 'Bạn chưa thuộc khóa học hoặc Challenge của sự kiện này.', type: 'error');
+
             return;
         }
 
         if ($event->status !== 'published' || $event->ends_at?->isPast()) {
             $this->dispatch('toast', message: 'Sự kiện này không còn nhận đăng ký.', type: 'error');
+
             return;
         }
 
@@ -90,17 +102,19 @@ class EventsPage extends Component
                     ]);
                 }
             });
-        } catch (\RuntimeException $e) {
-            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
-            return;
         } catch (QueryException $e) {
             $this->dispatch('toast', message: 'Bạn đã đăng ký sự kiện này rồi.', type: 'info');
+
+            return;
+        } catch (\RuntimeException $e) {
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+
             return;
         }
 
         $this->dispatch('toast', message: 'Đăng ký tham gia thành công!', type: 'success');
         $url = app()->bound('brand') ? community_route('events') : route('events');
-        $user->notify(new EventNotification('Đăng ký sự kiện — ' . (app()->bound('brand') ? brand()->name : 'DSCons'), 'Bạn đã đăng ký sự kiện “' . $event->title . '”.', $url));
+        $user->notify(new EventNotification('Đăng ký sự kiện — '.(app()->bound('brand') ? brand()->name : 'DSCons'), 'Bạn đã đăng ký sự kiện “'.$event->title.'”.', $url));
     }
 
     public function cancelRegistration(int $eventId): void
@@ -111,16 +125,24 @@ class EventsPage extends Component
             ->where('status', 'registered')
             ->first();
 
-        if (!$registration) return;
+        if (! $registration) {
+            return;
+        }
         $registration->update(['status' => 'cancelled']);
         $this->dispatch('toast', message: 'Đã hủy đăng ký sự kiện.', type: 'success');
     }
 
-    private function isEligible(Event $event, $user): bool
+    private function isEligible(Event $event, ?User $user): bool
     {
-        if (!$user) return false;
-        if ($user->isBrandAdmin()) return true;
-        if ($user->hasPremiumMembership()) return true;
+        if (! $user) {
+            return false;
+        }
+        if ($user->isBrandAdmin()) {
+            return true;
+        }
+        if ($user->hasPremiumMembership()) {
+            return true;
+        }
 
         if ($event->course_id) {
             return CourseEnrollment::query()
@@ -142,7 +164,7 @@ class EventsPage extends Component
         return false;
     }
 
-    public function render()
+    public function render(): View
     {
         $user = Auth::user();
         $isAdmin = $user?->isBrandAdmin() ?? false;
@@ -150,9 +172,9 @@ class EventsPage extends Component
 
         $query = Event::query()
             ->with(['course:id,title', 'expedition:id,title'])
-            ->withCount(['registrations as registered_count' => fn($q) => $q->where('status', 'registered')]);
+            ->withCount(['registrations as registered_count' => fn ($q) => $q->where('status', 'registered')]);
 
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             // Cancelled/completed events remain visible as history, while drafts
             // stay private to admins.
             $query->whereIn('status', ['published', 'cancelled', 'completed']);
@@ -164,10 +186,18 @@ class EventsPage extends Component
             $query->where('ends_at', '>=', $now);
         }
 
-        if ($this->courseFilter !== '') $query->where('course_id', (int) $this->courseFilter);
-        if ($this->challengeFilter !== '') $query->where('expedition_id', (int) $this->challengeFilter);
-        if ($this->typeFilter !== '') $query->where('event_type', $this->typeFilter);
-        if ($this->formatFilter !== '') $query->where('format', $this->formatFilter);
+        if ($this->courseFilter !== '') {
+            $query->where('course_id', (int) $this->courseFilter);
+        }
+        if ($this->challengeFilter !== '') {
+            $query->where('expedition_id', (int) $this->challengeFilter);
+        }
+        if ($this->typeFilter !== '') {
+            $query->where('event_type', $this->typeFilter);
+        }
+        if ($this->formatFilter !== '') {
+            $query->where('format', $this->formatFilter);
+        }
 
         $events = $query->orderBy($this->tab === 'past' ? 'ends_at' : 'starts_at', $this->tab === 'past' ? 'desc' : 'asc')->get();
         $registrations = $user
@@ -184,8 +214,8 @@ class EventsPage extends Component
             'registrations' => $registrations,
             'eligible' => $eligible,
             'isAdmin' => $isAdmin,
-            'courses' => \App\Models\Course::query()->orderBy('title')->get(['id', 'title']),
-            'challenges' => \App\Models\Expedition::query()->orderBy('title')->get(['id', 'title']),
+            'courses' => Course::query()->orderBy('title')->get(['id', 'title']),
+            'challenges' => Expedition::query()->orderBy('title')->get(['id', 'title']),
             'typeLabels' => Event::typeLabels(),
         ])->layout('layouts.app', ['title' => 'Sự kiện — DSCons']);
     }

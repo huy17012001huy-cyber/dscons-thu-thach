@@ -106,7 +106,7 @@
                             <td><strong>{{ $profile?->headline ?: 'Chưa có tiêu đề' }}</strong><small style="display:block;color:#61798A;margin-top:.2rem;">{{ $profile?->discipline ?: 'BIM/MEP' }} · {{ $profile?->years_experience ?? 0 }} năm</small></td>
                             <td><div style="display:flex;gap:.25rem;flex-wrap:wrap;max-width:300px;">@foreach(collect($cv->skills())->take(8) as $skill)<span style="padding:.2rem .35rem;border-radius:999px;background:#EEF7FA;color:#236684;font-size:.65rem;">{{ is_array($skill) ? ($skill['name'] ?? '') : $skill }}</span>@endforeach</div></td>
                             <td><span>{{ $profile?->contact_email ?: 'Chưa có email' }}</span><small style="display:block;color:#61798A;margin-top:.2rem;">{{ $profile?->contact_phone ?: 'Chưa có số điện thoại' }}</small></td>
-                            <td><span class="connection-status {{ $cv->status === 'published' ? 'accepted' : 'pending' }}">{{ $cv->status === 'published' ? 'Công khai' : 'Bản nháp' }}</span></td>
+                            <td><span class="connection-status {{ $cv->status === 'published' ? 'accepted' : 'pending' }}">{{ $cv->status === 'published' ? 'Công khai' : 'Bản nháp' }}</span><a href="{{ community_route('manage.recruitment.preview.cv', ['cv' => $cv->id]) }}" style="display:block;width:max-content;margin-top:.45rem;color:#125A96;font-size:.72rem;font-weight:800;text-decoration:none;">Xem như ứng viên →</a></td>
                             <td>{{ $cv->updated_at?->format('d/m/Y H:i') }}</td>
                         </tr>
                     @empty
@@ -118,6 +118,19 @@
     </div>
 
     <div class="recruitment-admin-grid">
+        <div class="recruitment-admin-card">
+            <h2>Xem trước giao diện recruiter</h2>
+            <p>Chọn một nhà tuyển dụng đã xác minh để kiểm tra đúng giao diện họ thấy. Chế độ này chỉ đọc và không dùng credit.</p>
+            @forelse($verifiedRecruiters as $profile)
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.65rem 0;border-bottom:1px solid #E7F0F5;">
+                    <span style="font-size:.8rem;color:#29485B;"><strong style="display:block;color:#102A3B;">{{ $profile->company_name }}</strong><small style="color:#61798A;">{{ $profile->business_email }}</small></span>
+                    <a href="{{ community_route('manage.recruitment.preview.recruiter', ['recruiter' => $profile->id]) }}" class="btn btn-ghost" style="padding:.4rem .55rem;font-size:.7rem;text-decoration:none;white-space:nowrap;">Xem như recruiter</a>
+                </div>
+            @empty
+                <p class="recruitment-admin-empty">Chưa có recruiter nào đã xác minh để xem trước.</p>
+            @endforelse
+        </div>
+
         <div class="recruitment-admin-card">
             <h2>Nhà tuyển dụng chờ duyệt</h2>
             @forelse($pendingRecruiters as $profile)

@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Concerns\HasBrand;
 
+/**
+ * @property int $brand_id
+ * @property int $user_id
+ * @property string|null $verification_status
+ */
 class RecruiterProfile extends Model
 {
     use HasBrand;
@@ -14,7 +19,10 @@ class RecruiterProfile extends Model
 
     protected $casts = ['verified_at' => 'datetime'];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
+
+    /** @return BelongsTo<User, $this> */
     public function reviewer(): BelongsTo { return $this->belongsTo(User::class, 'reviewed_by'); }
 
     public function isVerified(): bool { return $this->verification_status === 'verified'; }

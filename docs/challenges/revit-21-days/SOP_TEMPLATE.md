@@ -1,31 +1,34 @@
-# SOP một ngày — AI làm, học viên kiểm chứng
+# SOP copy vào AI Agent
 
 ## Bối cảnh
 
-- Revit version: `...`
-- Workspace/Kit: `...`
-- Tên học viên và tên tool: `...`
-- Model test: bản sao, không chứa dữ liệu mật
+- Phiên bản Revit: [điền phiên bản]
+- Tên tool: [điền tên]
+- Workspace: [chọn thư mục làm việc]
+- Model kiểm thử: [bản sao/model mẫu]
 
-## Prompt copy vào AI Agent
+## Mục tiêu
 
-```text
-Hãy đọc workspace và file hướng dẫn trước.
-Mục tiêu hôm nay: [viết một kết quả nhìn thấy được].
-Hãy nói ngắn gọn kế hoạch, file sẽ đổi, lệnh chạy và cách kiểm tra; chờ tôi xác nhận.
-Sau khi tôi xác nhận, hãy thực hiện, build/chạy theo đúng version Revit và báo lại:
-file đã đổi, kết quả, lỗi còn lại và cách tôi kiểm tra trong Revit.
-Không xóa file, không sửa model gốc, không đưa dữ liệu mật lên AI.
-```
+[Nói bằng ngôn ngữ công việc: tôi muốn giảm thao tác nào và kết quả cần thấy là gì?]
 
-## Học viên làm gì?
+## Ràng buộc an toàn
 
-1. Mở workspace và model bản sao.
-2. Đọc kế hoạch của AI rồi xác nhận hoặc sửa phạm vi.
-3. Mở Revit, chạy tool và đối chiếu kết quả.
-4. Chụp ảnh minh chứng theo yêu cầu ngày học.
-5. Nếu tạo ra sản phẩm, đăng ảnh lên Bảng tin.
+- Không sửa model gốc hoặc xóa file ngoài workspace.
+- Đọc những gì đang có và nói kế hoạch trước khi sửa.
+- Backup trước thao tác thay đổi dữ liệu.
+- Không đoán API hoặc phiên bản; nếu chưa chắc phải hỏi lại.
+- Không đưa dữ liệu mật, token hoặc thông tin công ty lên AI.
 
-## Nếu AI hỏi lại
+## Yêu cầu AI
 
-Trả lời đúng version, đường dẫn workspace, input và output. Nếu chưa biết, nói “chưa xác định, hãy đọc read-only”; không đoán.
+1. Đọc workspace và giải thích ngắn gọn những gì đã tìm thấy.
+2. Nêu kế hoạch, file sẽ thay đổi, lệnh build và cách kiểm tra; chờ tôi xác nhận.
+3. Thực hiện sau khi tôi xác nhận.
+4. Build/chạy theo phiên bản Revit thật.
+5. Báo lại file đã đổi, kết quả, lỗi còn lại và cách rollback.
+
+## Việc tôi phải kiểm tra
+
+- Mở Revit bằng model bản sao.
+- Bấm tool và kiểm tra kết quả với Properties, Schedule hoặc cách đếm thủ công.
+- Chụp ảnh kết quả thật và ghi ngắn gọn cách tôi đã kiểm chứng.

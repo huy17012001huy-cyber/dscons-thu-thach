@@ -2,12 +2,13 @@
 
 namespace App\Livewire;
 
-use App\Models\PillarStat;
-use App\Models\Post;
 use App\Models\CommunityPostType;
 use App\Models\CommunitySubject;
+use App\Models\PillarStat;
+use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -32,7 +33,7 @@ class Feed extends Component
     #[Url]
     public ?int $post = null;
 
-    protected $paginationTheme = 'tailwind';
+    protected string $paginationTheme = 'tailwind';
 
     public function mount(): void
     {
@@ -52,7 +53,7 @@ class Feed extends Component
 
     public function setTab(string $tab): void
     {
-        $this->tab   = $tab;
+        $this->tab = $tab;
         $this->pillar = '';
         $this->subject_id = null;
         $this->post_type_id = null;
@@ -61,45 +62,45 @@ class Feed extends Component
 
     public function setPillar(string $pillar): void
     {
-        $this->tab   = 'pillar';
+        $this->tab = 'pillar';
         $this->pillar = $pillar;
         $this->resetPage();
     }
 
-    public function setSubject($subjectId): void
+    public function setSubject(int|string|null $subjectId): void
     {
         $this->subject_id = filled($subjectId) ? (int) $subjectId : null;
         $this->tab = 'latest';
         $this->resetPage();
     }
 
-    public function setPostType($postTypeId): void
+    public function setPostType(int|string|null $postTypeId): void
     {
         $this->post_type_id = filled($postTypeId) ? (int) $postTypeId : null;
         $this->tab = 'latest';
         $this->resetPage();
     }
 
-    public function render()
+    public function render(): View
     {
         $brandId = app()->bound('brand') ? (int) brand()->id : 0;
         $query = Post::with(['user.daKhongCuc', 'images', 'topic', 'subject', 'postType'])
             ->withCount(['likes', 'allComments'])
-            ->withExists(['likes' => fn($q) => $q->where('user_id', Auth::id())])
-            ->withExists(['bookmarks' => fn($q) => $q->where('user_id', Auth::id())])
+            ->withExists(['likes' => fn ($q) => $q->where('user_id', Auth::id())])
+            ->withExists(['bookmarks' => fn ($q) => $q->where('user_id', Auth::id())])
             ->whereNull('deleted_at');
 
-        match($this->tab) {
-            'cot'     => $query->where('is_cot', true),
-            'pillar'  => $query->where('pillar', $this->pillar),
+        match ($this->tab) {
+            'cot' => $query->where('is_cot', true),
+            'pillar' => $query->where('pillar', $this->pillar),
             'popular' => $query->where('created_at', '>=', now()->subDays(7))
-                               ->orderByDesc(
-                                   Post::selectRaw('count(*)')
-                                       ->from('likes')
-                                       ->whereColumn('likes.likeable_id', 'posts.id')
-                                       ->where('likes.likeable_type', Post::class)
-                               ),
-            default   => null,
+                ->orderByDesc(
+                    Post::selectRaw('count(*)')
+                        ->from('likes')
+                        ->whereColumn('likes.likeable_id', 'posts.id')
+                        ->where('likes.likeable_type', Post::class)
+                ),
+            default => null,
         };
 
         if ($this->subject_id) {
@@ -151,14 +152,14 @@ class Feed extends Component
         });
 
         return view('livewire.feed', [
-            'posts'         => $posts,
-            'pinnedPosts'   => $pinned,
+            'posts' => $posts,
+            'pinnedPosts' => $pinned,
             'burningPillar' => $burningPillar,
-            'activeRune'    => $activeRune,
-            'subjects'      => CommunitySubject::active()
+            'activeRune' => $activeRune,
+            'subjects' => CommunitySubject::active()
                 ->where('slug', '!=', 'tieu-chuan')
                 ->get(),
-            'postTypes'     => CommunityPostType::active()->get(),
+            'postTypes' => CommunityPostType::active()->get(),
         ])->layout('layouts.app', ['title' => 'Bảng tin']);
     }
 }

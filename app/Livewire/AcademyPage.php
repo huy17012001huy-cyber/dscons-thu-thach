@@ -4,9 +4,10 @@ namespace App\Livewire;
 
 use App\Models\Course;
 use App\Models\LessonProgress;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
 
 class AcademyPage extends Component
 {
@@ -21,7 +22,7 @@ class AcademyPage extends Component
         $this->pillar = $this->pillar === $p ? '' : $p;
     }
 
-    public function render()
+    public function render(): View
     {
         $query = Course::where('is_published', true);
 
@@ -61,6 +62,6 @@ class AcademyPage extends Component
         });
 
         return view('livewire.academy-page', ['courses' => $courses])
-            ->layout('layouts.app', ['title' => 'Khóa học — ' . brand()->name]);
+            ->layout('layouts.app', ['title' => 'Khóa học — '.brand()->name]);
     }
 }

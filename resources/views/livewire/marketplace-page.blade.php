@@ -40,6 +40,7 @@
     @foreach([
         ['items' => $challengeItems, 'title' => 'Thử thách hot', 'icon' => 'target'],
         ['items' => $courseItems, 'title' => 'Khóa học', 'icon' => 'graduation'],
+        ['items' => $revitToolItems, 'title' => 'DSCons Revit Tools', 'icon' => 'tool'],
         ['items' => $resourceItems, 'title' => 'Nổi bật & trending tuần này', 'icon' => 'spark'],
     ] as $section)
         @if($section['items']->isNotEmpty())

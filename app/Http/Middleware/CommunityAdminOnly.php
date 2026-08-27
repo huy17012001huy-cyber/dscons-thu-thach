@@ -4,13 +4,16 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use App\Models\Brand;
+use App\Models\User;
 use Symfony\Component\HttpFoundation\Response;
 
 class CommunityAdminOnly
 {
     public function handle(Request $request, Closure $next): Response
     {
-        abort_unless($request->user()?->isCommunityAdmin($this->brandId($request)), 403);
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->isCommunityAdmin($this->brandId($request)), 403);
 
         return $next($request);
     }
@@ -18,6 +21,6 @@ class CommunityAdminOnly
     private function brandId(Request $request): ?int
     {
         $community = $request->route('community');
-        return $community?->id ?? (app()->bound('brand') ? brand()->id : null);
+        return $community instanceof Brand ? $community->id : (app()->bound('brand') ? brand()->id : null);
     }
 }

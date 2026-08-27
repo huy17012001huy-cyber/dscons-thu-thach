@@ -30,17 +30,22 @@ foreach ($challenges as $slug => $directory) {
             ->map(fn ($step, $index) => ($index + 1).'. '.trim((string) $step))
             ->implode("\n");
         $evidence = $bullets($payload['evidence_requirements'] ?? []);
-        $errors = $bullets(array_slice($payload['common_errors'] ?? [], 0, 2));
-        $live = ($payload['modality'] ?? '') === 'live' ? 'Livestream' : 'Video ngắn';
-        $share = $payload['share_to_feed'] ?? null;
+        $errors = $bullets($payload['common_errors'] ?? []);
+        $format = match ($payload['modality'] ?? '') {
+            'live' => 'Livestream',
+            'practice' => 'Tự thực hành',
+            'assignment' => 'Bài thực hành',
+            default => 'Bài học',
+        };
+        $share = $payload['feed_activity'] ?? $payload['share_to_feed'] ?? null;
 
         $content = "# Ngày {$task->day_number} — {$task->title}\n\n"
-            ."**Hình thức:** {$live} · **Thời lượng:** {$payload['estimated_minutes']} phút\n\n"
+            ."**Hình thức:** {$format} · **Thời lượng:** {$payload['estimated_minutes']} phút\n\n"
             ."## Hôm nay làm gì?\n\n{$task->description}\n\n"
             ."## Kết quả cần đạt\n\n{$payload['required_outcome']}\n\n"
             ."## AI làm gì?\n\n{$bullets($payload['ai_actions'] ?? [])}\n\n"
             ."## Học viên kiểm tra gì?\n\n{$bullets($payload['student_actions'] ?? [])}\n\n"
-            ."## SOP duy nhất\n\n{$steps}\n\n"
+            ."## SOP từng bước\n\n{$steps}\n\n"
             ."## Minh chứng cần nộp\n\n{$evidence}\n\n"
             .($share ? "**Đăng lên Bảng tin:** {$share}\n\n" : '')
             ."## Điều kiện Đạt\n\nĐạt từ {$payload['pass_score']}/100, có ảnh kết quả thật và không có lỗi nghiêm trọng. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP.\n\n"

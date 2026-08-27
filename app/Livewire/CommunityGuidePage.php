@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Support\CommunityContentDefaults;
+use App\Models\User;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 class CommunityGuidePage extends Component
@@ -10,12 +12,14 @@ class CommunityGuidePage extends Component
     public function mount(): void
     {
         abort_unless(auth()->check(), 403);
-        abort_unless(auth()->user()->isCommunityParticipant(brand()->id), 403);
+        $user = auth()->user();
+        abort_unless($user instanceof User && $user->isCommunityParticipant(brand()->id), 403);
     }
 
-    public function render()
+    public function render(): View
     {
         $content = CommunityContentDefaults::resolve(brand()->guide_content, CommunityContentDefaults::guide());
+        $user = auth()->user();
         $links = [
             'Bảng tin' => ['route' => 'feed', 'icon' => 'chat', 'tone' => 'blue'],
             'CỐT' => ['route' => 'cot', 'icon' => 'compass', 'tone' => 'orange'],
@@ -34,7 +38,7 @@ class CommunityGuidePage extends Component
             'Tìm kiếm, thông báo và hồ sơ' => ['route' => 'search', 'icon' => 'search', 'tone' => 'blue'],
         ];
 
-        if (! brand()->has_cv || ! auth()->user()->isEngineer()) {
+        if (! brand()->has_cv || ! ($user instanceof User && $user->isEngineer())) {
             unset($links['CV của tôi'], $links['Yêu cầu tuyển dụng']);
         }
 
@@ -56,7 +60,7 @@ class CommunityGuidePage extends Component
                             $parts = explode(':', trim($line), 2);
 
                             return [
-                                'label' => trim($parts[0] ?? ''),
+                                'label' => trim($parts[0]),
                                 'value' => trim($parts[1] ?? ''),
                             ];
                         })

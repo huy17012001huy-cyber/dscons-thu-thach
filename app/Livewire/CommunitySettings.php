@@ -5,7 +5,9 @@ namespace App\Livewire;
 use App\Models\Brand;
 use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 class CommunitySettings extends Component
@@ -41,10 +43,11 @@ class CommunitySettings extends Component
 
     private function authorizeCommunityAdmin(): void
     {
-        abort_unless(Auth::user()?->isCommunityAdmin($this->community->id), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isCommunityAdmin($this->community->id), 403);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.community-settings')
             ->layout('layouts.app', ['title' => 'Cài đặt '.$this->community->name]);

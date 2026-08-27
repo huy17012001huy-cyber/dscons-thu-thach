@@ -6,22 +6,25 @@ use App\Models\Brand;
 use App\Models\CommunityApplication;
 use App\Models\Membership;
 use App\Models\MembershipPlan;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AdminCommunities extends Component
 {
     public string $filter = 'pending';
+
     public string $reviewNote = '';
 
     public function approve(int $id): void
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        $admin = $this->currentSuperAdmin();
         $application = CommunityApplication::query()->findOrFail($id);
         abort_if($application->status !== 'pending', 422, 'Hồ sơ đã được xử lý.');
 
-        DB::transaction(function () use ($application): void {
+        DB::transaction(function () use ($application, $admin): void {
             $brand = Brand::create([
                 'name' => $application->name,
                 'slug' => $application->slug,
@@ -71,7 +74,7 @@ class AdminCommunities extends Component
                 MembershipPlan::withoutGlobalScopes()->create($planData);
             }
 
-            $application->update(['status' => 'approved', 'reviewed_by' => Auth::id(), 'review_note' => $this->reviewNote ?: null]);
+            $application->update(['status' => 'approved', 'reviewed_by' => $admin->id, 'review_note' => $this->reviewNote ?: null]);
         });
 
         $this->reviewNote = '';
@@ -80,14 +83,14 @@ class AdminCommunities extends Component
 
     public function reject(int $id): void
     {
-        abort_unless(Auth::user()?->is_admin, 403);
+        $admin = $this->currentSuperAdmin();
         $application = CommunityApplication::query()->findOrFail($id);
-        $application->update(['status' => 'rejected', 'reviewed_by' => Auth::id(), 'review_note' => $this->reviewNote ?: null]);
+        $application->update(['status' => 'rejected', 'reviewed_by' => $admin->id, 'review_note' => $this->reviewNote ?: null]);
         $this->reviewNote = '';
         $this->dispatch('toast', message: 'Đã từ chối hồ sơ.', type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         $applications = CommunityApplication::query()
             ->with('applicant:id,name,email')
@@ -97,5 +100,13 @@ class AdminCommunities extends Component
 
         return view('livewire.admin-communities', compact('applications', 'communities'))
             ->layout('layouts.app', ['title' => 'Quản lý cộng đồng']);
+    }
+
+    private function currentSuperAdmin(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isSuperAdmin(), 403);
+
+        return $user;
     }
 }

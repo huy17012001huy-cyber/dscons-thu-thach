@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\AdminEvents;
 use App\Livewire\EventsPage;
+use App\Models\Brand;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Event;
-use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,7 @@ class EventsTest extends TestCase
     {
         $user = User::factory()->create(['class' => 'offer_architect']);
         Membership::factory()->active()->create(['user_id' => $user->id]);
+
         return $user;
     }
 
@@ -93,5 +95,36 @@ class EventsTest extends TestCase
             'event_id' => $event->id,
             'user_id' => $user->id,
         ]);
+    }
+
+    public function test_community_admin_cannot_attach_an_event_to_another_community_course(): void
+    {
+        $admin = User::factory()->create();
+        $admin->brandRoles()->attach(brand()->id, ['role' => 'admin']);
+        $otherBrand = Brand::create([
+            'name' => 'Other community',
+            'slug' => 'other-community',
+            'domain' => 'other-community.test',
+            'status' => 'active',
+        ]);
+        $otherCourse = Course::withoutGlobalScopes()->create([
+            'brand_id' => $otherBrand->id,
+            'title' => 'Other course',
+            'pillar' => 'delivery',
+            'difficulty' => 'basic',
+            'is_published' => true,
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(AdminEvents::class)
+            ->set('title', 'Cross community event')
+            ->set('courseId', $otherCourse->id)
+            ->set('startsAt', now()->format('Y-m-d\\TH:i'))
+            ->set('endsAt', now()->addHour()->format('Y-m-d\\TH:i'))
+            ->set('meetingUrl', 'https://meet.google.com/test')
+            ->call('saveEvent')
+            ->assertHasErrors(['courseId']);
+
+        $this->assertDatabaseMissing('events', ['title' => 'Cross community event']);
     }
 }

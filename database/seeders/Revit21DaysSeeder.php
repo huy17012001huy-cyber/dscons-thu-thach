@@ -8,12 +8,7 @@ use App\Models\Expedition;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
-/**
- * Idempotent source of truth for the DSCons Revit curriculum.
- *
- * Run explicitly with: php artisan db:seed --class=Revit21DaysSeeder
- * It updates the existing slug and never deletes legacy tasks or evidence.
- */
+/** Source of truth for the learner-friendly DSCons Revit challenge. */
 class Revit21DaysSeeder extends Seeder
 {
     private const SLUG = '21-ngay-lam-tool-revit-voi-ai-agent';
@@ -35,43 +30,45 @@ class Revit21DaysSeeder extends Seeder
                 'class' => $leader->class ?: 'delivery_assassin',
             ])->save();
         }
+
         $expedition = Expedition::withoutGlobalScopes()->firstOrNew([
             'brand_id' => $brand->id,
             'slug' => self::SLUG,
         ]);
-
         $expedition->fill([
             'brand_id' => $brand->id,
             'title' => '21 Ngày Chinh Phục Tool Revit bằng AI Agent',
-            'description' => 'Lộ trình thực chiến dành cho kỹ sư BIM/MEP: dùng AI Agent để khảo sát Revit, xây add-in, kiểm thử, đóng gói và chứng minh kết quả trên model của chính mình.',
+            'description' => 'Lộ trình thực chiến dành cho kỹ sư BIM/MEP: chọn một việc lặp lại trong Revit, giao AI Agent thực hiện phần kỹ thuật, rồi tự kiểm tra để tạo ra một tool chạy thật.',
             'boss_name' => $expedition->boss_name ?: 'DSCons Revit Mentor',
             'difficulty' => $expedition->difficulty ?: 'normal',
             'required_days' => 21,
             'max_members' => $expedition->max_members ?: 999,
-            'created_by' => $expedition->created_by ?: $leader?->id,
-            'leader_id' => $expedition->leader_id ?: $leader?->id,
+            'created_by' => $expedition->created_by ?: $leader->id,
+            'leader_id' => $expedition->leader_id ?: $leader->id,
             'status' => $expedition->status ?: 'open',
         ]);
         $expedition->save();
 
         foreach ($this->days() as $day) {
             $payload = $this->payload($day);
-            ChallengeTask::withoutGlobalScopes()->updateOrCreate(
-                ['expedition_id' => $expedition->id, 'day_number' => $day['day']],
-                [
-                    'label' => $day['label'],
-                    'title' => $day['title'],
-                    'description' => $day['description'],
-                    'sop_content' => $this->sopMarkdown($day, $payload),
-                    'video_url' => null,
-                    'meeting_at' => null,
-                    'evidence_type' => 'text',
-                    'evidence_label' => implode(' ', $payload['evidence_requirements']),
-                    'duration_hours' => 24,
-                    'quiz_json' => null,
-                    'instruction_payload' => $payload,
-                ]
-            );
+            $task = ChallengeTask::withoutGlobalScopes()->firstOrNew([
+                'expedition_id' => $expedition->id,
+                'day_number' => $day['day'],
+            ]);
+            $task->fill([
+                'expedition_id' => $expedition->id,
+                'day_number' => $day['day'],
+                'label' => $day['label'],
+                'title' => $day['title'],
+                'description' => $day['description'],
+                'sop_content' => $this->sopMarkdown($day, $payload),
+                // Existing admin-entered links/schedules are intentionally preserved.
+                'evidence_type' => 'text',
+                'evidence_label' => implode(' ', $payload['evidence_requirements']),
+                'duration_hours' => 24,
+                'instruction_payload' => $payload,
+            ]);
+            $task->save();
         }
 
         $this->command?->info("Đã seed {$expedition->tasks()->count()} task cho {$expedition->slug}.");
@@ -80,325 +77,138 @@ class Revit21DaysSeeder extends Seeder
     /** @return array<int, array<string, mixed>> */
     private function days(): array
     {
-        $commonPrerequisites = [
-            'Có Revit 2020–2026 và một model mẫu không chứa dữ liệu mật.',
-            'Có workspace Bộ Kit DSCons và quyền chạy PowerShell/Build Tools.',
+        $rows = [
+            [1, 'live', 'common', 'Chọn và cài AI Agent để bắt đầu', 'Khởi động', 90, 'Bạn sẽ chọn một AI Agent, tải đúng phần mềm, đăng nhập và kiểm tra nó đọc được workspace Bộ Kit.', 'AI Agent hoạt động và bạn biết chính xác nơi bắt đầu.', 'Chọn Codex, Claude Code hoặc Google Antigravity; không cần cài cả ba.', 'AI Agent đã mở được workspace và trả lời đúng mục tiêu khóa học.'],
+            [2, 'practice', 'common', 'Giao việc cho AI theo từng bước', 'Cách làm việc', 35, 'Bạn học cách nói rõ mục tiêu, yêu cầu AI lập kế hoạch trước và chỉ bắt đầu sau khi bạn đồng ý.', 'Có một kế hoạch làm tool mà bạn hiểu và có thể kiểm tra.', 'Dán SOP vào AI, yêu cầu đọc trước, nêu file sẽ đụng tới và chờ bạn xác nhận.', 'AI đưa ra kế hoạch trước khi thực hiện, không sửa mù.'],
+            [3, 'practice', 'common', 'Kiểm tra máy và phiên bản Revit', 'Kiểm tra môi trường', 40, 'Bạn kiểm tra Revit, .NET, Build Tools, Git và phiên bản đang dùng để tránh cài nhầm.', 'Biết môi trường của mình đang đạt hay còn lỗi nào.', 'Chạy kiểm tra chỉ đọc; nếu có lỗi, gửi đúng phần log cần thiết cho AI.', 'Báo cáo có PASS/FAIL và phiên bản Revit thật.'],
+            [4, 'practice', 'common', 'Đọc model Revit mà không sửa model', 'Khảo sát model', 45, 'AI sẽ đọc model mẫu qua MCP hoặc cơ chế kết nối của Bộ Kit. Ngày này chỉ khảo sát, không thay đổi dữ liệu.', 'AI đếm được Duct, Pipe và Equipment để bạn đối chiếu.', 'Mở model mẫu, bật chế độ chỉ đọc và dừng ngay nếu AI yêu cầu thao tác ghi.', 'Số lượng AI trả về khớp Schedule hoặc phép đếm trong Revit.'],
+            [5, 'practice', 'common', 'Xem thông tin của phần tử MEP', 'Thông tin phần tử', 45, 'Bạn yêu cầu AI xem Category, Family, Type, Level, System, Size, Mark và Comments của phần tử.', 'Có bảng thông tin dễ đọc của 5–10 phần tử.', 'Chọn phần tử, yêu cầu AI ghi “chưa có” khi thiếu thông tin và đối chiếu từng dòng.', 'Ít nhất 5 thông tin được kiểm tra lại trong Properties hoặc Schedule.'],
+            [6, 'practice', 'common', 'Lọc đúng phần tử cần tìm', 'Lọc dữ liệu', 50, 'Bạn biến một câu hỏi công việc thành điều kiện lọc, ví dụ Duct lớn hơn 300 mm ở Level 2 thuộc Supply Air.', 'Có kết quả lọc đúng và giải thích được vì sao phần tử được chọn.', 'Nói câu hỏi bằng ngôn ngữ công việc; để AI chuyển thành điều kiện; đối chiếu độc lập.', 'Kết quả không nhầm Category, Level, hệ thống hoặc đơn vị.'],
+            [7, 'practice', 'common', 'Chọn bài toán tool của riêng bạn', 'Chọn bài toán', 60, 'Bạn chọn một việc lặp lại trong công việc MEP và mô tả nó bằng biểu mẫu trên website, không cần tạo file kỹ thuật.', 'Có bài toán đủ nhỏ để làm MVP trong hai tuần.', 'Mô tả việc làm tay, đầu vào, kết quả mong muốn, người dùng và điều không làm trong khóa.', 'Bài toán có đầu vào, đầu ra và cách đo thành công; đăng bài xin góp ý lên Bảng tin.'],
+            [8, 'live', 'common', 'Chốt phạm vi với mentor', 'Livestream', 120, 'Mentor cùng bạn thu nhỏ đề tài, kiểm tra tính khả thi và viết lại yêu cầu để AI có thể triển khai.', 'Đề tài được xác nhận và có tiêu chí “tool chạy được”.', 'Trình bày vấn đề → đầu vào → thao tác → kết quả → giới hạn; ghi lại góp ý và cập nhật biểu mẫu.', 'Mentor xác nhận một nhánh và một bản demo cụ thể.'],
+            [9, 'practice', 'common', 'Tạo nút tool đầu tiên trong Revit', 'Nền tảng tool', 60, 'AI tạo phần nền tảng, nút trên Ribbon và cửa sổ giới thiệu. Bạn chỉ cần build, cài và bấm thử.', 'Add-in xuất hiện trong Revit với tên của bạn.', 'Khai báo đúng phiên bản Revit, xem danh sách thay đổi, build rồi cài trên model mẫu.', 'Ribbon và cửa sổ giới thiệu mở được, không báo lỗi.'],
+            [10, 'practice', 'counting', 'Chọn và đếm phần tử', 'Chức năng lõi', 60, 'Bạn xây chức năng đầu tiên có ích: chọn Category, lọc phạm vi và trả về số lượng.', 'Số lượng tool trả về khớp Revit.', 'Yêu cầu AI làm chức năng chỉ đọc; chạy trên model mẫu và so với Schedule hoặc Filter.', 'Có ảnh nút chạy, kết quả và cách đối chiếu.'],
+            [11, 'practice', 'parameter', 'Làm phiên bản đầu tiên của tool', 'Xây chức năng', 75, 'Theo nhánh đã chọn, AI làm phần lọc/đếm, gán thông số, chuẩn bị tag hoặc xuất dữ liệu.', 'Một chức năng chính chạy được trên vài phần tử thử nghiệm.', 'Backup model, chạy trước với 3–5 phần tử, kiểm tra trước/sau và ghi phần tử không xử lý được.', 'Có kết quả thật, backup và log rõ số thành công/thất bại.'],
+            [12, 'practice', 'capstone', 'Hoàn thiện chức năng chính và báo lỗi rõ ràng', 'MVP', 75, 'Bạn đưa tool qua cả trường hợp bình thường và dữ liệu thiếu để AI bổ sung thông báo dễ hiểu.', 'MVP không dừng toàn bộ chỉ vì một phần tử có vấn đề.', 'Thử input rỗng, thiếu Parameter, trùng Tag hoặc dữ liệu sai; gửi log lỗi cho AI và chạy lại.', 'Có kết quả đúng cùng thông báo xử lý được/không xử lý được.'],
+            [13, 'practice', 'wpf', 'Làm cửa sổ tool dễ sử dụng', 'Giao diện', 60, 'AI giúp bạn làm giao diện WPF có nút chính, loading, thành công, lỗi và hủy; màu sắc theo DSCons.', 'Người dùng biết phải bấm gì và đang xảy ra điều gì.', 'Giữ logic đã chạy; kiểm tra mở, đóng, loading, thành công, lỗi và trạng thái không có dữ liệu.', 'Giao diện hoạt động thật, không chỉ là hình minh họa.'],
+            [14, 'practice', 'common', 'Sửa một lỗi bằng AI có kiểm soát', 'Xử lý lỗi', 60, 'Bạn học cách lấy đúng phần lỗi, yêu cầu AI giải thích nguyên nhân rồi mới sửa.', 'Sửa được một lỗi và chứng minh lỗi không quay lại.', 'Dùng lỗi an toàn ở bản sao, gửi đoạn log liên quan, xem file thay đổi và chạy lại bài test cũ.', 'Nêu được nguyên nhân, file sửa và kết quả kiểm tra sau sửa.'],
+            [15, 'live', 'common', 'Review MVP và xin góp ý cộng đồng', 'Livestream', 120, 'Mentor kiểm tra Ribbon, chức năng, giao diện và phạm vi trước khi bạn đóng gói.', 'Có quyết định rõ: được đóng gói hoặc cần sửa lỗi nào trước.', 'Demo theo format mở Revit → bấm tool → nhập → chạy → kết quả → lỗi; đăng bản MVP lên Bảng tin.', 'MVP chạy thật, có góp ý và danh sách việc cần sửa.'],
+            [16, 'practice', 'report', 'Thêm một nâng cấp có giá trị', 'Nâng cấp', 75, 'Bạn chọn một nâng cấp sát công việc: lọc theo vị trí, batch operation, geometry hoặc báo cáo.', 'Nâng cấp giải quyết đúng vấn đề đã chốt, không mở rộng lan man.', 'Viết trước một tiêu chí kiểm tra, nhờ AI cập nhật kế hoạch, thử dữ liệu bình thường và dữ liệu biên.', 'Có output dùng được và test case pass/fail.'],
+            [17, 'practice', 'common', 'Bảo vệ model và người dùng', 'An toàn', 45, 'Bạn thêm backup, xác nhận trước thay đổi hàng loạt, log thao tác và cảnh báo giới hạn.', 'Tool chạy thử an toàn và nói rõ khi nào không nên dùng.', 'Yêu cầu AI rà soát thao tác ghi, test trên bản sao, kiểm tra log không chứa dữ liệu mật.', 'Có cảnh báo trước thao tác nguy hiểm và hướng dẫn khôi phục.'],
+            [18, 'practice', 'common', 'Đóng gói bản tool có thể cài lại', 'Đóng gói', 60, 'AI gom các thành phần cần thiết thành bộ cài/ZIP; bạn thử cài lại như một người dùng mới.', 'Bộ cài mở được Ribbon trên môi trường sạch.', 'Build Release, kiểm tra dependency, cài từ thư mục dist và không đưa secret vào bộ cài.', 'Có bộ cài, danh sách thành phần và ảnh cài thành công.'],
+            [19, 'practice', 'common', 'Viết hướng dẫn sử dụng ngắn', 'Tài liệu', 45, 'AI soạn bản nháp hướng dẫn; bạn kiểm tra lại từng bước bằng chính bộ cài.', 'Người khác có thể cài và chạy mà không cần hỏi lại.', 'Kiểm tra yêu cầu, cách cài, cách chạy, kết quả, lỗi thường gặp và giới hạn; sửa mọi chỗ AI đoán sai.', 'Có hướng dẫn đã thử thật và ảnh kết quả.'],
+            [20, 'practice', 'common', 'Kiểm thử như một người dùng thật', 'UAT', 75, 'Bạn thử tool trên model mô phỏng công việc với dữ liệu đúng, thiếu và thao tác sai.', 'Tool đạt ít nhất ba tình huống và có giới hạn rõ ràng.', 'Chạy từ bộ cài; ghi pass/fail, gửi lỗi cho AI, cập nhật bản build rồi test lại.', 'Có bảng test và ảnh chụp của ba tình huống.'],
+            [21, 'live', 'common', 'Showcase tool và tổng kết', 'Grand Finale', 120, 'Bạn trình bày vấn đề ban đầu, cách dùng AI, demo tool thật, kết quả trước/sau và giới hạn.', 'Có tool chạy được, bộ cài, hướng dẫn và video tổng kết.', 'Demo 3 phút vấn đề, 3 phút tool, 2 phút hỏi đáp; quay video nếu vắng livestream và đăng thành quả lên Bảng tin.', 'Demo chạy thật, bộ cài cài lại được, video và bài tổng kết đầy đủ.'],
         ];
 
-        return [
-            $this->day(1, 'live', 'common', 'Khởi động workspace và chạy prompt đầu tiên', 'Khai hoả', 90,
-                'Buổi kickoff giúp học viên cài/kiểm tra AI Agent, mở đúng Bộ Kit và biết đầu ra cuối khóa.',
-                ['Xác định được add-in/công cụ muốn hoàn thành sau 21 ngày.', 'Mở được workspace bằng Codex, Antigravity hoặc agent tương đương.', 'AI đọc được cấu trúc thư mục và giải thích quy trình làm việc.'],
-                $commonPrerequisites,
-                ['Đăng nhập AI Agent bằng tài khoản được phép dùng cho dữ liệu không mật.', 'Mở thư mục workspace Bộ Kit DSCons, không mở thư mục dự án mật của công ty.', 'Yêu cầu AI chỉ đọc cây thư mục, không sửa file.', 'Chạy prompt kiểm tra đầu tiên và lưu câu trả lời vào AI_WORKFLOW.md.', 'Trong livestream, hỏi mentor khi workspace hoặc quyền chạy lệnh bị lỗi.'],
-                ['Ảnh workspace có tên thư mục và tên AI Agent.', 'Video 30 giây AI nhận diện workspace và nói lại đầu ra khóa học.', 'Ba câu reflection: tôi yêu cầu gì, AI đã làm gì, tôi kiểm chứng thế nào.'],
-                ['Không gửi model hoặc file công ty lên AI.', 'Không cho phép AI xóa, di chuyển hoặc ghi đè file ngoài workspace.', 'Không coi câu trả lời của AI là bằng chứng tool đã chạy trong Revit.'],
-                'Tạo workspace đầu tiên an toàn và có thể lặp lại',
-                ['Sử dụng Codex/Antigravity ở đâu?', 'File nào là nguồn hướng dẫn?', 'Bước nào chỉ đọc và bước nào có thể sửa?']),
-            $this->day(2, 'video', 'common', 'Lập kế hoạch trước khi cho AI viết code', 'Cách làm việc với Agent', 45,
-                'Học viên biết AI Agent có thể đọc/sửa/build trong workspace, nhưng phải lập kế hoạch trước và chờ xác nhận.',
-                ['Phân biệt chatbot trả lời với agent thao tác trên file.', 'Tạo AI_WORKFLOW.md có mục tiêu, kế hoạch và danh sách file dự kiến sửa.', 'Biết yêu cầu AI giải thích trước khi code.'],
-                ['Hoàn thành ngày 1 và có workspace sạch.'],
-                ['Mở workspace và đọc AGENTS.md/SETUP.md nếu có.', 'Dán prompt lập kế hoạch, yêu cầu AI chưa được sửa file.', 'Đọc kế hoạch: mục tiêu, giả định, file ảnh hưởng, lệnh build và cách rollback.', 'Nếu AI hỏi lại, trả lời phiên bản Revit, đường dẫn workspace và capstone dự kiến; không đoán API.', 'Chỉ sau khi đồng ý kế hoạch mới cho AI tạo file.'],
-                ['File AI_WORKFLOW.md có mục tiêu, kế hoạch, file dự kiến sửa và lệnh kiểm thử.', 'Ảnh đoạn chat thể hiện AI lập kế hoạch trước khi code.'],
-                ['Bấm “làm luôn” khi chưa đọc file.', 'Cho AI sửa cả model hoặc thư mục không liên quan.', 'Không lưu lại giả định về version Revit.'],
-                'Lập kế hoạch có phê duyệt trước khi code',
-                ['AI sẽ sửa file nào?', 'Có file nào không được sửa?', 'Lệnh nào chứng minh build thành công?']),
-            $this->day(3, 'video', 'common', 'Chạy preflight môi trường Revit', 'Preflight', 45,
-                'Kiểm tra môi trường trước khi debug để phân biệt lỗi máy, lỗi version và lỗi code.',
-                ['Đọc được báo cáo Windows/Revit/.NET/Build Tools/Git.', 'Biết ghi nhận lỗi chưa xử lý thay vì giấu lỗi.', 'Có environment-report.json hoặc ảnh PASS.'],
-                ['Có workspace và quyền chạy script cục bộ.'],
-                ['Mở PowerShell tại root workspace.', 'Dán prompt yêu cầu AI đọc script preflight trước khi chạy.', 'Cho AI chạy lệnh read-only; lưu output vào environment-report.json.', 'Kiểm tra Revit version và .NET target có khớp Bộ Kit.', 'Nếu FAIL, gửi cho AI đúng phần log từ dòng ERROR đến dòng summary; không gửi token hay đường dẫn nhạy cảm.'],
-                ['Báo cáo có trạng thái PASS/FAIL cho từng thành phần.', 'Ít nhất một ảnh cửa sổ PowerShell và version Revit.', 'Danh sách lỗi đã sửa hoặc lý do chưa sửa.'],
-                ['Chỉ chụp màn hình, không lưu report.', 'Dùng sai terminal hoặc chạy script từ thư mục con.', 'Bỏ qua FAIL vì nghĩ ngày sau AI sẽ tự sửa.'],
-                'Môi trường build có thể kiểm tra bằng một lệnh rõ ràng',
-                ['Revit version đang dùng?', 'Target framework là gì?', 'Nếu build FAIL, log nào cần gửi AI?']),
-            $this->day(4, 'video', 'common', 'Khảo sát model Revit ở chế độ chỉ đọc', 'Đọc dữ liệu Revit', 45,
-                'Kết nối Revit MCP/cơ chế đọc dữ liệu của Bộ Kit để AI nhìn thấy model thật nhưng chưa được sửa model.',
-                ['AI truy vấn được document đang mở.', 'Đếm được Duct, Pipe và Equipment để đối chiếu.', 'Biết bật read-only và dừng nếu agent yêu cầu Transaction.'],
-                ['Revit mở một model mẫu; đã backup model trước khi thử nghiệm.'],
-                ['Mở Revit và model mẫu.', 'Khởi động MCP/connector theo SETUP.md của Bộ Kit.', 'Dán prompt khảo sát, nhấn mạnh không tạo Transaction.', 'Đối chiếu số lượng AI trả về với Schedule hoặc Filter trong Revit.', 'Lưu câu hỏi, câu trả lời và sai lệch nếu có vào day-04-notes.md.'],
-                ['Ảnh AI đọc được tên document/model không mật.', 'Kết quả số lượng Duct/Pipe/Equipment.', 'Ảnh Schedule hoặc Properties dùng để đối chiếu.'],
-                ['AI trả số liệu nhưng không nói nguồn.', 'Mở sai model.', 'Để connector có quyền ghi model khi bài chỉ yêu cầu đọc.'],
-                'Truy vấn được model thật mà không làm thay đổi model',
-                ['Document nào đang mở?', 'Kết quả nào đối chiếu được trong Revit?', 'Có Transaction hay không?']),
-            $this->day(5, 'video', 'common', 'Đọc Parameter của phần tử MEP', 'Parameter', 45,
-                'Biết yêu cầu AI xuất dữ liệu có ngữ cảnh: Category, Family, Type, Level, System, Size, Mark và Comments.',
-                ['Chọn được 5–10 phần tử đại diện.', 'Xuất bảng Parameter có tên và giá trị.', 'Đối chiếu được ít nhất 5 giá trị với Properties/Schedule.'],
-                ['Hoàn thành ngày 4 và có phần tử Duct/Pipe/Equipment trong model.'],
-                ['Chọn một Category và 5–10 phần tử.', 'Dán prompt yêu cầu AI trả bảng có ElementId, Category, Family, Type, Level và các Parameter MEP.', 'Nếu Parameter không tồn tại, yêu cầu AI ghi “missing” thay vì đoán.', 'Đối chiếu từng dòng trong Revit Properties.', 'Lưu bảng CSV/Markdown và ghi lại một Parameter bị thiếu nếu có.'],
-                ['Bảng 5–10 phần tử có ít nhất 5 Parameter đúng tên/giá trị.', 'Ảnh đối chiếu Properties hoặc Schedule.', 'Ba câu reflection bắt buộc.'],
-                ['Nhầm Type với Family.', 'Dùng giá trị hiển thị đã format thay cho giá trị thật.', 'Bỏ qua Parameter không tồn tại.'],
-                'Đọc Parameter có thể truy nguyên về ElementId',
-                ['ElementId nào?', 'Parameter thuộc instance hay type?', 'Giá trị có đối chiếu được ở đâu?']),
-            $this->day(6, 'video', 'common', 'Viết truy vấn lọc nâng cao và giải thích điều kiện', 'Query', 50,
-                'Lọc theo Category, Level, System, kích thước và điều kiện kết hợp; học viên phải hiểu logic lọc do AI tạo.',
-                ['Tạo một truy vấn có ít nhất ba điều kiện.', 'Giải thích được từng điều kiện bằng ngôn ngữ kỹ sư.', 'Đối chiếu kết quả không lấy nhầm Category/Level.'],
-                ['Hoàn thành ngày 5.'],
-                ['Chọn một câu hỏi thực tế, ví dụ Duct > 300 mm ở Level 2 thuộc Supply Air.', 'Yêu cầu AI viết điều kiện và giải thích bằng bảng.', 'Chạy truy vấn read-only trước.', 'Đếm kết quả độc lập bằng Schedule/Filter trong Revit.', 'Lưu câu truy vấn, output và sai lệch vào day-06-query.md.'],
-                ['Một truy vấn nâng cao có input, điều kiện, output.', 'Ảnh kết quả lọc và cách đối chiếu.', 'Đoạn giải thích 3–5 câu của học viên.'],
-                ['Dùng “chứa” thay cho so sánh kích thước.', 'Không xác định đơn vị mm/feet.', 'Không kiểm tra Level hoặc System thực tế.'],
-                'Một truy vấn có thể giải thích và kiểm chứng, không phải câu thần chú',
-                ['Điều kiện nào là AND/OR?', 'Đơn vị của kích thước?', 'Đối chiếu với công cụ Revit nào?']),
-            $this->day(7, 'assignment', 'common', 'Chọn capstone và viết TOOL_BRIEF.md', 'Chọn bài toán', 60,
-                'Chuyển một vấn đề lặp lại của kỹ sư BIM/MEP thành bài toán đủ nhỏ để xây MVP trong hai tuần.',
-                ['Chọn một trong 4 nhánh: đếm/lọc, gán Parameter, Auto-Tag, báo cáo.', 'Mô tả input, thao tác, output và người dùng.', 'Có tiêu chí thành công đo được.'],
-                ['Hoàn thành các truy vấn ngày 4–6.'],
-                ['Chọn đúng một workflow lặp lại trong công việc.', 'Mở mẫu TOOL_BRIEF.md.', 'Dán prompt yêu cầu AI phỏng vấn ngược và phát hiện phạm vi quá lớn.', 'Điền input, output, Category, điều kiện an toàn, tiêu chí thành công và ngoài phạm vi.', 'Không chọn “làm mọi thứ cho dự án”; capstone phải demo được trên model mẫu.'],
-                ['TOOL_BRIEF.md có vấn đề, input, thao tác, output, người dùng và success metric.', 'Một sơ đồ 3 bước hoặc ảnh workflow hiện tại.', 'Nêu rõ dữ liệu mật nào không đưa vào AI.'],
-                ['Phạm vi không đo được.', 'Chọn nhiều nhánh cùng lúc.', 'Đưa yêu cầu license server hoặc triển khai doanh nghiệp vào MVP.'],
-                'Một Tool Brief có đầu vào và đầu ra quan sát được',
-                ['Bài toán mất bao lâu khi làm tay?', 'Output đo bằng gì?', 'Nếu chỉ có 2 tuần, bỏ tính năng nào?']),
-            $this->day(8, 'live', 'common', 'Review và chốt capstone với mentor', 'Livestream chốt đề tài', 120,
-                'Mentor loại bỏ đề tài quá lớn, chốt nhánh kỹ thuật và viết prompt riêng cho từng học viên.',
-                ['Trình bày Tool Brief trong 3 phút.', 'Nhận phạm vi đã chỉnh và tiêu chí “tool chạy được”.', 'Có prompt riêng sau review.'],
-                ['Đã nộp TOOL_BRIEF.md ngày 7.'],
-                ['Chuẩn bị demo workflow hiện tại và một model mẫu không mật.', 'Trình bày theo format: vấn đề → input → thao tác → output → giới hạn.', 'Ghi lại các câu hỏi mentor và cập nhật Tool Brief ngay sau livestream.', 'Dán prompt capstone mới vào AI nhưng chỉ yêu cầu lập kế hoạch.', 'Chờ mentor xác nhận trước khi tạo scaffold.'],
-                ['Video/trình bày 3 phút hoặc bản ghi theo format.', 'TOOL_BRIEF.md sau chỉnh sửa.', 'Ảnh/tệp prompt riêng và nhận xét mentor.'],
-                ['Không có output đo được.', 'Đổi đề tài sau livestream mà không cập nhật brief.', 'Bắt đầu code trước khi mentor xác nhận.'],
-                'Đề tài được mentor xác nhận và sẵn sàng xây MVP',
-                ['Tính năng cốt lõi là gì?', 'Demo thành công trông như thế nào?', 'Test trên bản sao nào?']),
-            $this->day(9, 'video', 'common', 'Tạo add-in nền tảng, Ribbon và About Me', 'Add-in scaffold', 60,
-                'AI tạo scaffold C#/.addin và Ribbon; học viên không viết tay nhưng phải biết build, cài và xác nhận tên cá nhân.',
-                ['Add-in load được trong Revit.', 'Ribbon có tên cá nhân/tool.', 'Nút About Me mở được cửa sổ không lỗi.'],
-                ['Tool Brief đã được mentor xác nhận; preflight ngày 3 PASS.'],
-                ['Mở solution hiện có hoặc tạo solution trong workspace.', 'Dán prompt scaffold với Revit version chính xác.', 'AI phải liệt kê file trước khi sửa và chờ xác nhận.', 'Chạy build Debug/Release theo README.', 'Copy .addin/DLL vào thư mục add-in đúng version và mở Revit.', 'Bấm Ribbon/About Me và chụp kết quả.'],
-                ['Ảnh Ribbon cá nhân và About Me.', 'Log build thành công.', 'Mô tả cách cài lại từ đầu.'],
-                ['Sai target Revit.', 'DLL thiếu dependency.', 'Tên cá nhân chỉ nằm trong code, không hiện trong giao diện.'],
-                'Add-in load ổn định và có điểm nhận diện cá nhân',
-                ['File manifest ở đâu?', 'DLL nào được load?', 'Nếu Revit không thấy tab, xem log nào?']),
-            $this->day(10, 'video', 'counting', 'Lọc và đếm phần tử bằng FilteredElementCollector', 'Command lõi', 60,
-                'Xây command lõi dùng chung: lọc Category/Level/View và hiển thị số lượng có thể đối chiếu với Schedule.',
-                ['Nút chạy được trên model mẫu.', 'Kết quả đếm đúng và ghi rõ phạm vi.', 'Có xử lý model không có phần tử.'],
-                ['Ngày 9 load được add-in.'],
-                ['Mở bản sao model.', 'Dán prompt yêu cầu AI dùng FilteredElementCollector, không hard-code ElementId.', 'AI phải giải thích collector, filter và transaction; command đếm không được mở Transaction.', 'Build Release, cài lại DLL và chạy nút.', 'Đối chiếu với Schedule/Filter thủ công và ghi chênh lệch.'],
-                ['Video 15–30 giây bấm nút và hiển thị kết quả.', 'Ảnh Schedule hoặc phép đếm đối chiếu.', 'Ba câu reflection về collector.'],
-                ['Đếm cả type thay vì instance.', 'Lọc sai view/level.', 'Tạo Transaction cho thao tác chỉ đọc.'],
-                'Kết quả đếm đúng trên model mẫu và lặp lại được',
-                ['Collector lấy loại nào?', 'Vì sao không cần Transaction?', 'Kết quả đối chiếu ở đâu?']),
-            $this->day(11, 'video', 'parameter', 'Thực hiện logic theo nhánh capstone và Transaction an toàn', 'Xây chức năng', 75,
-                'Bắt đầu logic có thay đổi hoặc xuất dữ liệu. AI viết phần code; học viên kiểm tra backup, Transaction và kết quả trước/sau.',
-                ['Có một chức năng nhánh chạy được trên bản sao model.', 'Có log số phần tử xử lý/thất bại.', 'Không làm hỏng file gốc.'],
-                ['Ngày 8 đã chốt nhánh.'],
-                ['Sao lưu model và mở bản sao.', 'Dán prompt capstone với input/output đã chốt.', 'Yêu cầu AI bọc thay đổi trong Transaction và xử lý Parameter read-only/missing.', 'Chạy thử với 3–5 phần tử trước.', 'Kiểm tra trước/sau bằng Properties hoặc file CSV/XLSX.', 'Ghi lại element không xử lý được và lý do.'],
-                ['Ảnh trước/sau hoặc file export.', 'Log AI giải thích Transaction.', 'Danh sách trường hợp lỗi đã xử lý.'],
-                ['Sửa trực tiếp model gốc.', 'Không rollback khi lỗi giữa chừng.', 'Ép kiểu Parameter sai hoặc bỏ qua read-only.'],
-                'Một thao tác nhánh có backup, transaction và log kết quả',
-                ['Có backup ở đâu?', 'Transaction bắt đầu/kết thúc thế nào?', 'Phần tử lỗi được ghi ra sao?']),
-            $this->day(12, 'video', 'tagging', 'Hoàn thiện command chính và xử lý dữ liệu không hoàn hảo', 'Capstone MVP', 75,
-                'Hoàn thiện Auto-Tag, Set Parameter, báo cáo hoặc lọc/đếm; đặc biệt xử lý thiếu Parameter, trùng Tag và phần tử lỗi.',
-                ['Chạy end-to-end trên model mẫu.', 'Có thông báo thành công/thất bại rõ ràng.', 'Không dừng toàn bộ batch chỉ vì một phần tử lỗi.'],
-                ['Ngày 11 có kết quả thử nhỏ.'],
-                ['Liệt kê 3 trường hợp xấu cần test: missing Parameter, duplicate Tag, empty selection hoặc invalid input.', 'Dán prompt yêu cầu AI thêm guard clause và summary.', 'Chạy happy path rồi chạy từng trường hợp xấu.', 'Kiểm tra output và log theo ElementId.', 'Cập nhật TOOL_BRIEF.md với giới hạn thực tế.'],
-                ['Video end-to-end trên model mẫu.', 'Bảng trường hợp lỗi và kết quả.', 'Ảnh thông báo rõ khi không xử lý được.'],
-                ['Tool báo thành công dù không có phần tử.', 'Duplicate Tag làm command crash.', 'Catch exception nhưng không ghi log nguyên nhân.'],
-                'MVP xử lý được happy path và báo lỗi có thể hành động',
-                ['Input rỗng thì sao?', 'Một phần tử lỗi có làm dừng cả batch không?', 'Người dùng biết sửa lỗi từ thông báo nào?']),
-            $this->day(13, 'video', 'common', 'Thiết kế cửa sổ WPF dùng được trong Revit', 'WPF', 60,
-                'Tạo UI WPF có bố cục rõ, màu DSCons, loading, thành công/thất bại; không che Revit và có trạng thái đóng/mở ổn định.',
-                ['WPF mở/đóng không lỗi.', 'Nút chính, trạng thái đang chạy và lỗi hiển thị rõ.', 'Màu/nhãn được cá nhân hóa theo DSCons.'],
-                ['Command ngày 12 chạy được trước khi làm UI.'],
-                ['Mở XAML và code-behind do AI tạo trong workspace.', 'Dán prompt yêu cầu AI giữ logic hiện có, chỉ thay UI và binding cần thiết.', 'Build và mở cửa sổ từ Ribbon.', 'Thử loading, success, error, empty state và đóng cửa sổ.', 'Chụp ảnh ở độ phân giải desktop thông thường.'],
-                ['Ảnh giao diện WPF.', 'Checklist 5 trạng thái UI.', 'Video mở/đóng cửa sổ không lỗi.'],
-                ['UI giả nút nhưng không gọi command.', 'Không có loading khiến người dùng bấm lặp.', 'Dialog che Revit hoặc không đóng bằng Esc/Close.'],
-                'Giao diện giúp kỹ sư biết đang chạy gì và kết quả là gì',
-                ['Nút này gọi method nào?', 'Loading kết thúc khi nào?', 'Lỗi có hướng dẫn bước tiếp theo không?']),
-            $this->day(14, 'video', 'common', 'Debug build, Revit API và Hot Reload có kiểm soát', 'Debug', 60,
-                'Học quy trình đọc lỗi, phân loại nguyên nhân và đưa đúng log cho AI; không copy lỗi mù quáng.',
-                ['Sửa được một lỗi có chủ ý.', 'Nêu được nguyên nhân, file sửa và cách kiểm tra lại.', 'Biết phân biệt namespace, version, API và Transaction error.'],
-                ['Có MVP WPF/command ngày 13.'],
-                ['Tạo một lỗi an toàn ở bản sao branch hoặc dùng lỗi có sẵn.', 'Copy từ dòng exception/build error đến stack trace liên quan.', 'Dán prompt debug yêu cầu AI giải thích trước khi sửa.', 'AI liệt kê file thay đổi và build lại.', 'Chạy lại đúng test case cũ để chứng minh lỗi đã hết.', 'Ghi before/after vào bug-log.md.'],
-                ['Video sửa một lỗi có chủ ý.', 'Đoạn log trước/sau.', 'Ba câu: nguyên nhân, sửa ở file nào, kiểm tra lại ra sao.'],
-                ['Gửi toàn bộ log có secret.', 'Sửa nhiều file không liên quan.', 'Kết luận “đã fix” mà chưa mở Revit test lại.'],
-                'Một lỗi có nguyên nhân và bằng chứng regression test',
-                ['Lỗi thuộc môi trường hay code?', 'Log tối thiểu cần gửi?', 'Test nào chứng minh không hồi quy?']),
-            $this->day(15, 'live', 'common', 'Review MVP trực tiếp với mentor', 'Livestream review MVP', 120,
-                'Mentor kiểm tra Ribbon, command chính, WPF và phạm vi capstone trước khi cho phép đóng gói.',
-                ['Demo MVP trong 3 phút theo format cố định.', 'Nhận danh sách lỗi bắt buộc sửa.', 'Được xác nhận đủ điều kiện bước sang packaging hoặc biết cần resubmit.'],
-                ['Ngày 14 có bug-log và MVP chạy được.'],
-                ['Chuẩn bị model bản sao, build Release và checklist demo.', 'Demo: mở Revit → Ribbon → input → tool chạy → output → trường hợp lỗi.', 'Ghi lại feedback mentor theo mức critical/important/nice-to-have.', 'Sau live, cập nhật TOOL_BRIEF.md và bug-log.md.', 'Chỉ sửa critical/important trước ngày 16.'],
-                ['Video demo 3 phút.', 'Checklist mentor hoặc biên bản review.', 'MVP build chạy được trên Revit.'],
-                ['Demo bằng ảnh/video cũ.', 'Không có input lỗi.', 'Đề nghị đóng gói khi command chính chưa chạy.'],
-                'MVP chạy thật và có quyết định go/no-go rõ ràng',
-                ['Tính năng chính đã chạy chưa?', 'Critical bug nào còn?', 'Có thể cài lại trên máy sạch không?']),
-            $this->day(16, 'video', 'report', 'Thêm logic nâng cao có giá trị thực tế', 'Nâng cao', 75,
-                'Chọn đúng một nâng cấp: Geometry/BoundingBox, lọc theo vị trí, batch operation hoặc báo cáo xuất file.',
-                ['Tính năng nâng cao giải quyết vấn đề trong Tool Brief.', 'Có test model gần thực tế.', 'Output có thể sử dụng lại, không chỉ là giao diện.'],
-                ['MVP đã qua review ngày 15.'],
-                ['Chọn một nâng cấp và viết acceptance test trước.', 'Dán prompt yêu cầu AI cập nhật plan, không làm lan phạm vi.', 'Build trên branch/copy và chạy test dữ liệu bình thường + biên.', 'Kiểm tra đơn vị, tolerance geometry và encoding file nếu export.', 'Cập nhật manual sơ bộ với tính năng mới.'],
-                ['Video trên model gần thực tế.', 'File báo cáo hoặc output cuối.', 'Acceptance test pass/fail.'],
-                ['Nâng cấp không liên quan brief.', 'Geometry thiếu tolerance.', 'Xuất file có đường dẫn máy cá nhân hoặc dữ liệu mật.'],
-                'Tính năng nâng cao có test case và giá trị sử dụng',
-                ['Nâng cấp giải quyết câu nào trong brief?', 'Input biên là gì?', 'Output có thể mở ở đâu?']),
-            $this->day(17, 'video', 'common', 'Đặt giới hạn an toàn và trial/demo', 'An toàn', 45,
-                'Bảo vệ model và người dùng: backup, xác nhận trước khi sửa, log thao tác và trial demo đơn giản; không xây license server.',
-                ['Tool có cảnh báo trước thay đổi hàng loạt.', 'Có hướng dẫn backup và log.', 'Trial/expiry demo không phá workflow và không thu thập dữ liệu nhạy cảm.'],
-                ['MVP đã có logic chính.'],
-                ['Dán prompt yêu cầu AI audit Transaction, destructive action và dữ liệu log.', 'Thêm confirmation trước batch operation.', 'Test trên bản sao model với backup.', 'Nếu có trial, dùng ngày hết hạn cấu hình cục bộ; không hard-code secret.', 'Kiểm tra log không chứa email/token/model mật.'],
-                ['Checklist an toàn.', 'Ảnh cảnh báo/trial nếu có.', 'Video test trên bản sao model.'],
-                ['Không backup.', 'Ghi nguyên model vào log.', 'Đưa license server thành điều kiện đạt MVP.'],
-                'Tool an toàn khi chạy thử và có giới hạn minh bạch',
-                ['Có thao tác nào không thể undo?', 'Backup ở đâu?', 'Log có lộ dữ liệu mật không?']),
-            $this->day(18, 'video', 'common', 'Build Release và đóng gói bộ cài', 'Packaging', 60,
-                'Gom DLL, .addin, dependency, icon và cấu hình thành ZIP/installer có thể cài lại.',
-                ['Build Release sạch.', 'Bộ cài có README và cấu trúc rõ.', 'Cài lại được từ dist trên workspace/máy sạch.'],
-                ['Ngày 15 go; ngày 17 checklist an toàn đạt.'],
-                ['Yêu cầu AI lập danh sách artifact và dependency.', 'Xóa bin/obj cũ rồi build Release.', 'Tạo dist với DLL, .addin, dependency, icon, README và uninstall/rollback.', 'Cài từ ZIP vào môi trường sạch hoặc thư mục test.', 'Mở Revit và xác nhận Ribbon xuất hiện.', 'Không commit secret/config cá nhân vào ZIP.'],
-                ['File ZIP/EXE trong dist.', 'Ảnh/video cài lại.', 'Danh sách file trong bộ cài và version Revit hỗ trợ.'],
-                ['Thiếu dependency.', 'Manifest trỏ sai đường dẫn.', 'Bộ cài chỉ chạy trên máy người tạo.'],
-                'Người khác có thể cài và mở add-in từ bộ cài đã nộp',
-                ['dist chứa gì?', 'Cài lại từ đâu?', 'Rollback khi cài lỗi thế nào?']),
-            $this->day(19, 'video', 'common', 'Viết User Manual một trang và video hướng dẫn', 'Tài liệu', 45,
-                'AI soạn bản nháp, học viên kiểm tra từng bước để người khác dùng tool mà không cần hỏi lại.',
-                ['Manual có yêu cầu, cài đặt, thao tác, output, lỗi và giới hạn.', 'Video 1–2 phút theo đúng manual.', 'Tên tool/version khớp bộ cài.'],
-                ['Có bộ cài ngày 18.'],
-                ['Dán prompt yêu cầu AI đọc README, Tool Brief và UI hiện tại.', 'AI tạo HUONG_DAN_SU_DUNG.md/PDF bản nháp.', 'Học viên cài từ dist và làm theo từng bước, đánh dấu bước sai.', 'Sửa manual bằng kết quả thực tế, không giữ hướng dẫn AI đoán.', 'Quay video ngắn từ cài/ mở đến output.'],
-                ['PDF/Markdown manual.', 'Video 1–2 phút.', 'Một người khác có thể đọc và chạy theo.'],
-                ['Manual có lệnh/file không tồn tại.', 'Video và bộ cài khác version.', 'Không nêu giới hạn hoặc tình huống lỗi.'],
-                'Tài liệu được kiểm chứng bởi một lần cài và chạy thật',
-                ['Bước nào người mới dễ sai?', 'Output nằm ở đâu?', 'Không dùng được khi nào?']),
-            $this->day(20, 'video', 'common', 'UAT trên model gần thực tế', 'UAT', 75,
-                'Kiểm thử cả đường đi bình thường, dữ liệu thiếu và input người dùng sai trước khi showcase.',
-                ['Tool pass ít nhất 3 tình huống.', 'Có bảng test case pass/fail.', 'Không dùng dữ liệu mật của công ty.'],
-                ['Có bộ cài và manual.'],
-                ['Chọn model mô phỏng công việc hoặc bản sao đã anonymize.', 'Tạo bảng test: happy path, empty input, missing Parameter/invalid selection.', 'Chạy từ bộ cài đã nộp, không chạy từ bin/Debug.', 'Ghi screenshot/video có tên tool và kết quả.', 'Gửi FAIL cho AI theo đúng log; cập nhật version nếu sửa.', 'Chốt danh sách giới hạn còn lại.'],
-                ['Video demo A–Z 2–3 phút.', 'Bảng test case có pass/fail.', 'Ảnh kết quả của 3 tình huống.'],
-                ['Chỉ test happy path.', 'Dùng model mật.', 'Sửa sau test nhưng không đổi version/dist.'],
-                'Có bằng chứng tool chịu được input đúng, thiếu dữ liệu và lỗi người dùng',
-                ['Test chạy từ bộ cài nào?', 'Case lỗi hiển thị gì?', 'Giới hạn còn lại được nói ở đâu?']),
-            $this->day(21, 'live', 'common', 'Showcase tool và tổng kết hành trình', 'Grand Finale', 120,
-                'Trình bày bài toán, cách dùng AI Agent, demo thật, kết quả trước/sau và giới hạn của tool.',
-                ['Demo chạy thật trên Revit.', 'Có bộ cài và manual.', 'Nói rõ AI làm gì, học viên kiểm chứng gì và tool chưa làm được gì.'],
-                ['Ngày 20 UAT đạt.'],
-                ['Chuẩn bị 3 phút bài toán, 3 phút demo, 2 phút Q&A và 1 phút nhận feedback.', 'Mở Revit từ trạng thái sạch, cài hoặc bật add-in từ dist.', 'Demo input, output và một trường hợp lỗi.', 'Nộp bài tổng kết lên DSCons, kèm link bộ cài/video/manual.', 'Nếu vắng live, quay video theo đúng format và nộp thay thế.'],
-                ['Video showcase hoặc trình bày trực tiếp.', 'Link/file dist, manual và Tool Brief cuối.', 'Bài tổng kết có before/after và giới hạn.'],
-                ['Demo bằng ảnh không chạy.', 'Bộ cài không cài lại.', 'Không nêu giới hạn hoặc dùng dữ liệu dự án mật.'],
-                'Một tool Revit có thể demo, cài lại, hướng dẫn và đánh giá giới hạn',
-                ['Vấn đề ban đầu là gì?', 'Kết quả đo được?', 'Bước tiếp theo sau khóa học?']),
-        ];
+        return array_map(fn (array $row) => $this->day($row), $rows);
     }
 
-    /** @return array<string, mixed> */
-    private function day(int $day, string $modality, string $track, string $title, string $label, int $minutes, string $description, array $objectives, array $prerequisites, array $sop, array $evidence, array $errors, string $outcome, array $questions): array
+    /** @param array<int, mixed> $row */
+    private function day(array $row): array
     {
-        return compact('day', 'modality', 'track', 'title', 'label', 'minutes', 'description', 'objectives', 'prerequisites', 'sop', 'evidence', 'errors', 'outcome', 'questions');
+        [$day, $modality, $track, $title, $label, $minutes, $description, $outcome, $focus, $check] = $row;
+        $feed = in_array($day, [1, 7, 15, 21], true)
+            ? match ($day) {
+                1 => 'Sau khi hoàn tất phần cài đặt, đăng một bài giới thiệu ngắn: tên, AI Agent đã chọn và mục tiêu 21 ngày.',
+                7 => 'Đăng bài toán tool bạn muốn giải quyết và một câu hỏi xin góp ý từ cộng đồng.',
+                15 => 'Đăng ảnh MVP đang chạy, điều đã làm được và điều bạn muốn được góp ý.',
+                default => 'Đăng thành quả cuối khóa, video demo, bộ cài và một giới hạn bạn đã phát hiện.',
+            }
+            : null;
+
+        return compact('day', 'modality', 'track', 'title', 'label', 'minutes', 'description', 'outcome', 'focus', 'check', 'feed');
     }
 
-    /** @return array<string, mixed> */
     private function payload(array $day): array
     {
-        $reviewMode = $day['modality'] === 'live' ? 'live' : ($day['day'] >= 7 ? 'mentor' : 'auto');
-        $evidence = $this->simpleEvidence($day);
+        $isLive = $day['modality'] === 'live';
+        $isLong = in_array($day['day'], [7, 12, 15, 18, 20, 21], true);
+        $evidence = [
+            'Ảnh màn hình kết quả thật của ngày '.$day['day'].'.',
+            $day['check'],
+            'Ba câu ngắn: Tôi yêu cầu AI làm gì? AI đã làm gì? Tôi kiểm tra kết quả thế nào?',
+        ];
+        if ($day['day'] === 21) {
+            $evidence[] = 'Video tổng kết 3–6 phút hoặc phần trình bày trực tiếp trong livestream.';
+        }
+
         return [
             'modality' => $day['modality'],
             'estimated_minutes' => $day['minutes'],
-            'learning_objectives' => array_slice($day['objectives'], 0, 2),
-            'prerequisites' => array_slice($day['prerequisites'], 0, 1),
-            'ai_actions' => [
-                'Đọc workspace, hiểu mục tiêu và đề xuất cách làm.',
-                'Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.',
-            ],
-            'student_actions' => [
-                'Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.',
-                'Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.',
-            ],
-            'student_does_not_need' => [
-                'Không cần tự viết C#/WPF bằng tay.',
-                'Không cần upload model hoặc dữ liệu dự án mật lên AI.',
-            ],
-            'sop_steps' => $this->compactSteps($day['sop']),
-            'verification_checklist' => $evidence,
-            'homework' => [
-                'title' => 'Bài nộp ngày '.$day['day'].': '.$day['title'],
-                'instructions' => $evidence,
-                'deadline_hours' => 24,
-            ],
+            'learning_objectives' => [$day['focus'], 'Giải thích được kết quả bằng ngôn ngữ công việc của kỹ sư Cơ Điện.'],
+            'prerequisites' => [$day['day'] === 1 ? 'Có máy Windows và quyền cài phần mềm được phép sử dụng.' : 'Hoàn thành bài trước và dùng model mẫu hoặc bản sao đã backup.'],
+            'ai_actions' => ['Đọc mục tiêu và những gì đang có trước khi thực hiện.', 'Đề xuất kế hoạch, file cần thay đổi, lệnh build và cách kiểm tra.', 'Thực hiện phần kỹ thuật sau khi học viên xác nhận và báo lại kết quả.'],
+            'student_actions' => ['Chọn đúng phiên bản Revit và cung cấp thông tin công việc cho AI.', 'Đọc kế hoạch, xác nhận trước thay đổi và không đưa dữ liệu mật lên AI.', 'Mở Revit bằng model mẫu/bản sao, chạy thử và đối chiếu kết quả.'],
+            'student_does_not_need' => ['Không cần tự viết C#, WPF hoặc API bằng tay.', 'Không cần tạo file Markdown hay hiểu cấu trúc project để nộp bài.'],
+            'sop_steps' => array_merge([
+                'Mở công cụ hoặc model được ghi trong bài và dùng bản sao an toàn.',
+                'Copy toàn bộ prompt bên dưới, dán vào AI Agent và điền các phần trong ngoặc vuông.',
+                'Khi AI hỏi lại, trả lời phiên bản Revit, mục tiêu và model kiểm thử; nếu chưa biết thì nói rõ “chưa biết”, không đoán.',
+                'Đọc kế hoạch AI: mục tiêu, việc sẽ làm, file sẽ sửa, lệnh chạy và cách quay lại. Chỉ xác nhận khi bạn hiểu.',
+            ], $this->specificSteps($day['day']), [
+                'Sau khi xác nhận, build/chạy theo hướng dẫn, rồi mở Revit để kiểm tra kết quả thật.',
+                'Chụp bằng chứng, trả lời ba câu reflection và nộp bài trên website. Nếu lỗi, gửi đoạn log từ ERROR/exception đến phần summary.',
+            ]),
+            'verification_checklist' => ['Tôi đã dùng đúng phiên bản và model kiểm thử.', 'Kết quả có thể đối chiếu bằng Properties, Schedule, Filter hoặc thao tác thực tế.', 'Không sửa model gốc và không nộp ảnh code thay cho kết quả.'],
+            'homework' => ['title' => 'Bài thực hành ngày '.$day['day'].': '.$day['title'], 'instructions' => $evidence, 'deadline_hours' => 24],
             'evidence_requirements' => $evidence,
-            'rubric' => [
-                ['key' => 'evidence_completeness', 'label' => 'Đủ bằng chứng bắt buộc', 'points' => 30],
-                ['key' => 'correctness', 'label' => 'Kết quả đúng/đối chiếu được', 'points' => 40],
-                ['key' => 'personalization', 'label' => 'Có cá nhân hóa theo học viên', 'points' => 15],
-                ['key' => 'verification', 'label' => 'Mô tả cách kiểm chứng', 'points' => 15],
-            ],
-            'milestone_rubric' => [
-                ['key' => 'real_functionality', 'label' => 'Chức năng chạy thật', 'points' => 30],
-                ['key' => 'model_correctness', 'label' => 'Đúng trên model', 'points' => 25],
-                ['key' => 'invalid_input', 'label' => 'Xử lý input lỗi', 'points' => 15],
-                ['key' => 'reinstallable', 'label' => 'Cài và chạy lại được', 'points' => 15],
-                ['key' => 'ai_understanding', 'label' => 'Hiểu quy trình AI', 'points' => 15],
-            ],
-            'common_errors' => $day['errors'],
-            'review_mode' => $reviewMode,
+            'rubric' => [['key' => 'evidence_completeness', 'label' => 'Đủ bằng chứng', 'points' => 30], ['key' => 'correctness', 'label' => 'Kết quả đúng và đối chiếu được', 'points' => 40], ['key' => 'personalization', 'label' => 'Có cá nhân hóa theo công việc', 'points' => 15], ['key' => 'verification', 'label' => 'Mô tả được cách kiểm chứng', 'points' => 15]],
+            'milestone_rubric' => [['key' => 'real_functionality', 'label' => 'Chức năng chạy thật', 'points' => 30], ['key' => 'correctness', 'label' => 'Kết quả đúng trên model', 'points' => 25], ['key' => 'error_handling', 'label' => 'Có xử lý input lỗi', 'points' => 15], ['key' => 'reinstallable', 'label' => 'Cài và chạy lại được', 'points' => 15], ['key' => 'ai_understanding', 'label' => 'Hiểu quy trình AI', 'points' => 15]],
+            'common_errors' => ['Chỉ gửi ảnh code hoặc câu trả lời của AI mà chưa chạy trong Revit.', 'Dùng sai phiên bản, sai model hoặc quên kiểm tra kết quả độc lập.', 'Cho AI sửa quá nhiều thứ cùng lúc hoặc sửa model gốc.'],
+            'review_mode' => $isLive ? 'live' : ($day['day'] >= 7 ? 'mentor' : 'auto'),
             'pass_score' => 70,
             'track' => $day['track'],
-            'why' => 'Mỗi ngày dùng AI để làm nhanh hơn, nhưng học viên vẫn là người kiểm tra kết quả.',
+            'content_mode' => $isLong ? 'landing' : 'inline',
+            'landing_slug' => $isLong ? 'ngay-'.$day['day'] : null,
+            'feed_activity' => $day['feed'],
+            'why' => 'AI làm phần kỹ thuật nhanh hơn; học viên vẫn là người quyết định mục tiêu và kiểm tra kết quả thật.',
             'required_outcome' => $day['outcome'],
             'ai_prompt' => $this->prompt($day),
-            'error_prompts' => [
-                'Prompt sửa build: “Đọc đúng log lỗi, giải thích nguyên nhân, chỉ sửa file liên quan, build lại và nêu test regression.”',
-                'Prompt sửa Revit API: “Kiểm tra version/API thật trong solution trước khi sửa; không đoán method; nêu fallback nếu API không hỗ trợ.”',
-                'Prompt giải thích: “Giải thích đoạn code vừa sửa bằng ngôn ngữ kỹ sư MEP và chỉ ra cách tôi kiểm chứng trong Revit.”',
-            ],
-            'safety_constraints' => [
-                'Không xóa file hoặc sửa model gốc.',
-                'Tạo/copy backup trước Transaction hoặc batch operation.',
-                'Đọc file hiện có và lập kế hoạch trước khi sửa.',
-                'Không đưa model/dữ liệu mật của công ty lên AI Agent.',
-            ],
-            'mentor_questions' => $day['questions'],
-            'share_to_feed' => $this->shareInstruction($day['day']),
+            'error_prompts' => ['Sửa lỗi build: Đọc đúng phần log liên quan, giải thích nguyên nhân, chỉ sửa file cần thiết, build lại và chạy test cũ.', 'Sửa lỗi Revit: Kiểm tra đúng phiên bản và API đang có trước khi sửa; không đoán method.', 'Giải thích: Nói bằng ngôn ngữ kỹ sư MEP tôi cần kiểm tra gì và kiểm tra ở đâu trong Revit.'],
+            'safety_constraints' => ['Không xóa file hoặc sửa model gốc.', 'Backup trước thao tác thay đổi dữ liệu.', 'Đọc và lập kế hoạch trước khi sửa.', 'Không đưa model/dữ liệu mật, token hoặc thông tin công ty lên AI Agent.'],
         ];
-    }
-
-    /** @return array<int, string> */
-    private function compactSteps(array $steps): array
-    {
-        return array_values(array_slice($steps, 0, 4));
-    }
-
-    /** @return array<int, string> */
-    private function simpleEvidence(array $day): array
-    {
-        $videoDays = [7, 14, 21];
-        $productDays = [9, 10, 11, 12, 13, 16, 18, 19, 20, 21];
-
-        $evidence = ['Ảnh màn hình kết quả của ngày '.$day['day'].'.'];
-        if (in_array($day['day'], $videoDays, true)) {
-            $evidence[] = 'Video ngắn chứng minh thao tác chính chạy thật.';
-        }
-        if (in_array($day['day'], $productDays, true)) {
-            $evidence[] = 'Ảnh sản phẩm đã đăng lên Bảng tin cộng đồng.';
-        }
-
-        return $evidence;
-    }
-
-    private function shareInstruction(int $day): ?string
-    {
-        return in_array($day, [9, 10, 11, 12, 13, 16, 18, 19, 20, 21], true)
-            ? 'Đăng ảnh sản phẩm hoặc kết quả chạy thật, kèm 2–3 câu bạn đã dùng AI như thế nào.'
-            : null;
     }
 
     private function prompt(array $day): string
     {
-        return "BỐI CẢNH\n- Revit version: tôi sẽ khai báo\n- Workspace: thư mục hiện tại\n- Mục tiêu ngày {$day['day']}: {$day['outcome']}\n\nHÃY LÀM THEO THỨ TỰ\n1. Đọc workspace và các file liên quan.\n2. Nói ngắn gọn kế hoạch, file sẽ đổi và cách kiểm tra; chờ tôi xác nhận.\n3. Thực hiện mục tiêu, build/chạy theo version Revit thật.\n4. Báo lại file đã đổi, kết quả và lỗi còn lại.\n\nAN TOÀN\n- Không xóa file, không sửa model gốc và không đưa dữ liệu mật lên AI.\n- Backup trước thao tác làm thay đổi model.\n- Không đoán Revit API khi chưa kiểm tra version.\n\nTôi không cần tự viết C#/WPF, nhưng tôi sẽ mở Revit, kiểm tra kết quả và chụp bằng chứng.";
+        return "BỐI CẢNH\n- Tôi là kỹ sư Cơ Điện đang học ngày {$day['day']}/21.\n- Phiên bản Revit: [tôi sẽ điền]\n- Workspace: [đường dẫn workspace]\n- Model kiểm thử: model mẫu hoặc bản sao đã backup\n\nMỤC TIÊU HÔM NAY\n{$day['focus']}\n\nHÃY LÀM THEO THỨ TỰ\n1. Đọc workspace và các hướng dẫn liên quan trước.\n2. Nói ngắn gọn bạn hiểu mục tiêu gì, sẽ làm những bước nào, sửa file nào, build bằng lệnh nào và tôi kiểm tra kết quả ra sao. Chờ tôi xác nhận.\n3. Sau khi tôi xác nhận, thực hiện phần kỹ thuật theo đúng phiên bản Revit; không tự mở rộng phạm vi.\n4. Build/chạy thử và báo lại file đã đổi, kết quả, log lỗi còn lại và cách rollback.\n\nAN TOÀN\n- Không xóa file, không sửa model gốc, luôn backup trước thay đổi.\n- Không đoán Revit API hoặc package khi chưa kiểm tra phiên bản thật.\n- Không đưa dữ liệu mật, token hoặc thông tin công ty lên AI.\n\nTôi không cần tự viết C#/WPF. Tôi sẽ mở Revit, kiểm tra kết quả và nộp ảnh bằng chứng thật.";
+    }
+
+    /** @return array<int, string> */
+    private function specificSteps(int $day): array
+    {
+        return match ($day) {
+            1 => ['Chọn đúng một AI Agent: Codex, Claude Code hoặc Google Antigravity; tải từ trang chính thức.', 'Mở thư mục Bộ Kit, yêu cầu AI chỉ đọc và nói lại mục tiêu khóa học; chưa cho AI sửa gì.', 'Nếu cài đặt lỗi, chụp tên lỗi và phiên bản Windows thay vì tự thử các lệnh không rõ tác dụng.'],
+            2 => ['Nói cho AI một mục tiêu bằng câu đời thường: “Tôi muốn làm tool để…”.', 'Yêu cầu AI ghi rõ việc sẽ làm, việc không làm, cách build và cách quay lại nếu sai.', 'Chỉ nhắn “đồng ý thực hiện” sau khi bạn đọc được kế hoạch và thấy đúng mục tiêu.'],
+            3 => ['Yêu cầu AI đọc hướng dẫn Kit trước khi chạy kiểm tra môi trường.', 'Ghi lại phiên bản Revit thật đang dùng; không chọn version theo phỏng đoán.', 'Nếu có FAIL, gửi riêng phần lỗi và summary cho AI; không gửi token, mật khẩu hoặc file công ty.'],
+            4 => ['Mở Revit bằng model mẫu/bản sao và để AI xác nhận tên model đang mở.', 'Yêu cầu AI đếm Duct, Pipe và Equipment ở chế độ chỉ đọc.', 'Đối chiếu ít nhất một con số bằng Schedule hoặc Filter trong Revit.'],
+            5 => ['Chọn 5–10 phần tử cùng một nhóm để dễ kiểm tra.', 'Yêu cầu AI trả bảng có Category, Level, System, Size và thông tin còn lại; thiếu thì ghi “chưa có”.', 'Mở Properties/Schedule để kiểm tra tối thiểu 5 giá trị, không chỉ tin câu trả lời AI.'],
+            6 => ['Viết một câu hỏi thật của công việc, có đối tượng, điều kiện và nơi cần tìm.', 'Để AI lặp lại điều kiện bằng lời trước khi chạy lọc, đặc biệt là đơn vị kích thước.', 'So kết quả với Filter hoặc Schedule độc lập và ghi nhận nếu lệch.'],
+            7 => ['Điền form “Bài toán tool của tôi” bằng việc đang làm tay, đầu vào, đầu ra và người dùng.', 'Chọn một nhánh: đếm/lọc, gán Parameter, Auto-Tag hoặc báo cáo.', 'Loại bỏ những việc lớn như license server, làm mọi thứ cho dự án hoặc xử lý mọi category.'],
+            8 => ['Chuẩn bị phần trình bày 3 phút: vấn đề, đầu vào, thao tác, đầu ra và giới hạn.', 'Ghi đúng góp ý mentor vào form bài toán, không cần chỉnh file kỹ thuật.', 'Dán yêu cầu đã chốt vào AI nhưng chỉ cho AI lập kế hoạch, chưa tạo code.'],
+            9 => ['Khai báo đúng phiên bản Revit cho AI trước khi tạo nền tảng tool.', 'Cho AI tạo Ribbon/nút giới thiệu, build theo đúng hướng dẫn Kit và báo lại cách cài.', 'Mở Revit, xác nhận tab/nút có tên tool của bạn và bấm cửa sổ giới thiệu.'],
+            10 => ['Chọn một Category và phạm vi đếm đơn giản trước khi thêm nhiều điều kiện.', 'Yêu cầu AI làm thao tác chỉ đọc; nếu AI đề nghị thay đổi model, dừng và hỏi lại.', 'So số đếm với Schedule hoặc Filter; chụp cả tool và màn hình đối chiếu.'],
+            11 => ['Tạo bản sao model trước khi thử bất kỳ thao tác thay đổi dữ liệu nào.', 'Chạy thử trên 3–5 phần tử, xem trước/sau bằng Properties hoặc file xuất.', 'Yêu cầu AI báo số thành công, số không xử lý được và lý do.'],
+            12 => ['Chuẩn bị ít nhất ba tình huống: bình thường, không có dữ liệu và input sai.', 'Yêu cầu AI thêm guard/summary để người dùng biết cần sửa gì.', 'Chạy từng tình huống; không kết luận đạt chỉ vì happy path chạy được.'],
+            13 => ['Giữ nguyên chức năng đã chạy; chỉ yêu cầu AI chỉnh giao diện và binding cần thiết.', 'Kiểm tra nút chính, loading, thành công, lỗi, không dữ liệu, đóng và hủy.', 'Đảm bảo nhãn nút nói rõ hành động thay vì chỉ dùng icon.'],
+            14 => ['Chọn một lỗi an toàn ở bản sao hoặc một lỗi thật đã có, không cố tình làm hỏng model.', 'Gửi phần ERROR/exception cùng vài dòng trước sau cho AI.', 'Sau khi AI sửa, chạy lại đúng tình huống trước đó để chứng minh không hồi quy.'],
+            15 => ['Chuẩn bị demo: mở Revit, bấm tool, nhập/chọn dữ liệu, xem kết quả và thử một lỗi.', 'Ghi feedback thành “phải sửa”, “nên sửa”, “để sau”.', 'Đăng MVP cùng một câu hỏi cụ thể để cộng đồng có thể góp ý đúng chỗ.'],
+            16 => ['Chọn một nâng cấp duy nhất có liên quan trực tiếp đến bài toán đã chốt.', 'Viết trước kết quả mong đợi khi dữ liệu bình thường và khi dữ liệu biên.', 'Chỉ cho AI triển khai nâng cấp sau khi kế hoạch không làm lan phạm vi.'],
+            17 => ['Yêu cầu AI chỉ ra thao tác nào có thể thay đổi dữ liệu và nơi cần xác nhận người dùng.', 'Thử tool trên bản sao với backup và kiểm tra log không chứa dữ liệu mật.', 'Thêm hướng dẫn ngắn về backup, dừng thao tác và khôi phục khi kết quả không đúng.'],
+            18 => ['Yêu cầu AI liệt kê DLL, manifest, dependency, icon và hướng dẫn cài cần có.', 'Build Release sạch rồi tạo thư mục dist/ZIP; không lấy file từ bản Debug để nộp.', 'Cài vào nơi test sạch và mở Revit để xác nhận Ribbon xuất hiện.'],
+            19 => ['Để AI soạn nháp hướng dẫn từ tool hiện tại, sau đó tự làm theo như người mới.', 'Sửa chỗ thiếu yêu cầu cài, bước bấm, kết quả mong đợi hoặc tình huống lỗi.', 'Đảm bảo tên tool, phiên bản và bộ cài trong hướng dẫn trùng nhau.'],
+            20 => ['Chọn model mô phỏng hoặc đã ẩn dữ liệu nhạy cảm; chạy từ bộ cài đã đóng gói.', 'Ghi bảng test cho happy path, dữ liệu thiếu và thao tác sai.', 'Nếu sửa sau UAT, build lại dist và chạy lại case lỗi đã phát hiện.'],
+            21 => ['Chuẩn bị 3 phút vấn đề, 3 phút demo và 2 phút trả lời; demo trên Revit thật.', 'Quay video nếu không dự livestream; video phải có tool chạy, không dùng slideshow.', 'Đăng bài tổng kết có kết quả trước/sau, link bộ cài/hướng dẫn và giới hạn của tool.'],
+        };
     }
 
     private function sopMarkdown(array $day, array $payload): string
     {
-        $steps = collect($payload['sop_steps'])->values()->map(fn ($step, $i) => ($i + 1).'. '.$step)->implode("\n");
+        $steps = collect($payload['sop_steps'])->map(fn ($step, $i) => ($i + 1).'. '.$step)->implode("\n");
         $checks = collect($payload['verification_checklist'])->map(fn ($item) => '- [ ] '.$item)->implode("\n");
         $evidence = collect($payload['evidence_requirements'])->map(fn ($item) => '- '.$item)->implode("\n");
 
-        return "## {$day['title']}\n\n"
-            . "### Hôm nay học gì?\n{$day['description']}\n\n"
-            . "### Kết quả bắt buộc\n{$day['outcome']}\n\n"
-            . "### SOP thực hiện\n{$steps}\n\n"
-            . "### Checklist học viên tự kiểm tra\n{$checks}\n\n"
-            . "### Bài tập và bằng chứng cần nộp\n{$evidence}\n\n"
-            . "### Prompt copy vào AI Agent\n```text\n{$payload['ai_prompt']}\n```\n\n"
-            . "### Lỗi thường gặp\n".collect($day['errors'])->map(fn ($item) => '- '.$item)->implode("\n")."\n\n"
-            . "### Chấm đạt\nĐạt từ {$payload['pass_score']}/100, đủ bằng chứng, kết quả kiểm chứng được và không có Critical Fail. Nếu chưa đạt, sửa đúng lý do mentor ghi và nộp lại; không bị trừ XP vì nộp lại.";
+        return "## {$day['title']}\n\n### Hôm nay học gì?\n{$day['description']}\n\n### Kết quả bắt buộc\n{$day['outcome']}\n\n### AI sẽ làm gì?\n- {$day['focus']}\n- Báo lại file đã thay đổi, lệnh build và lỗi còn tồn tại.\n\n### SOP thực hiện\n{$steps}\n\n### Checklist học viên tự kiểm tra\n{$checks}\n\n### Bài tập và bằng chứng cần nộp\n{$evidence}\n\n### Prompt copy vào AI Agent\n```text\n{$payload['ai_prompt']}\n```\n\n### Lỗi thường gặp\n".collect($payload['common_errors'])->map(fn ($item) => '- '.$item)->implode("\n")."\n\n### Chấm đạt\nĐạt từ {$payload['pass_score']}/100, đủ bằng chứng, kết quả kiểm chứng được và không có Critical Fail. Nếu chưa đạt, sửa đúng lý do mentor ghi rồi nộp lại; không bị trừ XP vì nộp lại.";
     }
 }

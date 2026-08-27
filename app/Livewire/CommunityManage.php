@@ -3,9 +3,11 @@
 namespace App\Livewire;
 
 use App\Models\Brand;
+use App\Models\User;
 use App\Support\CommunityContentDefaults;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -19,15 +21,16 @@ class CommunityManage extends Component
     public string $description = '';
     public string $guideContent = '';
     public string $rulesContent = '';
-    public $logo;
-    public $banner;
+    public mixed $logo = null;
+    public mixed $banner = null;
     public bool $removeLogo = false;
     public bool $removeBanner = false;
 
     public function mount(): void
     {
         $this->community = brand();
-        abort_unless(Auth::user()?->isBrandAdmin($this->community->id), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isCommunityAdmin($this->community->id), 403);
         $this->name = $this->community->name;
         $this->tagline = $this->community->tagline ?? '';
         $this->description = $this->community->description ?? '';
@@ -37,7 +40,8 @@ class CommunityManage extends Component
 
     public function save(): void
     {
-        abort_unless(Auth::user()?->isBrandAdmin($this->community->id), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isCommunityAdmin($this->community->id), 403);
         $this->validate([
             'name' => 'required|string|max:100',
             'tagline' => 'nullable|string|max:255',
@@ -86,7 +90,7 @@ class CommunityManage extends Component
         $this->dispatch('toast', message: 'Đã cập nhật cộng đồng.', type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         $members = $this->community->users()->withPivot('role')->latest('brand_user.created_at')->limit(20)->get();
         $plans = $this->community->membershipPlans()->orderByDesc('tier')->get();

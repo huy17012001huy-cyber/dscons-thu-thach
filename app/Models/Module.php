@@ -10,11 +10,13 @@ class Module extends Model
 {
     protected $fillable = ['course_id', 'title', 'order_index'];
 
+    /** @return BelongsTo<Course, $this> */
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
+    /** @return HasMany<Lesson, $this> */
     public function lessons(): HasMany
     {
         return $this->hasMany(Lesson::class)->orderBy('order_index');

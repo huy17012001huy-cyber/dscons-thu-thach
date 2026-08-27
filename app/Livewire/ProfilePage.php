@@ -13,8 +13,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 class ProfilePage extends Component
@@ -26,7 +28,7 @@ class ProfilePage extends Component
     #[Url]
     public string $tab = 'posts';
 
-    public $avatarUpload;
+    public ?TemporaryUploadedFile $avatarUpload = null;
 
     public bool $editingProfile = false;
 
@@ -101,7 +103,7 @@ class ProfilePage extends Component
         $this->profileUser = $query->with(['daKhongCuc', 'powerSymbols', 'membership'])->firstOrFail();
     }
 
-    public function setTab(string $t)
+    public function setTab(string $t): void
     {
         $this->tab = $t;
     }
@@ -113,6 +115,10 @@ class ProfilePage extends Component
             return;
         }
 
+        if (! $this->avatarUpload instanceof TemporaryUploadedFile) {
+            return;
+        }
+
         $path = $this->avatarUpload->store('avatars', 'public');
         if ($this->profileUser->avatar) {
             Storage::disk('public')->delete($this->profileUser->avatar);
@@ -121,7 +127,7 @@ class ProfilePage extends Component
         $this->profileUser->refresh();
     }
 
-    public function render()
+    public function render(): View
     {
         $xpService = app(XpService::class);
         $posts = $this->tab === 'posts'

@@ -11,11 +11,13 @@ class LessonPrerequisite extends Model
 
     protected $fillable = ['lesson_id', 'required_lesson_id'];
 
+    /** @return BelongsTo<Lesson, $this> */
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
     }
 
+    /** @return BelongsTo<Lesson, $this> */
     public function requiredLesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class, 'required_lesson_id');

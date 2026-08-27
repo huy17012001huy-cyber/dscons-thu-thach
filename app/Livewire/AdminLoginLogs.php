@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\LoginLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -23,29 +24,37 @@ class AdminLoginLogs extends Component
 
     public function deviceLabel(?string $ua): string
     {
-        if (!$ua) return '—';
-        $os = match(true) {
-            (bool) preg_match('/Android/i', $ua)              => 'Android',
-            (bool) preg_match('/iPhone|iPad|iOS/i', $ua)      => 'iOS',
-            (bool) preg_match('/Windows/i', $ua)              => 'Windows',
-            (bool) preg_match('/Mac OS X|Macintosh/i', $ua)   => 'macOS',
-            (bool) preg_match('/Linux/i', $ua)                => 'Linux',
-            default                                           => 'Khác',
+        if (! $ua) {
+            return '—';
+        }
+        $os = match (true) {
+            (bool) preg_match('/Android/i', $ua) => 'Android',
+            (bool) preg_match('/iPhone|iPad|iOS/i', $ua) => 'iOS',
+            (bool) preg_match('/Windows/i', $ua) => 'Windows',
+            (bool) preg_match('/Mac OS X|Macintosh/i', $ua) => 'macOS',
+            (bool) preg_match('/Linux/i', $ua) => 'Linux',
+            default => 'Khác',
         };
         $br = 'Khác';
-        if (preg_match('/Edg\/([0-9]+)/i', $ua, $m))          $br = 'Edge ' . $m[1];
-        elseif (preg_match('/Chrome\/([0-9]+)/i', $ua, $m))   $br = 'Chrome ' . $m[1];
-        elseif (preg_match('/Firefox\/([0-9]+)/i', $ua, $m))  $br = 'Firefox ' . $m[1];
-        elseif (preg_match('/Version\/[0-9.]+.*Safari/i', $ua)) $br = 'Safari';
-        return $os . ' · ' . $br;
+        if (preg_match('/Edg\/([0-9]+)/i', $ua, $m)) {
+            $br = 'Edge '.$m[1];
+        } elseif (preg_match('/Chrome\/([0-9]+)/i', $ua, $m)) {
+            $br = 'Chrome '.$m[1];
+        } elseif (preg_match('/Firefox\/([0-9]+)/i', $ua, $m)) {
+            $br = 'Firefox '.$m[1];
+        } elseif (preg_match('/Version\/[0-9.]+.*Safari/i', $ua)) {
+            $br = 'Safari';
+        }
+
+        return $os.' · '.$br;
     }
 
-    public function render()
+    public function render(): View
     {
         $s = trim($this->search);
 
         // Cách user gõ → match kiểu nào (để hỗ trợ tìm theo fingerprint / device cookie)
-        $isFingerprint  = (bool) preg_match('/^[a-f0-9]{8,16}$/i', $s);
+        $isFingerprint = (bool) preg_match('/^[a-f0-9]{8,16}$/i', $s);
         $isDeviceCookie = (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $s);
 
         $logs = LoginLog::query()
@@ -58,11 +67,11 @@ class AdminLoginLogs extends Component
                         $w->where('device_cookie_id', $s);
                     } else {
                         $w->where('ip_address', 'like', "%{$s}%")
-                          ->orWhereHas('user', function ($u) use ($s) {
-                              $u->where('name', 'ilike', "%{$s}%")
-                                ->orWhere('username', 'ilike', "%{$s}%")
-                                ->orWhere('email', 'ilike', "%{$s}%");
-                          });
+                            ->orWhereHas('user', function ($u) use ($s) {
+                                $u->where('name', 'ilike', "%{$s}%")
+                                    ->orWhere('username', 'ilike', "%{$s}%")
+                                    ->orWhere('email', 'ilike', "%{$s}%");
+                            });
                     }
                 });
             })
@@ -76,9 +85,9 @@ class AdminLoginLogs extends Component
             ->when($s !== '', function ($q) use ($s) {
                 $q->where(function ($w) use ($s) {
                     $w->where('sessions.ip_address', 'like', "%{$s}%")
-                      ->orWhere('users.name', 'ilike', "%{$s}%")
-                      ->orWhere('users.username', 'ilike', "%{$s}%")
-                      ->orWhere('users.email', 'ilike', "%{$s}%");
+                        ->orWhere('users.name', 'ilike', "%{$s}%")
+                        ->orWhere('users.username', 'ilike', "%{$s}%")
+                        ->orWhere('users.email', 'ilike', "%{$s}%");
                 });
             })
             ->orderByDesc('sessions.last_activity')
@@ -89,10 +98,10 @@ class AdminLoginLogs extends Component
 
         // Banner counts khi search hữu ích: bao nhiêu account khác nhau / fingerprint khác nhau
         // / device cookie khác nhau trong cùng "thứ" đang tìm. Bỏ via_admin để khỏi nhiễu.
-        $distinctAccounts     = null;
+        $distinctAccounts = null;
         $distinctFingerprints = null;
         $distinctDeviceCookies = null;
-        $matchType            = null; // 'ip' | 'fingerprint' | 'device_cookie'
+        $matchType = null; // 'ip' | 'fingerprint' | 'device_cookie'
 
         if ($s !== '') {
             $base = LoginLog::query()->whereNotNull('user_id')->where('via_admin', false);
@@ -110,8 +119,8 @@ class AdminLoginLogs extends Component
 
             if ($matchType) {
                 $rows = (clone $base)->select('user_id', 'fingerprint_hash', 'device_cookie_id')->get();
-                $distinctAccounts      = $rows->pluck('user_id')->unique()->count();
-                $distinctFingerprints  = $rows->pluck('fingerprint_hash')->filter()->unique()->count();
+                $distinctAccounts = $rows->pluck('user_id')->unique()->count();
+                $distinctFingerprints = $rows->pluck('fingerprint_hash')->filter()->unique()->count();
                 $distinctDeviceCookies = $rows->pluck('device_cookie_id')->filter()->unique()->count();
 
                 // Khi search theo IP, gộp thêm user_id từ sessions để khớp với row "đang đăng nhập"

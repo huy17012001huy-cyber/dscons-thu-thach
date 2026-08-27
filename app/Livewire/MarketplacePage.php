@@ -6,16 +6,23 @@ use App\Models\Course;
 use App\Models\DigitalProduct;
 use App\Models\Expedition;
 use App\Models\ProductPurchase;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class MarketplacePage extends Component
 {
     public function purchase(int $productId): void
     {
-        if (!Auth::check()) return;
+        if (! Auth::check()) {
+            return;
+        }
 
         $user = Auth::user();
+        if (! $user instanceof User) {
+            return;
+        }
         $product = DigitalProduct::where('is_published', true)->findOrFail($productId);
         $existing = ProductPurchase::where('user_id', $user->id)
             ->where('digital_product_id', $product->id)
@@ -23,6 +30,7 @@ class MarketplacePage extends Component
 
         if ($existing) {
             $this->dispatch('toast', message: $existing->status === 'active' ? 'Bạn đã sở hữu sản phẩm này.' : 'Đơn hàng đang chờ thanh toán.', type: 'info');
+
             return;
         }
 
@@ -36,11 +44,11 @@ class MarketplacePage extends Component
         $this->dispatch('toast', message: $product->isFree() ? 'Đã nhận sản phẩm miễn phí.' : 'Đơn hàng đã tạo. Vui lòng chuyển khoản để hoàn tất.', type: $product->isFree() ? 'success' : 'info');
     }
 
-    public function render()
+    public function render(): View
     {
         $user = Auth::user();
-        $userId = $user?->id;
-        $hasPremium = $user?->hasPremiumMembership() ?? false;
+        $userId = $user instanceof User ? $user->id : null;
+        $hasPremium = $user instanceof User && $user->hasPremiumMembership();
 
         $ownedProducts = $userId
             ? ProductPurchase::where('user_id', $userId)->get()->keyBy('digital_product_id')
@@ -60,7 +68,7 @@ class MarketplacePage extends Component
 
         foreach ($challenges as $challenge) {
             $member = $challenge->members->first();
-            $owned = $hasPremium || ($member && in_array($member->status, ['approved', 'paid'], true) && !$member->kicked_at);
+            $owned = $hasPremium || ($member && in_array($member->status, ['approved', 'paid'], true) && ! $member->kicked_at);
             $pending = $member && in_array($member->status, ['pending', 'pending_payment'], true);
             $items->push((object) [
                 'kind' => 'challenge', 'kind_label' => 'Challenge', 'id' => $challenge->id,
@@ -106,13 +114,14 @@ class MarketplacePage extends Component
 
         foreach ($products as $product) {
             $purchase = $ownedProducts->get($product->id);
+            $isRevitTool = $product->product_kind === 'revit_tool';
             $items->push((object) [
-                'kind' => 'resource', 'kind_label' => 'Tài nguyên', 'id' => $product->id,
+                'kind' => $isRevitTool ? 'revit_tool' : 'resource', 'kind_label' => $isRevitTool ? 'Revit Tool' : 'Tài nguyên', 'id' => $product->id,
                 'title' => $product->title, 'description' => $product->description,
                 'image' => $product->thumbnail ? asset('storage/'.$product->thumbnail) : null,
                 'price' => (int) $product->price, 'pillar' => $product->pillar,
                 'difficulty' => null, 'member_count' => (int) $product->active_purchases_count,
-                'meta' => $product->delivery_type === 'both' ? 'File + Link' : ($product->delivery_type === 'link' ? 'Link truy cập' : 'File tải xuống'),
+                'meta' => $isRevitTool ? (($versions = $product->supported_revit_versions ?: []) ? 'Revit '.implode(', ', $versions) : 'Chờ công bố phiên bản đã test runtime') : ($product->delivery_type === 'both' ? 'File + Link' : ($product->delivery_type === 'link' ? 'Link truy cập' : 'File tải xuống')),
                 'featured' => (bool) $product->is_featured, 'owned' => $purchase?->status === 'active', 'pending' => $purchase?->status === 'pending_payment',
                 'created_at' => $product->created_at, 'url' => null, 'purchase_id' => $product->id,
             ]);
@@ -123,6 +132,7 @@ class MarketplacePage extends Component
             'challengeItems' => $items->where('kind', 'challenge')->values(),
             'courseItems' => $items->where('kind', 'course')->values(),
             'resourceItems' => $items->where('kind', 'resource')->values(),
-        ])->layout('layouts.app', ['title' => 'Marketplace — ' . brand()->name]);
+            'revitToolItems' => $items->where('kind', 'revit_tool')->values(),
+        ])->layout('layouts.app', ['title' => 'Marketplace — '.brand()->name]);
     }
 }

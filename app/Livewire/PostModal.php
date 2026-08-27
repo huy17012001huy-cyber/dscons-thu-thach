@@ -2,14 +2,15 @@
 
 namespace App\Livewire;
 
-use App\Models\Comment;
 use App\Models\Bookmark;
+use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use App\Services\XpService;
 use App\Support\PostContentRenderer;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -54,9 +55,15 @@ class PostModal extends Component
             ->when(app()->bound('brand'), fn ($query) => $query->where('brand_id', brand()->id))
             ->find($postId);
         $this->show = $this->post !== null;
-        $this->likesCount = (int) ($this->post?->likes_count ?? 0);
-        $this->isLiked = (bool) ($this->post?->likes_exists ?? false);
-        $this->isBookmarked = (bool) ($this->post?->bookmarks_exists ?? false);
+        if ($this->post instanceof Post) {
+            $this->likesCount = (int) ($this->post->likes_count ?? 0);
+            $this->isLiked = (bool) ($this->post->likes_exists ?? false);
+            $this->isBookmarked = (bool) ($this->post->bookmarks_exists ?? false);
+        } else {
+            $this->likesCount = 0;
+            $this->isLiked = false;
+            $this->isBookmarked = false;
+        }
         $this->resetComposer();
     }
 
@@ -95,11 +102,14 @@ class PostModal extends Component
             return;
         }
 
-        DB::transaction(function (): void {
+        $post = $this->post;
+        $actor = $this->currentUser();
+
+        DB::transaction(function () use ($post, $actor): void {
             $like = Like::withTrashed()
                 ->where('likeable_type', Post::class)
-                ->where('likeable_id', $this->post->id)
-                ->where('user_id', Auth::id())
+                ->where('likeable_id', $post->id)
+                ->where('user_id', $actor->id)
                 ->lockForUpdate()
                 ->first();
 
@@ -107,6 +117,7 @@ class PostModal extends Component
                 $like->delete();
                 $this->likesCount = max(0, $this->likesCount - 1);
                 $this->isLiked = false;
+
                 return;
             }
 
@@ -115,8 +126,8 @@ class PostModal extends Component
             } else {
                 Like::create([
                     'likeable_type' => Post::class,
-                    'likeable_id' => $this->post->id,
-                    'user_id' => Auth::id(),
+                    'likeable_id' => $post->id,
+                    'user_id' => $actor->id,
                 ]);
             }
 
@@ -131,18 +142,21 @@ class PostModal extends Component
             return;
         }
 
+        $post = $this->post;
+        $actor = $this->currentUser();
         $bookmark = Bookmark::query()
-            ->where('user_id', Auth::id())
-            ->where('post_id', $this->post->id)
+            ->where('user_id', $actor->id)
+            ->where('post_id', $post->id)
             ->first();
 
         if ($bookmark) {
             $bookmark->delete();
             $this->isBookmarked = false;
+
             return;
         }
 
-        Bookmark::create(['user_id' => Auth::id(), 'post_id' => $this->post->id]);
+        Bookmark::create(['user_id' => $actor->id, 'post_id' => $post->id]);
         $this->isBookmarked = true;
     }
 
@@ -151,6 +165,7 @@ class PostModal extends Component
         $query = trim($query);
         if ($query === '') {
             $this->mentionResults = [];
+
             return;
         }
 
@@ -159,7 +174,7 @@ class PostModal extends Component
                 ->where('username', 'ilike', $query.'%')
                 ->orWhere('name', 'ilike', '%'.$query.'%'))
             ->whereKeyNot(Auth::id())
-            ->orderByRaw("CASE WHEN username ILIKE ? THEN 0 ELSE 1 END", [$query.'%'])
+            ->orderByRaw('CASE WHEN username ILIKE ? THEN 0 ELSE 1 END', [$query.'%'])
             ->limit(5)
             ->get(['id', 'username', 'name', 'avatar'])
             ->map(fn ($u) => [
@@ -181,30 +196,33 @@ class PostModal extends Component
             return;
         }
 
+        $post = $this->post;
+        $actor = $this->currentUser();
         $this->validate(['newComment' => 'required|max:2000']);
 
         $recentCount = Comment::where('user_id', Auth::id())
             ->where('created_at', '>=', now()->subHour())->count();
         if ($recentCount >= 20) {
             $this->addError('newComment', 'Bạn đã bình luận quá nhiều. Vui lòng đợi.');
+
             return;
         }
 
         $parentId = $this->replyToId
-            ? $this->post->allComments()->whereKey($this->replyToId)->value('id')
+            ? $post->allComments()->whereKey($this->replyToId)->value('id')
             : null;
 
-        $comment = $this->post->allComments()->create([
-            'user_id' => Auth::id(),
+        $comment = $post->allComments()->create([
+            'user_id' => $actor->id,
             'parent_id' => $parentId,
             'content' => $this->newComment,
         ]);
 
         $wonRune = false;
-        if ($this->post->isRuneActive()) {
-            $affected = Post::where('id', $this->post->id)
+        if ($post->isRuneActive()) {
+            $affected = Post::where('id', $post->id)
                 ->whereNull('rune_first_comment_user_id')
-                ->update(['rune_first_comment_user_id' => Auth::id()]);
+                ->update(['rune_first_comment_user_id' => $actor->id]);
             $wonRune = $affected > 0;
             if ($wonRune) {
                 $comment->update(['is_rune_winner' => true]);
@@ -212,26 +230,27 @@ class PostModal extends Component
         }
 
         app(XpService::class)->award(
-            Auth::user(), 'comment', $wonRune ? 2.0 : 1.0,
+            $actor, 'comment', $wonRune ? 2.0 : 1.0,
             $wonRune ? 'Phù văn 2x EXP' : null, $comment
         );
 
-        $owner = $this->post->user;
-        if ($owner->id !== Auth::id()) {
+        $owner = $post->user;
+        abort_unless($owner instanceof User, 500);
+        if ($owner->id !== $actor->id) {
             $alreadyCommented = $this->post->allComments()
                 ->where('user_id', Auth::id())
                 ->where('id', '!=', $comment->id)
                 ->exists();
             if (! $alreadyCommented) {
-                app(XpService::class)->award($owner, 'post_commented', 1.0, Auth::user()->name.' bình luận bài viết', $this->post);
+                app(XpService::class)->award($owner, 'post_commented', 1.0, $actor->name.' bình luận bài viết', $this->post);
             }
-            $owner->notify(new GenericNotification('💬', Auth::user()->name.' bình luận bài viết của bạn', null, $this->post->id));
+            $owner->notify(new GenericNotification('💬', $actor->name.' bình luận bài viết của bạn', null, $post->id));
         }
 
-        $this->notifyMentions($comment->content, [Auth::id(), $owner->id]);
+        $this->notifyMentions($comment->content, [$actor->id, $owner->id]);
 
         $this->resetComposer();
-        $this->openPost($this->post->id);
+        $this->openPost($post->id);
     }
 
     /**
@@ -241,9 +260,15 @@ class PostModal extends Component
      */
     private function notifyMentions(string $content, array $excludeIds): void
     {
+        $actor = $this->currentUser();
+        $post = $this->post;
+        abort_unless($post instanceof Post, 500);
+
         preg_match_all('/@([a-zA-Z0-9._-]+)/', $content, $m);
-        $usernames = array_unique($m[1] ?? []);
-        if (empty($usernames)) return;
+        $usernames = array_unique($m[1]);
+        if (empty($usernames)) {
+            return;
+        }
 
         $users = User::whereIn('username', $usernames)
             ->whereNotIn('id', $excludeIds)
@@ -252,9 +277,9 @@ class PostModal extends Component
         foreach ($users as $u) {
             $u->notify(new GenericNotification(
                 '@',
-                Auth::user()->name.' đã nhắc đến bạn trong một bình luận',
+                $actor->name.' đã nhắc đến bạn trong một bình luận',
                 null,
-                $this->post->id
+                $post->id
             ));
         }
     }
@@ -267,7 +292,15 @@ class PostModal extends Component
         $this->mentionResults = [];
     }
 
-    public function render()
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
+    }
+
+    public function render(): View
     {
         return view('livewire.post-modal');
     }

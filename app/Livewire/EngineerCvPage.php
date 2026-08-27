@@ -5,11 +5,18 @@ namespace App\Livewire;
 use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
 use App\Models\RecruitmentContactRequest;
+use App\Models\User;
 use App\Services\RecruiterContactService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 
 class EngineerCvPage extends Component
 {
+    public bool $isAdminPreview = false;
+    public ?int $profileUserId = null;
+    public string $profileEmail = '';
+
     public string $headline = '';
     public string $discipline = 'BIM';
     public string $summary = '';
@@ -30,21 +37,33 @@ class EngineerCvPage extends Component
     public bool $showPhone = false;
     public bool $isPublished = false;
 
-    public function mount(): void
+    public function mount(?EngineerCv $cv = null): void
     {
-        abort_unless(auth()->user()?->isEngineer(), 403);
+        $this->isAdminPreview = request()->routeIs('community.manage.recruitment.preview.cv');
+        $user = auth()->user();
+        abort_unless($user instanceof User && ($this->isAdminPreview ? $user->isCommunityAdmin(brand()->id) : $user->isEngineer()), 403);
         abort_unless(brand()->has_cv || (app()->environment('testing') && brand()->slug === 'dscons'), 404);
 
-        $profile = EngineerProfile::firstOrCreate(
-            ['brand_id' => brand()->id, 'user_id' => auth()->id()],
-            ['anonymized_code' => 'KYS-'.str_pad((string) auth()->id(), 5, '0', STR_PAD_LEFT), 'contact_email' => auth()->user()->email]
-        );
-        $cv = EngineerCv::firstOrCreate(
-            ['brand_id' => brand()->id, 'user_id' => auth()->id()],
-            ['data' => []]
-        );
+        if ($this->isAdminPreview) {
+            abort_unless($cv instanceof EngineerCv && $cv->brand_id === brand()->id, 404);
+            $this->profileUserId = (int) $cv->user_id;
+            $profile = EngineerProfile::query()->where('user_id', $cv->user_id)->first();
+        } else {
+            $this->profileUserId = (int) $user->id;
+            $profile = EngineerProfile::firstOrCreate(
+                ['brand_id' => brand()->id, 'user_id' => $this->profileUserId],
+                ['anonymized_code' => 'KYS-'.str_pad((string) $this->profileUserId, 5, '0', STR_PAD_LEFT), 'contact_email' => $user->email]
+            );
+            $cv = EngineerCv::firstOrCreate(
+                ['brand_id' => brand()->id, 'user_id' => $this->profileUserId],
+                ['data' => []]
+            );
+        }
+
+        $profile ??= new EngineerProfile();
 
         $this->fill([
+            'profileEmail' => $profile->contact_email ?? ($cv->user instanceof User ? $cv->user->email : $user->email),
             'headline' => $profile->headline ?? '',
             'discipline' => $profile->discipline ?? 'BIM',
             'summary' => $profile->summary ?? '',
@@ -53,8 +72,8 @@ class EngineerCvPage extends Component
             'workMode' => $profile->work_mode ?? 'Hybrid',
             'availability' => $profile->availability ?? 'Đang cập nhật',
             'contactPhone' => $profile->contact_phone ?? '',
-            'showEmail' => data_get($profile->contact_visibility, 'email', true),
-            'showPhone' => data_get($profile->contact_visibility, 'phone', false),
+            'showEmail' => data_get($profile->contact_visibility ?? [], 'email', true),
+            'showPhone' => data_get($profile->contact_visibility ?? [], 'phone', false),
             'template' => $cv->template ?? 'technical-clean',
             'accentColor' => $cv->accent_color ?? '#1F77BE',
             'isPublished' => $cv->status === 'published',
@@ -70,6 +89,9 @@ class EngineerCvPage extends Component
 
     public function save(bool $publish = false): void
     {
+        abort_if($this->isAdminPreview, 403);
+        $user = auth()->user();
+        abort_unless($user instanceof User && $user->isEngineer(), 403);
         $this->validate([
             'headline' => 'required|string|max:180',
             'discipline' => 'required|string|max:120',
@@ -104,8 +126,8 @@ class EngineerCvPage extends Component
             'languages' => $this->lines($this->languagesText, true),
         ];
 
-        EngineerProfile::updateOrCreate(['brand_id' => brand()->id, 'user_id' => auth()->id()], [
-            'anonymized_code' => 'KYS-'.str_pad((string) auth()->id(), 5, '0', STR_PAD_LEFT),
+        EngineerProfile::updateOrCreate(['brand_id' => brand()->id, 'user_id' => $user->id], [
+            'anonymized_code' => 'KYS-'.str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
             'headline' => $this->headline,
             'discipline' => $this->discipline,
             'summary' => $this->summary,
@@ -113,13 +135,13 @@ class EngineerCvPage extends Component
             'location' => $this->location,
             'work_mode' => $this->workMode,
             'availability' => $this->availability,
-            'contact_email' => auth()->user()->email,
+            'contact_email' => $user->email,
             'contact_phone' => $this->contactPhone,
             'contact_visibility' => ['email' => $this->showEmail, 'phone' => $this->showPhone],
             'is_searchable' => $isPublished,
         ]);
 
-        EngineerCv::updateOrCreate(['brand_id' => brand()->id, 'user_id' => auth()->id()], [
+        EngineerCv::updateOrCreate(['brand_id' => brand()->id, 'user_id' => $user->id], [
             'title' => 'CV '.$this->headline,
             'template' => $this->template,
             'accent_color' => $this->accentColor,
@@ -134,43 +156,55 @@ class EngineerCvPage extends Component
 
     public function acceptRequest(int $requestId): void
     {
+        abort_if($this->isAdminPreview, 403);
         $request = $this->incomingRequests()->findOrFail($requestId);
-        app(RecruiterContactService::class)->respond($request, auth()->user(), true);
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+        app(RecruiterContactService::class)->respond($request, $user, true);
     }
 
     public function rejectRequest(int $requestId): void
     {
+        abort_if($this->isAdminPreview, 403);
         $request = $this->incomingRequests()->findOrFail($requestId);
-        app(RecruiterContactService::class)->respond($request, auth()->user(), false);
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+        app(RecruiterContactService::class)->respond($request, $user, false);
     }
 
-    private function incomingRequests()
+    /** @return Builder<RecruitmentContactRequest> */
+    private function incomingRequests(): Builder
     {
         return RecruitmentContactRequest::query()
             ->where('brand_id', brand()->id)
-            ->where('engineer_id', auth()->id())
+            ->where('engineer_id', $this->profileUserId)
             ->where('status', 'pending')
             ->with('recruiter.recruiterProfile');
     }
 
+    /** @return array<int, array<string, string>> */
     private function lines(string $value, bool $commaSeparated = false, string $key = 'name'): array
     {
         $separator = $commaSeparated ? '/[,\n]+/' : '/\r?\n/';
-        return collect(preg_split($separator, $value))
+        $lines = preg_split($separator, $value) ?: [];
+
+        return collect($lines)
             ->map(fn ($line) => trim($line))
             ->filter()
             ->unique()
             ->values()
             ->map(fn ($line) => [$key => $line])
+            ->values()
             ->all();
     }
 
+    /** @param array<int, mixed> $items @param callable(mixed): string $mapper */
     private function joinItems(array $items, callable $mapper, string $separator = "\n"): string
     {
         return collect($items)->map($mapper)->filter()->implode($separator);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.engineer-cv-page', [
             'incomingRequests' => $this->incomingRequests()->latest()->get(),

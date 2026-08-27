@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Report;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class AdminReports extends Component
@@ -31,7 +33,7 @@ class AdminReports extends Component
         $report->update(['status' => 'reviewed']);
     }
 
-    public function render()
+    public function render(): View
     {
         $this->authorizeModerator();
         $reports = Report::with(['user', 'reportable'])
@@ -45,6 +47,7 @@ class AdminReports extends Component
 
     private function authorizeModerator(): void
     {
-        abort_unless(Auth::user()?->isCommunityModerator(), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User && $user->isCommunityModerator(), 403);
     }
 }

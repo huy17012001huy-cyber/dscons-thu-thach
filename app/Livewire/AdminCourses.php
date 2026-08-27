@@ -5,7 +5,9 @@ namespace App\Livewire;
 use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 class AdminCourses extends Component
@@ -13,19 +15,33 @@ class AdminCourses extends Component
     use WithFileUploads;
 
     public bool $showCourseModal = false;
+
     public ?int $editingCourseId = null;
+
     public string $courseTitle = '';
+
     public string $courseDescription = '';
+
     public string $coursePillar = 'delivery';
+
     public string $courseDifficulty = 'basic';
+
     public int $courseMinLevel = 1;
+
     public int $courseXpReward = 0;
+
     public int $courseAipReward = 0;
+
     public string $coursePrice = '';
+
     public bool $coursePublished = false;
+
     public bool $courseFeatured = false;
-    public $courseThumbnail = null;
+
+    public ?TemporaryUploadedFile $courseThumbnail = null;
+
     public ?string $existingCourseThumbnail = null;
+
     public bool $removeCourseThumbnail = false;
 
     public function openCreateCourse(): void
@@ -36,7 +52,9 @@ class AdminCourses extends Component
 
     public function openEditCourse(int $id): void
     {
-        if (!Auth::user()?->isBrandAdmin()) return;
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
         $course = Course::findOrFail($id);
         $this->editingCourseId = $course->id;
         $this->courseTitle = $course->title;
@@ -57,7 +75,9 @@ class AdminCourses extends Component
 
     public function saveCourse(): void
     {
-        if (!Auth::user()?->isBrandAdmin()) return;
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
         $this->validate([
             'courseTitle' => 'required|string|max:255',
             'courseDescription' => 'nullable|string|max:5000',
@@ -86,7 +106,10 @@ class AdminCourses extends Component
         ];
 
         if ($this->courseThumbnail) {
-            $data['thumbnail'] = $this->courseThumbnail->store('course/thumbnails', 'public');
+            $path = $this->courseThumbnail->store('course/thumbnails', 'public');
+            if (is_string($path)) {
+                $data['thumbnail'] = $path;
+            }
         } elseif ($this->removeCourseThumbnail) {
             $data['thumbnail'] = null;
         }
@@ -109,14 +132,18 @@ class AdminCourses extends Component
 
     public function togglePublish(int $id): void
     {
-        if (!Auth::user()?->isBrandAdmin()) return;
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
         $course = Course::findOrFail($id);
-        $course->update(['is_published' => !$course->is_published]);
+        $course->update(['is_published' => ! $course->is_published]);
     }
 
     public function deleteCourse(int $id): void
     {
-        if (!Auth::user()?->isBrandAdmin()) return;
+        if (! Auth::user()?->isBrandAdmin()) {
+            return;
+        }
         $course = Course::findOrFail($id);
         if ($course->thumbnail && str_starts_with($course->thumbnail, 'course/thumbnails/')) {
             Storage::disk('public')->delete($course->thumbnail);
@@ -142,9 +169,10 @@ class AdminCourses extends Component
         $this->removeCourseThumbnail = false;
     }
 
-    public function render()
+    public function render(): View
     {
         $courses = Course::withCount(['modules', 'enrollments'])->latest()->get();
+
         return view('livewire.admin-courses', ['courses' => $courses])
             ->layout('layouts.app', ['title' => 'Quản lý khóa học — Admin']);
     }

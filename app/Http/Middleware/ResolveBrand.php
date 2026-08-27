@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Brand;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
@@ -21,7 +22,7 @@ class ResolveBrand
             $brand = Brand::where('slug', $routeCommunity)->first();
         }
 
-        if (!$brand) {
+        if (! $brand) {
             // Symfony normalises the host, while Laravel's HTTP tests may only
             // populate the raw Host header. Prefer the explicit header so both
             // local browser and test requests resolve the same community.
@@ -34,7 +35,9 @@ class ResolveBrand
                 // extra brand exists, use it as that test's intended context.
                 if (app()->environment('testing') && in_array($host, ['localhost', '127.0.0.1'], true)) {
                     $testBrand = Brand::where('id', '>', 1)->latest('id')->first();
-                    if ($testBrand) $brand = $testBrand;
+                    if ($testBrand) {
+                        $brand = $testBrand;
+                    }
                 }
             } catch (\Throwable $e) {
                 // A few CLI/bootstrap paths can run before the brand migration;
@@ -44,7 +47,7 @@ class ResolveBrand
         }
 
         // Fallback to DSCons (id=1) in local/testing environments
-        if (!$brand && in_array(app()->environment(), ['local', 'testing'])) {
+        if (! $brand && in_array(app()->environment(), ['local', 'testing'])) {
             try {
                 $brand = Brand::find(1);
             } catch (\Throwable $e) {
@@ -52,7 +55,7 @@ class ResolveBrand
             }
         }
 
-        if (!$brand && in_array(app()->environment(), ['local', 'testing'])) {
+        if (! $brand && in_array(app()->environment(), ['local', 'testing'])) {
             // Keep framework smoke tests and first-boot pages usable even when
             // the database is not installed yet. Real requests use the seeded row.
             $brand = new Brand([
@@ -67,11 +70,12 @@ class ResolveBrand
             ]);
         }
 
-        if (!$brand) {
+        if (! $brand) {
             abort(404, 'Community not found.');
         }
 
-        if ($brand->status !== 'active' && !($request->user()?->is_admin ?? false)) {
+        $user = $request->user();
+        if ($brand->status !== 'active' && ! ($user instanceof User && $user->isSuperAdmin())) {
             abort(404, 'Community not found.');
         }
 

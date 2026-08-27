@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Feedback;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
@@ -47,7 +48,7 @@ class FeedbackButton extends Component
         $this->dispatch('toast', message: 'Gửi thành công! Cảm ơn bạn đã góp ý.', type: 'success');
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.feedback-button');
     }

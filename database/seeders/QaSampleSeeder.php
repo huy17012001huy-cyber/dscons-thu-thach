@@ -41,6 +41,11 @@ class QaSampleSeeder extends Seeder
         $guest = $this->user('qa-guest@example.test', '[TEST] QA Guest', 'qa-guest');
         $unverified = $this->user('qa-unverified@example.test', '[TEST] QA Unverified', 'qa-unverified', false, false);
         $banned = $this->user('qa-banned@example.test', '[TEST] QA Banned', 'qa-banned');
+        $this->communityRole($brand->id, $admin, 'owner');
+        $this->communityRole($brand->id, $member, 'member');
+        $this->communityRole($brand->id, $guest, 'member');
+        $this->communityRole($brand->id, $unverified, 'member');
+        $this->communityRole($brand->id, $banned, 'member');
         $this->membership($brand->id, $admin, 'active');
         $this->membership($brand->id, $member, 'active');
         $this->membership($brand->id, $guest, 'expired', now()->subDay());
@@ -233,7 +238,7 @@ class QaSampleSeeder extends Seeder
             );
             XpTransaction::withoutGlobalScopes()->updateOrCreate(
                 ['brand_id' => $brand->id, 'user_id' => $user->id, 'type' => 'qa-seed', 'description' => '[TEST] QA leaderboard seed'],
-                ['amount' => $xp, 'multiplier' => 1]
+                ['amount' => $xp, 'multiplier' => 1, 'created_at' => now(), 'updated_at' => now()]
             );
         }
 
@@ -272,5 +277,10 @@ class QaSampleSeeder extends Seeder
                 'expires_at' => $expiresAt ?: now()->addYear(),
             ]
         );
+    }
+
+    private function communityRole(int $brandId, User $user, string $role): void
+    {
+        $user->brandRoles()->syncWithoutDetaching([$brandId => ['role' => $role]]);
     }
 }

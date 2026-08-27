@@ -1,36 +1,44 @@
-# Ngày 14 — Debug build, Revit API và Hot Reload có kiểm soát
+# Ngày 14 — Sửa một lỗi bằng AI có kiểm soát
 
-**Hình thức:** Video ngắn · **Thời lượng:** 60 phút
+**Hình thức:** Tự thực hành · **Thời lượng:** 60 phút
 
 ## Hôm nay làm gì?
 
-Học quy trình đọc lỗi, phân loại nguyên nhân và đưa đúng log cho AI; không copy lỗi mù quáng.
+Bạn học cách lấy đúng phần lỗi, yêu cầu AI giải thích nguyên nhân rồi mới sửa.
 
 ## Kết quả cần đạt
 
-Một lỗi có nguyên nhân và bằng chứng regression test
+Sửa được một lỗi và chứng minh lỗi không quay lại.
 
 ## AI làm gì?
 
-- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
-- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+- Đọc mục tiêu và những gì đang có trước khi thực hiện.
+- Đề xuất kế hoạch, file cần thay đổi, lệnh build và cách kiểm tra.
+- Thực hiện phần kỹ thuật sau khi học viên xác nhận và báo lại kết quả.
 
 ## Học viên kiểm tra gì?
 
-- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
-- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+- Chọn đúng phiên bản Revit và cung cấp thông tin công việc cho AI.
+- Đọc kế hoạch, xác nhận trước thay đổi và không đưa dữ liệu mật lên AI.
+- Mở Revit bằng model mẫu/bản sao, chạy thử và đối chiếu kết quả.
 
-## SOP duy nhất
+## SOP từng bước
 
-1. Tạo một lỗi an toàn ở bản sao branch hoặc dùng lỗi có sẵn.
-2. Copy từ dòng exception/build error đến stack trace liên quan.
-3. Dán prompt debug yêu cầu AI giải thích trước khi sửa.
-4. AI liệt kê file thay đổi và build lại.
+1. Mở công cụ hoặc model được ghi trong bài và dùng bản sao an toàn.
+2. Copy toàn bộ prompt bên dưới, dán vào AI Agent và điền các phần trong ngoặc vuông.
+3. Khi AI hỏi lại, trả lời phiên bản Revit, mục tiêu và model kiểm thử; nếu chưa biết thì nói rõ “chưa biết”, không đoán.
+4. Đọc kế hoạch AI: mục tiêu, việc sẽ làm, file sẽ sửa, lệnh chạy và cách quay lại. Chỉ xác nhận khi bạn hiểu.
+5. Chọn một lỗi an toàn ở bản sao hoặc một lỗi thật đã có, không cố tình làm hỏng model.
+6. Gửi phần ERROR/exception cùng vài dòng trước sau cho AI.
+7. Sau khi AI sửa, chạy lại đúng tình huống trước đó để chứng minh không hồi quy.
+8. Để AI thực hiện, build/chạy theo hướng dẫn, rồi mở Revit để kiểm tra kết quả thật.
+9. Chụp bằng chứng, trả lời ba câu reflection và nộp bài trên website. Nếu lỗi, gửi đoạn log từ ERROR/exception đến phần summary.
 
 ## Minh chứng cần nộp
 
-- Ảnh màn hình kết quả của ngày 14.
-- Video ngắn chứng minh thao tác chính chạy thật.
+- Ảnh màn hình kết quả thật của ngày 14.
+- Nêu được nguyên nhân, file sửa và kết quả kiểm tra sau sửa.
+- Ba câu ngắn: Tôi yêu cầu AI làm gì? AI đã làm gì? Tôi kiểm tra kết quả thế nào?
 
 ## Điều kiện Đạt
 
@@ -38,5 +46,6 @@ Một lỗi có nguyên nhân và bằng chứng regression test
 
 ## Lỗi thường gặp
 
-- Gửi toàn bộ log có secret.
-- Sửa nhiều file không liên quan.
+- Chỉ gửi ảnh code hoặc câu trả lời của AI mà chưa chạy trong Revit.
+- Dùng sai phiên bản, sai model hoặc quên kiểm tra kết quả độc lập.
+- Cho AI sửa quá nhiều thứ cùng lúc hoặc sửa model gốc.

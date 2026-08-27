@@ -2,16 +2,27 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasBrand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Concerns\HasBrand;
 
 class DirectMessage extends Model
 {
     use HasBrand;
+
     protected $fillable = ['conversation_id', 'sender_id', 'content', 'read_at', 'brand_id'];
+
     protected $casts = ['read_at' => 'datetime'];
 
-    public function conversation(): BelongsTo { return $this->belongsTo(Conversation::class); }
-    public function sender(): BelongsTo { return $this->belongsTo(User::class, 'sender_id'); }
+    /** @return BelongsTo<Conversation, $this> */
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function sender(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sender_id');
+    }
 }

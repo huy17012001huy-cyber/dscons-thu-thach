@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use App\Livewire\CommunityManage;
 use App\Livewire\AdminChallenges;
 use App\Livewire\AdminCourses;
+use App\Livewire\MembershipPricing;
 use App\Models\Brand;
 use App\Models\Course;
 use App\Models\Expedition;
 use App\Models\Membership;
+use App\Models\MembershipPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -155,6 +157,38 @@ class CommunityManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Revit MEP thực chiến')
             ->assertSee('BIM Sprint 14 ngày');
+    }
+
+    public function test_membership_pricing_explains_the_community_plan_and_only_sells_premium(): void
+    {
+        [$owner, $brand] = $this->ownerAndBrand();
+        app()->instance('brand', $brand);
+        $this->actingAs($owner);
+
+        MembershipPlan::withoutGlobalScopes()->create([
+            'brand_id' => $brand->id,
+            'tier' => 'free',
+            'name' => 'Free',
+            'price' => 0,
+            'status' => 'published',
+        ]);
+        $premium = MembershipPlan::withoutGlobalScopes()->create([
+            'brand_id' => $brand->id,
+            'tier' => 'premium',
+            'name' => 'Premium 90 days',
+            'duration_days' => 90,
+            'price' => 990000,
+            'status' => 'published',
+        ]);
+
+        Livewire::test(MembershipPricing::class)
+            ->assertSee('Thành viên community')
+            ->assertSee('Membership Premium')
+            ->assertSee('Premium 90 days')
+            ->assertDontSee('52 tuần')
+            ->call('selectCommunityPlan', $premium->id)
+            ->assertSee('Nội dung chuyển khoản')
+            ->assertSee('MC'.$brand->id.'P'.$premium->id.'U'.$owner->id);
     }
 
     /** @return array{User, Brand} */

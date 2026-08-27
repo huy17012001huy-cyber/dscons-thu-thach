@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\Response;
 
 class EnsureDeviceCookie
 {
@@ -17,12 +18,12 @@ class EnsureDeviceCookie
      * đều mang cùng cookie_id, dùng để phát hiện nick ảo trong AdminLoginLogs.
      * User clear cookie thì mất, nhưng đa số không bao giờ clear cookie.
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         $existing = $request->cookie('challenge_device_id');
         $generated = false;
 
-        if (!$existing) {
+        if (! is_string($existing) || $existing === '') {
             $existing = (string) Str::uuid();
             $generated = true;
             // Inject ngay vào request hiện tại để listener (RecordLoginLog) đọc được
@@ -32,14 +33,17 @@ class EnsureDeviceCookie
         // DEBUG: log mọi request POST tới /livewire/update để xác minh middleware có chạy
         if ($request->isMethod('POST') && str_contains($request->path(), 'livewire/update')) {
             Log::info('EnsureDeviceCookie ran on livewire/update', [
-                'existing'     => $existing,
-                'generated'    => $generated,
+                'existing' => $existing,
+                'generated' => $generated,
                 'after_inject' => $request->cookie('challenge_device_id'),
-                'all_cookies'  => array_keys($request->cookies->all()),
+                'all_cookies' => array_keys($request->cookies->all()),
             ]);
         }
 
         $response = $next($request);
+        if (! $response instanceof Response) {
+            throw new \UnexpectedValueException('The next middleware must return a response.');
+        }
 
         // Dùng Symfony Cookie qua headers->setCookie() thay cho $response->cookie()
         // vì BinaryFileResponse / StreamedResponse / RedirectResponse từ Symfony

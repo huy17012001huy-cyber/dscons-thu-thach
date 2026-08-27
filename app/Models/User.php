@@ -2,15 +2,42 @@
 
 namespace App\Models;
 
+use App\Support\CommunityBrandSettings;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
+
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $username
+ * @property string|null $avatar
+ * @property string|null $bio
+ * @property string|null $location
+ * @property string $account_type
+ * @property bool $is_admin
+ * @property int $level
+ * @property int $xp
+ * @property Carbon|null $last_active_at
+ * @property int|float|null $period_xp
+ * @property string|null $two_factor_secret
+ * @property array<int, string>|null $two_factor_recovery_codes
+ * @property Carbon|null $two_factor_confirmed_at
+ * @property-read Membership|null $membership
+ * @property-read EngineerProfile|null $engineerProfile
+ * @property-read EngineerCv|null $engineerCv
+ * @property-read RecruiterProfile|null $recruiterProfile
+ * @property-read DaKhongCuc|null $daKhongCuc
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -22,17 +49,19 @@ class User extends Authenticatable implements MustVerifyEmail
         'referred_by', 'class_changed_at', 'source',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'last_active_at'    => 'datetime',
-            'class_changed_at'  => 'datetime',
-            'is_admin'          => 'boolean',
-            'is_moderator'      => 'boolean',
-            'password'          => 'hashed',
+            'last_active_at' => 'datetime',
+            'class_changed_at' => 'datetime',
+            'is_admin' => 'boolean',
+            'is_moderator' => 'boolean',
+            'password' => 'hashed',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
         ];
     }
 
@@ -44,91 +73,109 @@ class User extends Authenticatable implements MustVerifyEmail
 
     // ─── Relationships ───────────────────────────────────────────────
 
+    /** @return HasOne<Membership, $this> */
     public function membership(): HasOne
     {
         return $this->hasOne(Membership::class)->latestOfMany();
     }
 
+    /** @return HasMany<CommunityUserStat, $this> */
     public function communityStats(): HasMany
     {
         return $this->hasMany(CommunityUserStat::class);
     }
 
+    /** @return HasMany<Membership, $this> */
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
     }
 
+    /** @return HasMany<Post, $this> */
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
+    /** @return HasMany<Comment, $this> */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function referredBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'referred_by');
     }
 
+    /** @return HasMany<User, $this> */
     public function referrals(): HasMany
     {
         return $this->hasMany(User::class, 'referred_by');
     }
 
+    /** @return HasMany<XpTransaction, $this> */
     public function xpTransactions(): HasMany
     {
         return $this->hasMany(XpTransaction::class);
     }
 
+    /** @return HasMany<AipTransaction, $this> */
     public function aipTransactions(): HasMany
     {
         return $this->hasMany(AipTransaction::class);
     }
 
+    /** @return HasOne<DaKhongCuc, $this> */
     public function daKhongCuc(): HasOne
     {
         return $this->hasOne(DaKhongCuc::class);
     }
 
+    /** @return HasMany<PowerSymbol, $this> */
     public function powerSymbols(): HasMany
     {
         return $this->hasMany(PowerSymbol::class);
     }
 
+    /** @return HasMany<ExpeditionMember, $this> */
     public function expeditionMembers(): HasMany
     {
         return $this->hasMany(ExpeditionMember::class);
     }
 
+    /** @return HasMany<Bookmark, $this> */
     public function bookmarks(): HasMany
     {
         return $this->hasMany(Bookmark::class);
     }
 
+    /** @return HasMany<Question, $this> */
     public function questions(): HasMany
     {
         return $this->hasMany(Question::class);
     }
 
+    /** @return HasMany<AffiliateEarning, $this> */
     public function affiliateEarnings(): HasMany
     {
         return $this->hasMany(AffiliateEarning::class, 'referrer_id');
     }
 
+    /** @return HasOne<RecruiterProfile, $this> */
     public function recruiterProfile(): HasOne
     {
         return $this->hasOne(RecruiterProfile::class);
     }
 
+    /** @return HasOne<EngineerProfile, $this> */
     public function engineerProfile(): HasOne
     {
         return $this->hasOne(EngineerProfile::class);
     }
 
+    /** @return HasOne<EngineerCv, $this> */
     public function engineerCv(): HasOne
     {
         return $this->hasOne(EngineerCv::class, 'user_id');
@@ -149,34 +196,52 @@ class User extends Authenticatable implements MustVerifyEmail
         return ! $this->is_admin && $this->account_type !== 'recruiter';
     }
 
+    /** @return HasMany<EventRegistration, $this> */
     public function eventRegistrations(): HasMany
     {
         return $this->hasMany(EventRegistration::class);
     }
 
+    /** @return HasMany<UserBadge, $this> */
     public function userBadges(): HasMany
     {
         return $this->hasMany(UserBadge::class);
     }
 
+    /** @return BelongsToMany<Brand, $this, Pivot> */
     public function brandRoles(): BelongsToMany
     {
         return $this->belongsToMany(Brand::class)->withPivot('role')->withTimestamps();
     }
 
+    /** @return HasMany<UserCommunityPreference, $this> */
     public function communityPreferences(): HasMany
     {
         return $this->hasMany(UserCommunityPreference::class);
     }
 
+    /** @return HasMany<UserBillingProfile, $this> */
     public function billingProfiles(): HasMany
     {
         return $this->hasMany(UserBillingProfile::class);
     }
 
+    /** @return HasMany<ToolInstallation, $this> */
+    public function toolInstallations(): HasMany
+    {
+        return $this->hasMany(ToolInstallation::class);
+    }
+
+    /** @return HasMany<ToolSecurityEvent, $this> */
+    public function toolSecurityEvents(): HasMany
+    {
+        return $this->hasMany(ToolSecurityEvent::class);
+    }
+
     public function isBrandAdmin(?int $brandId = null): bool
     {
         $brandId ??= app()->bound('brand') ? brand()->id : null;
+
         return $this->isCommunityAdmin($brandId);
     }
 
@@ -187,14 +252,16 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        return $this->brandRoles()
+        return (string) data_get($this->brandRoles()
             ->where('brand_id', $brandId)
-            ->first()?->pivot?->role;
+            ->first(), 'pivot.role', '');
     }
 
+    /** @param string|array<int, string> $roles */
     public function hasCommunityRole(string|array $roles, ?int $brandId = null): bool
     {
         $role = $this->communityRole($brandId);
+
         return $role !== null && in_array($role, (array) $roles, true);
     }
 
@@ -211,7 +278,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isCommunityOwner(?int $brandId = null): bool
     {
         $brandId ??= app()->bound('brand') ? brand()->id : null;
-        if (!$brandId) return false;
+        if (! $brandId) {
+            return false;
+        }
 
         return $this->isSuperAdmin() || $this->brandRoles()
             ->where('brand_id', $brandId)
@@ -225,21 +294,27 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $brand = app()->bound('brand')
             ? brand()
-            : new \App\Models\Brand(['slug' => 'default']);
-        $stages = app(\App\Support\CommunityBrandSettings::class)->stageLabels($brand);
+            : new Brand(['slug' => 'default']);
+        $stages = app(CommunityBrandSettings::class)->stageLabels($brand);
 
         return $stages[$this->levelBadgeTone()] ?? 'Người mới vào nghề';
     }
 
     public function getClassLabelAttribute(): string
     {
-        if ($this->level < 10) return 'Beginner';
+        if ($this->level < 10) {
+            return 'Beginner';
+        }
+
         return $this->communityClassProfile()['name'] ?? 'Beginner';
     }
 
     public function getClassColorAttribute(): string
     {
-        if ($this->level < 10) return 'gray';
+        if ($this->level < 10) {
+            return 'gray';
+        }
+
         return $this->communityClassProfile()['color_token'] ?? 'blue';
     }
 
@@ -268,12 +343,13 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $brand = app()->bound('brand')
             ? brand()
-            : new \App\Models\Brand(['slug' => 'default']);
+            : new Brand(['slug' => 'default']);
 
-        return app(\App\Support\CommunityBrandSettings::class)->badgeColors($brand)[$this->levelBadgeTone()]
+        return app(CommunityBrandSettings::class)->badgeColors($brand)[$this->levelBadgeTone()]
             ?? '#1F77BE';
     }
 
+    /** @return array<string, mixed> */
     public function communityClassProfile(): array
     {
         $profiles = app()->bound('brand')
@@ -281,7 +357,7 @@ class User extends Authenticatable implements MustVerifyEmail
             : config('communities.classes.default', []);
 
         $profile = $profiles[$this->class] ?? null;
-        if (!$profile) {
+        if (! $profile) {
             return [];
         }
 
@@ -295,12 +371,13 @@ class User extends Authenticatable implements MustVerifyEmail
                 'continuity_captain' => 'red',
                 default => 'gray',
             };
+
         return $profile;
     }
 
     public function getDaCountAttribute(): int
     {
-        return $this->daKhongCuc?->total_count ?? 0;
+        return (int) optional($this->daKhongCuc)->total_count;
     }
 
     public function getAvatarUrlAttribute(): string
@@ -310,25 +387,29 @@ class User extends Authenticatable implements MustVerifyEmail
                 return $this->avatar;
             }
 
-            return asset('storage/' . $this->avatar);
+            return asset('storage/'.$this->avatar);
         }
         $initials = collect(explode(' ', $this->name))
-            ->map(fn($w) => strtoupper(substr($w, 0, 1)))
+            ->map(fn ($w) => strtoupper(substr($w, 0, 1)))
             ->take(2)
             ->join('');
-        return 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&background=DCECF7&color=125A96&bold=true&size=80';
+
+        return 'https://ui-avatars.com/api/?name='.urlencode($initials).'&background=DCECF7&color=125A96&bold=true&size=80';
     }
 
     public function isActive(): bool
     {
         $m = $this->membership;
+
         return $m && in_array($m->status, ['trial', 'active']);
     }
 
     public function hasPremiumMembership(?int $brandId = null): bool
     {
         $brandId ??= app()->bound('brand') ? brand()->id : null;
-        if (!$brandId) return false;
+        if (! $brandId) {
+            return false;
+        }
 
         return $this->memberships()->withoutGlobalScopes()
             ->where('brand_id', $brandId)
@@ -343,8 +424,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isCommunityParticipant(?int $brandId = null): bool
     {
         $brandId ??= app()->bound('brand') ? brand()->id : null;
-        if (!$brandId) return false;
-        if ($this->is_admin) return true;
+        if (! $brandId) {
+            return false;
+        }
+        if ($this->is_admin) {
+            return true;
+        }
 
         $hasCommunityRole = $this->brandRoles()
             ->where('brand_id', $brandId)

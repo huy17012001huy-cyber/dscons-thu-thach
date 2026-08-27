@@ -1,0 +1,5 @@
+{
+  "name": "Commerce",
+  "provider": "Modules\\Commerce\\Providers\\CommerceServiceProvider",
+  "depends": []
+}

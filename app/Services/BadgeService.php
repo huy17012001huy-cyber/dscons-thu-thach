@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Badge;
+use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Models\UserBadge;
 
@@ -12,7 +13,7 @@ class BadgeService
     {
         $badges = Badge::all();
         foreach ($badges as $badge) {
-            if ($this->evaluate($user, $badge) && !$this->hasEarned($user, $badge)) {
+            if ($this->evaluate($user, $badge) && ! $this->hasEarned($user, $badge)) {
                 $this->award($user, $badge);
             }
         }
@@ -20,7 +21,9 @@ class BadgeService
 
     public function award(User $user, Badge $badge): void
     {
-        if ($this->hasEarned($user, $badge)) return;
+        if ($this->hasEarned($user, $badge)) {
+            return;
+        }
 
         UserBadge::create([
             'user_id' => $user->id,
@@ -36,21 +39,23 @@ class BadgeService
 
     private function evaluate(User $user, Badge $badge): bool
     {
-        if (!$badge->condition_type || !$badge->condition_value) return false;
+        if (! $badge->condition_type || ! $badge->condition_value) {
+            return false;
+        }
 
         return match ($badge->condition_type) {
-            'level_gte'       => $user->level >= (int) $badge->condition_value,
-            'post_count_gte'  => $user->posts()->count() >= (int) $badge->condition_value,
+            'level_gte' => $user->level >= (int) $badge->condition_value,
+            'post_count_gte' => $user->posts()->count() >= (int) $badge->condition_value,
             'comment_count_gte' => $user->comments()->count() >= (int) $badge->condition_value,
-            'streak_gte'      => $user->streak >= (int) $badge->condition_value,
+            'streak_gte' => $user->streak >= (int) $badge->condition_value,
             'bookmark_count_gte' => $user->bookmarks()->count() >= (int) $badge->condition_value,
             'answer_count_gte' => $user->questions()->count() >= (int) $badge->condition_value, // answers given
-            'da_count_gte'    => $user->da_count >= (int) $badge->condition_value,
+            'da_count_gte' => $user->da_count >= (int) $badge->condition_value,
             'expedition_created' => $user->expeditionMembers()
-                ->whereHas('expedition', fn($q) => $q->where('created_by', $user->id))
+                ->whereHas('expedition', fn ($q) => $q->where('created_by', $user->id))
                 ->exists(),
-            'course_completed' => $user->fresh()->affiliateEarnings()->exists() === false
-                && \App\Models\CourseEnrollment::where('user_id', $user->id)
+            'course_completed' => ! $user->affiliateEarnings()->exists()
+                && CourseEnrollment::where('user_id', $user->id)
                     ->whereNotNull('completed_at')->exists(),
             default => false,
         };

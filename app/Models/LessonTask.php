@@ -12,11 +12,13 @@ class LessonTask extends Model
 
     protected $casts = ['is_required' => 'boolean'];
 
+    /** @return BelongsTo<Lesson, $this> */
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
     }
 
+    /** @return HasMany<TaskSubmission, $this> */
     public function submissions(): HasMany
     {
         return $this->hasMany(TaskSubmission::class, 'lesson_task_id');

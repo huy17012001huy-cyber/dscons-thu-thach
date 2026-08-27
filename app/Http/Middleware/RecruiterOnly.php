@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,7 +11,9 @@ class RecruiterOnly
 {
     public function handle(Request $request, Closure $next): Response
     {
-        abort_unless($request->user()?->isRecruiter(), 403);
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->isRecruiter(), 403);
+
         return $next($request);
     }
 }

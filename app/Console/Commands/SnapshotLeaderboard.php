@@ -4,12 +4,12 @@ namespace App\Console\Commands;
 
 use App\Models\LeaderboardSnapshot;
 use App\Models\User;
-use App\Models\XpTransaction;
 use Illuminate\Console\Command;
 
 class SnapshotLeaderboard extends Command
 {
     protected $signature = 'aip:snapshot-leaderboard';
+
     protected $description = 'Create weekly/monthly leaderboard snapshots';
 
     public function handle(): void
@@ -25,7 +25,7 @@ class SnapshotLeaderboard extends Command
                 ->selectRaw('COALESCE(SUM(xp_transactions.amount), 0) as xp_earned')
                 ->leftJoin('xp_transactions', function ($j) use ($since) {
                     $j->on('users.id', '=', 'xp_transactions.user_id')
-                      ->where('xp_transactions.created_at', '>=', $since);
+                        ->where('xp_transactions.created_at', '>=', $since);
                 })
                 ->groupBy('users.id')
                 ->orderByDesc('xp_earned')
@@ -43,7 +43,7 @@ class SnapshotLeaderboard extends Command
 
                 LeaderboardSnapshot::updateOrCreate(
                     ['user_id' => $u->id, 'period' => $period, 'period_key' => $key],
-                    ['xp_earned' => $u->xp_earned, 'rank' => $rank, 'rank_change' => $rankChange, 'snapshot_date' => $now->toDateString()]
+                    ['xp_earned' => (int) $u->getAttribute('xp_earned'), 'rank' => $rank, 'rank_change' => $rankChange, 'snapshot_date' => $now->toDateString()]
                 );
                 $rank++;
             }

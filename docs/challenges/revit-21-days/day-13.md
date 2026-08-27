@@ -1,38 +1,44 @@
-# Ngày 13 — Thiết kế cửa sổ WPF dùng được trong Revit
+# Ngày 13 — Làm cửa sổ tool dễ sử dụng
 
-**Hình thức:** Video ngắn · **Thời lượng:** 60 phút
+**Hình thức:** Tự thực hành · **Thời lượng:** 60 phút
 
 ## Hôm nay làm gì?
 
-Tạo UI WPF có bố cục rõ, màu DSCons, loading, thành công/thất bại; không che Revit và có trạng thái đóng/mở ổn định.
+AI giúp bạn làm giao diện WPF có nút chính, loading, thành công, lỗi và hủy; màu sắc theo DSCons.
 
 ## Kết quả cần đạt
 
-Giao diện giúp kỹ sư biết đang chạy gì và kết quả là gì
+Người dùng biết phải bấm gì và đang xảy ra điều gì.
 
 ## AI làm gì?
 
-- Đọc workspace, hiểu mục tiêu và đề xuất cách làm.
-- Thực hiện phần code/tài liệu, build và báo lại file đã thay đổi.
+- Đọc mục tiêu và những gì đang có trước khi thực hiện.
+- Đề xuất kế hoạch, file cần thay đổi, lệnh build và cách kiểm tra.
+- Thực hiện phần kỹ thuật sau khi học viên xác nhận và báo lại kết quả.
 
 ## Học viên kiểm tra gì?
 
-- Mở đúng workspace và model bản sao; đọc kế hoạch trước khi bấm chạy.
-- Kiểm tra kết quả thật trong Revit và chụp minh chứng dễ đối chiếu.
+- Chọn đúng phiên bản Revit và cung cấp thông tin công việc cho AI.
+- Đọc kế hoạch, xác nhận trước thay đổi và không đưa dữ liệu mật lên AI.
+- Mở Revit bằng model mẫu/bản sao, chạy thử và đối chiếu kết quả.
 
-## SOP duy nhất
+## SOP từng bước
 
-1. Mở XAML và code-behind do AI tạo trong workspace.
-2. Dán prompt yêu cầu AI giữ logic hiện có, chỉ thay UI và binding cần thiết.
-3. Build và mở cửa sổ từ Ribbon.
-4. Thử loading, success, error, empty state và đóng cửa sổ.
+1. Mở công cụ hoặc model được ghi trong bài và dùng bản sao an toàn.
+2. Copy toàn bộ prompt bên dưới, dán vào AI Agent và điền các phần trong ngoặc vuông.
+3. Khi AI hỏi lại, trả lời phiên bản Revit, mục tiêu và model kiểm thử; nếu chưa biết thì nói rõ “chưa biết”, không đoán.
+4. Đọc kế hoạch AI: mục tiêu, việc sẽ làm, file sẽ sửa, lệnh chạy và cách quay lại. Chỉ xác nhận khi bạn hiểu.
+5. Giữ nguyên chức năng đã chạy; chỉ yêu cầu AI chỉnh giao diện và binding cần thiết.
+6. Kiểm tra nút chính, loading, thành công, lỗi, không dữ liệu, đóng và hủy.
+7. Đảm bảo nhãn nút nói rõ hành động thay vì chỉ dùng icon.
+8. Để AI thực hiện, build/chạy theo hướng dẫn, rồi mở Revit để kiểm tra kết quả thật.
+9. Chụp bằng chứng, trả lời ba câu reflection và nộp bài trên website. Nếu lỗi, gửi đoạn log từ ERROR/exception đến phần summary.
 
 ## Minh chứng cần nộp
 
-- Ảnh màn hình kết quả của ngày 13.
-- Ảnh sản phẩm đã đăng lên Bảng tin cộng đồng.
-
-**Đăng lên Bảng tin:** Đăng ảnh sản phẩm hoặc kết quả chạy thật, kèm 2–3 câu bạn đã dùng AI như thế nào.
+- Ảnh màn hình kết quả thật của ngày 13.
+- Giao diện hoạt động thật, không chỉ là hình minh họa.
+- Ba câu ngắn: Tôi yêu cầu AI làm gì? AI đã làm gì? Tôi kiểm tra kết quả thế nào?
 
 ## Điều kiện Đạt
 
@@ -40,5 +46,6 @@ Giao diện giúp kỹ sư biết đang chạy gì và kết quả là gì
 
 ## Lỗi thường gặp
 
-- UI giả nút nhưng không gọi command.
-- Không có loading khiến người dùng bấm lặp.
+- Chỉ gửi ảnh code hoặc câu trả lời của AI mà chưa chạy trong Revit.
+- Dùng sai phiên bản, sai model hoặc quên kiểm tra kết quả độc lập.
+- Cho AI sửa quá nhiều thứ cùng lúc hoặc sửa model gốc.

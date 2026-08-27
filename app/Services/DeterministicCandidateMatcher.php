@@ -6,10 +6,14 @@ use App\Models\EngineerCv;
 
 class DeterministicCandidateMatcher implements CandidateMatcher
 {
+    /**
+     * @param  array<string, mixed>  $jobCriteria
+     * @return array{score:int, matched_skills:array<int,string>, reasons:array<int,string>}
+     */
     public function score(array $jobCriteria, EngineerCv $cv): array
     {
-        $skills = collect($cv->skills())->map(fn ($skill) => strtolower(trim(is_array($skill) ? ($skill['name'] ?? '') : $skill)))->filter()->values();
-        $required = collect($jobCriteria['skills'] ?? [])->map(fn ($skill) => strtolower($skill))->filter()->values();
+        $skills = collect((array) $cv->skills())->map(fn ($skill) => strtolower(trim(is_array($skill) ? (string) ($skill['name'] ?? '') : (string) $skill)))->filter()->values();
+        $required = collect((array) ($jobCriteria['skills'] ?? []))->map(fn ($skill) => strtolower((string) $skill))->filter()->values();
         $matched = $required->filter(fn ($skill) => $skills->contains(fn ($candidate) => str_contains($candidate, $skill) || str_contains($skill, $candidate)))->values();
         $score = $required->isEmpty() ? 50 : (int) round(($matched->count() / $required->count()) * 80);
         $years = (int) data_get($cv->data, 'years_experience', 0);

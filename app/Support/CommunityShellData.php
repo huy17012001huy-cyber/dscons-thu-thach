@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 
 final class CommunityShellData
 {
+    /** @return array<string, mixed> */
     public static function make(Brand $brand, ?User $user, bool $isDiscovery): array
     {
         $brandId = (int) $brand->id;
@@ -43,9 +44,10 @@ final class CommunityShellData
         ];
     }
 
+    /** @return Collection<int, Membership> */
     private static function membershipsForUser(?User $user): Collection
     {
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -54,7 +56,7 @@ final class CommunityShellData
             ->with('brand')
             ->whereIn('status', ['active', 'trial'])
             ->get()
-            ->filter(fn ($membership) => $membership->brand);
+            ->filter(fn (Membership $membership): bool => $membership->brand instanceof Brand);
 
         $roleBrands = $user->brandRoles()
             ->whereIn('brand_user.role', ['member', 'moderator', 'admin', 'owner'])
@@ -66,13 +68,14 @@ final class CommunityShellData
                 'tier' => 'free',
                 'status' => 'active',
             ]);
+
             return $membership->setRelation('brand', $brand);
         });
 
         return $memberships->merge($roleMemberships)->unique('brand_id')->values();
     }
 
-    private static function currentMembership(?User $user, int $brandId): mixed
+    private static function currentMembership(?User $user, int $brandId): ?Membership
     {
         return $user?->memberships()
             ->withoutGlobalScopes()
@@ -85,7 +88,7 @@ final class CommunityShellData
     {
         $fallback = CommunityBrandSettings::membershipLabel($brand);
 
-        if (!$membership?->isPremium()) {
+        if (! $membership?->isPremium()) {
             return $fallback;
         }
 

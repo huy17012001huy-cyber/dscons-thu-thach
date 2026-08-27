@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Expedition;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -26,7 +27,7 @@ class ChallengePage extends Component
         $this->resetPage();
     }
 
-    public function render()
+    public function render(): View
     {
         $userId = Auth::id();
         $isAdmin = Auth::user()?->isBrandAdmin() ?? false;
@@ -76,7 +77,7 @@ class ChallengePage extends Component
         $challenges = $query->latest()->paginate(12);
 
         $taskIds = $challenges->getCollection()
-            ->flatMap(fn (Expedition $challenge) => $challenge->tasks->pluck('id'))
+            ->flatMap(fn (Expedition $challenge) => $challenge->tasks->map(fn ($task): int => (int) $task->id))
             ->values();
 
         $approvedTaskIds = collect();
@@ -86,7 +87,6 @@ class ChallengePage extends Component
                 ->whereIn('challenge_task_id', $taskIds)
                 ->where('status', 'approved')
                 ->orderBy('created_at')
-                ->get(['challenge_task_id'])
                 ->pluck('challenge_task_id')
                 ->unique();
         }

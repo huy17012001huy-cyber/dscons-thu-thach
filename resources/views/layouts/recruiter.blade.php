@@ -48,7 +48,9 @@
             <span class="talent-community"><x-icon name="layers" size="14" /> {{ brand()->name }}</span>
             @auth
                 <nav class="talent-nav" aria-label="Điều hướng Talent">
-                    @if(auth()->user()->isRecruiter())
+                    @if(request()->routeIs('community.manage.recruitment.preview.recruiter'))
+                        <a href="{{ community_route('manage.recruitment') }}" class="active"><x-icon name="settings" size="16" /> Quản lý Talent</a>
+                    @elseif(auth()->user()->isRecruiter())
                         <a href="{{ community_route('recruiter.dashboard') }}" class="{{ request()->routeIs('*recruiter.dashboard','*recruiter.candidates') ? 'active' : '' }}"><x-icon name="search" size="16" /> Ứng viên</a>
                         <a href="{{ community_route('recruiter.plans') }}" class="{{ request()->routeIs('*recruiter.plans') ? 'active' : '' }}"><x-icon name="credit-card" size="16" /> Gói & credit</a>
                         <a href="{{ community_route('recruiter.messages') }}" class="{{ request()->routeIs('*recruiter.messages') ? 'active' : '' }}"><x-icon name="mail" size="16" /> Tin nhắn</a>

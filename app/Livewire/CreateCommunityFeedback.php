@@ -3,8 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Feedback;
-use Illuminate\Support\Facades\Storage;
+use App\Models\User;
+use Illuminate\View\View;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 class CreateCommunityFeedback extends Component
@@ -12,16 +14,22 @@ class CreateCommunityFeedback extends Component
     use WithFileUploads;
 
     public string $type = 'gop_y';
+
     public string $subject = '';
+
     public string $content = '';
+
+    /** @var array<int, TemporaryUploadedFile> */
     public array $attachments = [];
 
     public function mount(): void
     {
         abort_unless(auth()->check(), 403);
-        abort_unless(auth()->user()->isCommunityParticipant(brand()->id), 403);
+        $user = auth()->user();
+        abort_unless($user instanceof User && $user->isCommunityParticipant(brand()->id), 403);
     }
 
+    /** @return array<string, list<string>> */
     protected function rules(): array
     {
         return [
@@ -43,13 +51,16 @@ class CreateCommunityFeedback extends Component
     {
         $this->validate();
 
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
         $paths = collect($this->attachments)
-            ->map(fn ($file) => $file->store('feedback/'.brand()->slug.'/'.auth()->id(), 'public'))
+            ->map(fn (TemporaryUploadedFile $file) => $file->store('feedback/'.brand()->slug.'/'.$user->id, 'public'))
+            ->filter(fn (mixed $path): bool => is_string($path))
             ->values()
             ->all();
 
         Feedback::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'brand_id' => brand()->id,
             'type' => $this->type,
             'subject' => trim($this->subject),
@@ -63,7 +74,7 @@ class CreateCommunityFeedback extends Component
         $this->redirect(community_route('feedbacks'), navigate: true);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.create-community-feedback')
             ->layout('layouts.app', ['title' => 'Gửi góp ý & Khiếu nại · '.brand()->name]);

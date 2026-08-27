@@ -9,6 +9,7 @@ class PostImage extends Model
 {
     protected $fillable = ['post_id', 'path', 'order_index'];
 
+    /** @return BelongsTo<Post, $this> */
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);

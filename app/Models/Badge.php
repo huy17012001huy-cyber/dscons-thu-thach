@@ -9,6 +9,7 @@ class Badge extends Model
 {
     protected $fillable = ['name', 'description', 'icon', 'rarity', 'condition_type', 'condition_value'];
 
+    /** @return HasMany<UserBadge, $this> */
     public function userBadges(): HasMany
     {
         return $this->hasMany(UserBadge::class);

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class CleanQaSample extends Command
@@ -80,7 +81,8 @@ class CleanQaSample extends Command
         return self::SUCCESS;
     }
 
-    private function qaUserIds()
+    /** @return Collection<int, int> */
+    private function qaUserIds(): Collection
     {
         return DB::table('users')
             ->where('source', 'qa-test')
@@ -94,7 +96,11 @@ class CleanQaSample extends Command
             ->pluck('id');
     }
 
-    private function eventIds($userIds)
+    /**
+     * @param  Collection<int, int>  $userIds
+     * @return Collection<int, int>
+     */
+    private function eventIds(Collection $userIds): Collection
     {
         return DB::table('events')
             ->where('title', 'like', '[TEST]%')
@@ -102,7 +108,11 @@ class CleanQaSample extends Command
             ->pluck('id');
     }
 
-    private function expeditionIds($userIds)
+    /**
+     * @param  Collection<int, int>  $userIds
+     * @return Collection<int, int>
+     */
+    private function expeditionIds(Collection $userIds): Collection
     {
         return DB::table('expeditions')
             ->where('title', 'like', '[TEST]%')
@@ -110,17 +120,20 @@ class CleanQaSample extends Command
             ->pluck('id');
     }
 
-    private function courseIds()
+    /** @return Collection<int, int> */
+    private function courseIds(): Collection
     {
         return DB::table('courses')->where('title', 'like', '[TEST]%')->pluck('id');
     }
 
-    private function productIds()
+    /** @return Collection<int, int> */
+    private function productIds(): Collection
     {
         return DB::table('digital_products')->where('title', 'like', '[TEST]%')->pluck('id');
     }
 
-    private function topicIds()
+    /** @return Collection<int, int> */
+    private function topicIds(): Collection
     {
         return DB::table('topics')->where('name', 'like', '[TEST]%')->pluck('id');
     }

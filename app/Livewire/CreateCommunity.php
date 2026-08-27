@@ -3,9 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\CommunityApplication;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 class CreateCommunity extends Component
@@ -13,16 +16,26 @@ class CreateCommunity extends Component
     use WithFileUploads;
 
     public string $name = '';
+
     public string $slug = '';
+
     public string $tagline = '';
+
     public string $description = '';
+
     public string $teachingTopic = '';
+
     public string $programDescription = '';
+
     public string $proposedPremiumPrice = '';
+
     public string $proposedSepayAccount = '';
+
     public string $proposedSepayBank = '';
-    public $logo;
-    public $banner;
+
+    public ?TemporaryUploadedFile $logo = null;
+
+    public ?TemporaryUploadedFile $banner = null;
 
     public function updatedName(string $value): void
     {
@@ -33,6 +46,9 @@ class CreateCommunity extends Component
 
     public function submit(): void
     {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
         $this->validate([
             'name' => 'required|string|max:100',
             'slug' => 'required|alpha_dash:ascii|max:50|unique:brands,slug|unique:community_applications,slug',
@@ -48,7 +64,7 @@ class CreateCommunity extends Component
         ]);
 
         $data = [
-            'applicant_id' => Auth::id(),
+            'applicant_id' => $user->id,
             'name' => trim($this->name),
             'slug' => Str::slug($this->slug),
             'tagline' => trim($this->tagline) ?: null,
@@ -62,10 +78,16 @@ class CreateCommunity extends Component
         ];
 
         if ($this->logo) {
-            $data['logo_path'] = $this->logo->store('community/logos', 'public');
+            $path = $this->logo->store('community/logos', 'public');
+            if (is_string($path)) {
+                $data['logo_path'] = $path;
+            }
         }
         if ($this->banner) {
-            $data['banner_path'] = $this->banner->store('community/banners', 'public');
+            $path = $this->banner->store('community/banners', 'public');
+            if (is_string($path)) {
+                $data['banner_path'] = $path;
+            }
         }
 
         CommunityApplication::create($data);
@@ -73,7 +95,7 @@ class CreateCommunity extends Component
         $this->redirect(route('communities'), navigate: true);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.create-community')
             ->layout('layouts.app', ['title' => 'Tạo cộng đồng']);

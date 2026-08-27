@@ -9,7 +9,9 @@ use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\Membership;
 use App\Models\ProductPurchase;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -25,9 +27,9 @@ class OrdersPage extends Component
         }
     }
 
-    public function render()
+    public function render(): View
     {
-        $user = Auth::user();
+        $user = $this->currentUser();
         $userId = $user->id;
         $hasPremium = $user->hasPremiumMembership();
 
@@ -40,7 +42,9 @@ class OrdersPage extends Component
             $orders->push((object) [
                 'kind' => 'membership', 'kind_label' => 'Membership', 'title' => ucfirst($record->tier ?: 'Free').' · '.brand()->name,
                 'amount' => (int) $record->paid_amount, 'status' => $status,
-                'status_label' => match ($status) { 'active' => 'Đang dùng', 'expired' => 'Đã hết hạn', 'trial' => 'Dùng thử', default => ucfirst($status) },
+                'status_label' => match ($status) {
+                    'active' => 'Đang dùng', 'expired' => 'Đã hết hạn', 'trial' => 'Dùng thử', default => ucfirst($status)
+                },
                 'date' => $record->starts_at ?: $record->created_at, 'ref' => $record->payment_ref,
                 'url' => community_route('membership'), 'action' => $status === 'active' ? 'Đổi hoặc gia hạn' : 'Mở gói',
             ]);
@@ -80,8 +84,8 @@ class OrdersPage extends Component
         foreach ($purchases as $purchase) {
             $status = $purchase->status === 'pending_payment' ? 'pending' : $purchase->status;
             $orders->push((object) [
-                'kind' => 'resource', 'kind_label' => 'Tài nguyên', 'title' => $purchase->product?->title ?: 'Sản phẩm đã lưu trữ',
-                'amount' => (int) ($purchase->amount_paid ?: $purchase->product?->price), 'status' => $status,
+                'kind' => 'resource', 'kind_label' => 'Tài nguyên', 'title' => $purchase->product->title,
+                'amount' => (int) ($purchase->amount_paid ?: $purchase->product->price), 'status' => $status,
                 'status_label' => $status === 'pending' ? 'Chờ thanh toán' : 'Đã mua',
                 'date' => $purchase->paid_at ?: $purchase->created_at, 'ref' => $purchase->payment_ref,
                 'url' => community_route('marketplace'), 'action' => $status === 'pending' ? 'Thanh toán tiếp' : 'Mở Marketplace',
@@ -89,22 +93,22 @@ class OrdersPage extends Component
         }
 
         $ownedCourseIds = $enrollments->where('status', 'active')->pluck('course_id');
-        $ownedChallengeIds = $membershipsByChallenge->filter(fn ($member) => in_array($member->status, ['approved', 'paid'], true) && !$member->kicked_at)->pluck('expedition_id');
+        $ownedChallengeIds = $membershipsByChallenge->filter(fn ($member) => in_array($member->status, ['approved', 'paid'], true) && ! $member->kicked_at)->pluck('expedition_id');
         $ownedProductIds = $purchases->where('status', 'active')->pluck('digital_product_id');
         $unowned = collect();
 
         Course::where('is_published', true)->get()->each(function ($course) use ($ownedCourseIds, $hasPremium, $unowned): void {
-            if (!$hasPremium && !$ownedCourseIds->contains($course->id)) {
+            if (! $hasPremium && ! $ownedCourseIds->contains($course->id)) {
                 $unowned->push((object) ['kind_label' => 'Khóa học', 'title' => $course->title, 'price' => (int) $course->price, 'url' => community_route('academy.show', ['id' => $course->id]), 'action' => 'Xem khóa học']);
             }
         });
         Expedition::whereIn('status', ['open', 'active'])->get()->each(function ($challenge) use ($ownedChallengeIds, $hasPremium, $unowned): void {
-            if (!$hasPremium && !$ownedChallengeIds->contains($challenge->id)) {
+            if (! $hasPremium && ! $ownedChallengeIds->contains($challenge->id)) {
                 $unowned->push((object) ['kind_label' => 'Challenge', 'title' => $challenge->title, 'price' => (int) $challenge->price, 'url' => community_route('challenge.show', ['slug' => $challenge->slug ?? $challenge->id]), 'action' => 'Xem Challenge']);
             }
         });
         DigitalProduct::where('is_published', true)->get()->each(function ($product) use ($ownedProductIds, $unowned): void {
-            if (!$ownedProductIds->contains($product->id)) {
+            if (! $ownedProductIds->contains($product->id)) {
                 $unowned->push((object) ['kind_label' => 'Tài nguyên', 'title' => $product->title, 'price' => (int) $product->price, 'url' => community_route('marketplace'), 'action' => 'Mở Marketplace']);
             }
         });
@@ -123,6 +127,14 @@ class OrdersPage extends Component
             'purchasedCount' => $orders->whereIn('status', ['active', 'completed'])->count(),
             'pendingCount' => $orders->where('status', 'pending')->count(),
             'unowned' => $unowned,
-        ])->layout('layouts.app', ['title' => 'Gói & Đơn hàng — ' . brand()->name]);
+        ])->layout('layouts.app', ['title' => 'Gói & Đơn hàng — '.brand()->name]);
+    }
+
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }

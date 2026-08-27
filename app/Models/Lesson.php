@@ -16,21 +16,25 @@ class Lesson extends Model
 
     protected $casts = ['is_locked_by_default' => 'boolean'];
 
+    /** @return BelongsTo<Module, $this> */
     public function module(): BelongsTo
     {
         return $this->belongsTo(Module::class);
     }
 
+    /** @return HasMany<LessonProgress, $this> */
     public function progress(): HasMany
     {
         return $this->hasMany(LessonProgress::class);
     }
 
+    /** @return HasMany<LessonTask, $this> */
     public function tasks(): HasMany
     {
         return $this->hasMany(LessonTask::class)->orderBy('order_index');
     }
 
+    /** @return HasMany<LessonPrerequisite, $this> */
     public function prerequisites(): HasMany
     {
         return $this->hasMany(LessonPrerequisite::class);
@@ -38,7 +42,7 @@ class Lesson extends Model
 
     public function isUnlockedFor(User $user): bool
     {
-        if (!$this->is_locked_by_default) {
+        if (! $this->is_locked_by_default) {
             return true;
         }
 
@@ -56,7 +60,7 @@ class Lesson extends Model
                 ->orderByDesc('order_index')
                 ->first();
 
-            if (!$prev) {
+            if (! $prev) {
                 return true;
             }
 

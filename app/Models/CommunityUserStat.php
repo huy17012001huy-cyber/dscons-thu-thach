@@ -22,6 +22,7 @@ class CommunityUserStat extends Model
         'last_active_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

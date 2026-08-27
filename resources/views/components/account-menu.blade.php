@@ -18,6 +18,9 @@
         <a href="{{ route('account.settings') }}" @click="accountOpen=false">
             <x-icon name="settings" size="19" /> <span>Cài đặt tài khoản</span>
         </a>
+        <a href="{{ route('account.revit-device') }}" @click="accountOpen=false">
+            <x-icon name="layers" size="19" /> <span>Thiết bị Revit</span>
+        </a>
     </div>
     <form method="POST" action="{{ route('logout') }}" class="account-logout-form">
         @csrf

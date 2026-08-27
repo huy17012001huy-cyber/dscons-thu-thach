@@ -27,26 +27,25 @@ test.describe('guest smoke flows', () => {
 
     test('legacy registration and password URLs follow the configured auth mode', async ({ page }) => {
         const authMode = process.env.QA_AUTH_MODE ?? 'password';
+        const registrationMode = process.env.QA_REGISTRATION_MODE ?? 'invite';
+        const canUsePasswordRecovery = authMode === 'password' && registrationMode === 'open';
         await page.goto('/register');
-        if (authMode === 'google') {
+        if (!canUsePasswordRecovery) {
             await expect(page).toHaveURL(/\/login$/);
-            await expect(page.getByRole('link', { name: /đăng nhập bằng Google/i })).toBeVisible();
         } else {
             await expect(page.getByRole('heading', { name: 'Tham gia cộng đồng' })).toBeVisible();
         }
 
         await page.goto('/quen-mat-khau');
-        if (authMode === 'google') {
+        if (!canUsePasswordRecovery) {
             await expect(page).toHaveURL(/\/login$/);
-            await expect(page.getByText(/chỉ hỗ trợ đăng nhập bằng Google/i)).toBeVisible();
         } else {
             await expect(page.getByRole('heading', { name: 'Quên mật khẩu\?' })).toBeVisible();
         }
 
         await page.goto('/dat-lai-mat-khau/test-token');
-        if (authMode === 'google') {
+        if (!canUsePasswordRecovery) {
             await expect(page).toHaveURL(/\/login$/);
-            await expect(page.getByText(/chỉ hỗ trợ đăng nhập bằng Google/i)).toBeVisible();
         } else {
             await expect(page.getByRole('heading', { name: 'Đặt lại mật khẩu' })).toBeVisible();
         }

@@ -2,7 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class NotificationBell extends Component
@@ -11,7 +15,7 @@ class NotificationBell extends Component
 
     public function toggleDropdown(): void
     {
-        $this->showDropdown = !$this->showDropdown;
+        $this->showDropdown = ! $this->showDropdown;
     }
 
     public function markAllRead(): void
@@ -23,7 +27,9 @@ class NotificationBell extends Component
     public function openNotification(string $id): void
     {
         $notification = $this->communityNotifications()->whereKey($id)->first();
-        if (!$notification) return;
+        if (! $notification) {
+            return;
+        }
 
         $notification->markAsRead();
         $this->showDropdown = false;
@@ -45,13 +51,15 @@ class NotificationBell extends Component
         $host = $parsed['host'] ?? null;
 
         // Block non-http schemes (javascript:, data:, etc.)
-        if ($scheme && !in_array($scheme, ['http', 'https'], true)) return false;
+        if ($scheme && ! in_array($scheme, ['http', 'https'], true)) {
+            return false;
+        }
 
         // Allow relative URLs or same-host URLs
-        return !$host || $host === request()->getHost();
+        return ! $host || $host === request()->getHost();
     }
 
-    public function render()
+    public function render(): View
     {
         $user = Auth::user();
         $count = $this->communityNotifications()->whereNull('read_at')->count();
@@ -65,9 +73,12 @@ class NotificationBell extends Component
         ]);
     }
 
-    private function communityNotifications()
+    /** @return MorphMany<DatabaseNotification, User> */
+    private function communityNotifications(): MorphMany
     {
-        $query = Auth::user()->notifications();
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+        $query = $user->notifications();
         if (app()->bound('brand')) {
             $query->where(function ($builder) {
                 $builder->where('brand_id', brand()->id)->orWhereNull('brand_id');

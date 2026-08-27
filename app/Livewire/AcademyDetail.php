@@ -8,32 +8,41 @@ use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\LessonTask;
 use App\Models\TaskSubmission;
+use App\Models\User;
 use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 class AcademyDetail extends Component
 {
     public Course $course;
+
     public bool $enrolled = false;
+
     public bool $pendingPayment = false;
+
     public bool $premiumLocked = false;
+
     public int $completedLessons = 0;
+
     public int $totalLessons = 0;
+
     public ?int $openLessonId = null;
 
     #[Rule('required|min:3|max:5000')]
     public string $taskAnswer = '';
+
     public ?int $activeTaskId = null;
 
     public function mount(int $id): void
     {
         $this->course = Course::with(['modules.lessons.tasks'])->findOrFail($id);
-        $this->totalLessons = $this->course->modules->sum(fn($m) => $m->lessons->count());
+        $this->totalLessons = $this->course->modules->sum(fn ($m) => $m->lessons->count());
 
-        if (Auth::check()) {
-            $enrollment = CourseEnrollment::where('user_id', Auth::id())
+        if ($user = $this->authenticatedUser()) {
+            $enrollment = CourseEnrollment::where('user_id', $user->id)
                 ->where('course_id', $this->course->id)
                 ->first();
             $this->enrolled = $enrollment && $enrollment->status === 'active';
@@ -45,11 +54,11 @@ class AcademyDetail extends Component
             // Premium membership includes every course in the current community.
             // Create the enrollment lazily so progress, completion and XP keep
             // using the existing course flow without a second payment.
-            if (!$this->premiumLocked && !$this->enrolled && !$this->pendingPayment
-                && Auth::user()->hasPremiumMembership()
+            if (! $this->enrolled && ! $this->pendingPayment
+                && $user->hasPremiumMembership()
                 && $this->course->is_published) {
                 $enrollment = CourseEnrollment::firstOrCreate(
-                    ['user_id' => Auth::id(), 'course_id' => $this->course->id],
+                    ['user_id' => $user->id, 'course_id' => $this->course->id],
                     ['status' => 'active', 'enrolled_at' => now()]
                 );
                 if ($enrollment->status === 'active') {
@@ -58,8 +67,8 @@ class AcademyDetail extends Component
             }
 
             if ($this->enrolled) {
-                $lessonIds = $this->course->modules->flatMap(fn($m) => $m->lessons->pluck('id'));
-                $this->completedLessons = LessonProgress::where('user_id', Auth::id())
+                $lessonIds = $this->course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+                $this->completedLessons = LessonProgress::where('user_id', $user->id)
                     ->whereIn('lesson_id', $lessonIds)
                     ->whereNotNull('completed_at')
                     ->count();
@@ -69,11 +78,14 @@ class AcademyDetail extends Component
 
     public function enroll(): void
     {
-        if (!Auth::check() || $this->enrolled) return;
-        $user = Auth::user();
+        $user = $this->authenticatedUser();
+        if (! $user || $this->enrolled) {
+            return;
+        }
 
         if ($user->level < $this->course->min_level) {
-            $this->dispatch('toast', message: 'Cần đạt Lv.' . $this->course->min_level . ' để tham gia', type: 'error');
+            $this->dispatch('toast', message: 'Cần đạt Lv.'.$this->course->min_level.' để tham gia', type: 'error');
+
             return;
         }
 
@@ -81,7 +93,9 @@ class AcademyDetail extends Component
         $existing = CourseEnrollment::where('user_id', $user->id)
             ->where('course_id', $this->course->id)
             ->first();
-        if ($existing) return;
+        if ($existing) {
+            return;
+        }
 
         if ($user->hasPremiumMembership() || $this->course->isFree()) {
             // Free course — enroll immediately
@@ -120,44 +134,56 @@ class AcademyDetail extends Component
 
     public function submitTask(): void
     {
-        if (!Auth::check() || !$this->enrolled || !$this->activeTaskId) return;
+        $user = $this->authenticatedUser();
+        if (! $user || ! $this->enrolled || ! $this->activeTaskId) {
+            return;
+        }
 
         $this->validate();
 
         $task = LessonTask::findOrFail($this->activeTaskId);
 
         TaskSubmission::updateOrCreate(
-            ['lesson_task_id' => $task->id, 'user_id' => Auth::id()],
+            ['lesson_task_id' => $task->id, 'user_id' => $user->id],
             ['content' => $this->taskAnswer, 'status' => 'pending', 'submitted_at' => now()]
         );
 
         $this->resetTaskForm();
 
         // Check if lesson auto-completes
-        $this->checkLessonAutoComplete($task->lesson);
+        if ($task->lesson instanceof Lesson) {
+            $this->checkLessonAutoComplete($task->lesson);
+        }
     }
 
     public function completeLesson(int $lessonId): void
     {
-        if (!Auth::check() || !$this->enrolled) return;
+        $user = $this->authenticatedUser();
+        if (! $user || ! $this->enrolled) {
+            return;
+        }
 
-        $lesson = $this->course->modules->flatMap(fn($m) => $m->lessons)->firstWhere('id', $lessonId);
-        if (!$lesson || !$lesson->isUnlockedFor(Auth::user())) return;
+        $lesson = $this->course->modules->flatMap(fn ($m) => $m->lessons)->firstWhere('id', $lessonId);
+        if (! $lesson || ! $lesson->isUnlockedFor($user)) {
+            return;
+        }
 
-        $already = LessonProgress::where('user_id', Auth::id())
+        $already = LessonProgress::where('user_id', $user->id)
             ->where('lesson_id', $lessonId)
             ->whereNotNull('completed_at')
             ->exists();
 
-        if ($already) return;
+        if ($already) {
+            return;
+        }
 
         LessonProgress::updateOrCreate(
-            ['user_id' => Auth::id(), 'lesson_id' => $lessonId],
+            ['user_id' => $user->id, 'lesson_id' => $lessonId],
             ['completed_at' => now()]
         );
 
         if ($lesson->xp_reward > 0) {
-            app(XpService::class)->award(Auth::user(), 'lesson_complete', 1.0, 'Hoàn thành bài: ' . $lesson->title, $lesson);
+            app(XpService::class)->award($user, 'lesson_complete', 1.0, 'Hoàn thành bài: '.$lesson->title, $lesson);
         }
 
         $this->completedLessons++;
@@ -169,7 +195,7 @@ class AcademyDetail extends Component
                 ->update(['completed_at' => now()]);
 
             if ($this->course->xp_reward > 0) {
-                app(XpService::class)->award(Auth::user(), 'course_complete', 1.0, 'Hoàn thành khóa học: ' . $this->course->title, $this->course);
+                app(XpService::class)->award($user, 'course_complete', 1.0, 'Hoàn thành khóa học: '.$this->course->title, $this->course);
             }
 
             $this->dispatch('toast', message: 'Chúc mừng! Bạn đã hoàn thành khóa học!', type: 'success');
@@ -179,7 +205,9 @@ class AcademyDetail extends Component
     private function checkLessonAutoComplete(Lesson $lesson): void
     {
         $requiredTaskIds = $lesson->tasks()->where('is_required', true)->pluck('id');
-        if ($requiredTaskIds->isEmpty()) return;
+        if ($requiredTaskIds->isEmpty()) {
+            return;
+        }
 
         $submittedCount = TaskSubmission::where('user_id', Auth::id())
             ->whereIn('lesson_task_id', $requiredTaskIds)
@@ -198,9 +226,16 @@ class AcademyDetail extends Component
         $this->resetValidation();
     }
 
-    public function render()
+    private function authenticatedUser(): ?User
     {
         $user = Auth::user();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    public function render(): View
+    {
+        $user = $this->authenticatedUser();
 
         // Auto-detect payment success while polling
         if ($this->pendingPayment && $user) {
@@ -219,7 +254,7 @@ class AcademyDetail extends Component
         $submissions = collect();
 
         if ($user && $this->enrolled) {
-            $lessonIds = $this->course->modules->flatMap(fn($m) => $m->lessons->pluck('id'));
+            $lessonIds = $this->course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $completedIds = LessonProgress::where('user_id', $user->id)
                 ->whereIn('lesson_id', $lessonIds)
                 ->whereNotNull('completed_at')
@@ -227,8 +262,8 @@ class AcademyDetail extends Component
                 ->toArray();
 
             $taskIds = $this->course->modules
-                ->flatMap(fn($m) => $m->lessons)
-                ->flatMap(fn($l) => $l->tasks->pluck('id'));
+                ->flatMap(fn ($m) => $m->lessons)
+                ->flatMap(fn ($l) => $l->tasks->pluck('id'));
 
             $submissions = TaskSubmission::where('user_id', $user->id)
                 ->whereIn('lesson_task_id', $taskIds)
@@ -271,6 +306,6 @@ class AcademyDetail extends Component
             'submittedTaskIds' => $submittedTaskIds,
             'submissions' => $submissions,
             'classSubmissions' => $classSubmissions,
-        ])->layout('layouts.app', ['title' => $this->course->title . ' — Khóa học']);
+        ])->layout('layouts.app', ['title' => $this->course->title.' — Khóa học']);
     }
 }

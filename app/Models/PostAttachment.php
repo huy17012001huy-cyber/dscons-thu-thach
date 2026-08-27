@@ -9,6 +9,7 @@ class PostAttachment extends Model
 {
     protected $fillable = ['post_id', 'type', 'url', 'size'];
 
+    /** @return BelongsTo<Post, $this> */
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);

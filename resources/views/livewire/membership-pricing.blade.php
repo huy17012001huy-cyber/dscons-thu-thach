@@ -1,152 +1,137 @@
 <div class="membership-page" @if($selectedPlan || $selectedCommunityPlanId) wire:poll.5s @endif>
-<style>
-    .membership-page { width: min(100%, 760px); margin: 0 auto; }
-    .membership-page .card { border-radius: 16px; border-color: #D7E5EA; }
-    .membership-plan-option, .community-plan-option { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease; }
-    .membership-plan-option:hover, .community-plan-option:hover { transform: translateY(-2px); border-color: #8FB9CB !important; box-shadow: 0 8px 18px rgba(18,59,89,.09); }
-    .membership-plan-option:focus-visible, .community-plan-option:focus-visible { outline: 3px solid rgba(31,119,190,.20); outline-offset: 2px; }
-    .membership-plan-option { min-height: 154px; }
-    .membership-plan-option[style*="#F0FDF4"] { background:#F7FCFD !important; }
-    .membership-page [style*="background:#F7F5F3"] { background:#F7FAFC !important; }
-    .membership-page img[alt^="QR"] { box-shadow: 0 4px 12px rgba(18,59,89,.10); }
-    @media (max-width: 640px) { .membership-page > div { max-width: none !important; } }
-</style>
+    <style>
+        .membership-page { width: min(100%, 1040px); margin: 0 auto; padding: 30px clamp(16px, 3vw, 32px) 64px; color: #15384f; }
+        .membership-hero { position: relative; overflow: hidden; padding: clamp(25px, 4vw, 42px); border: 1px solid #b9d7e6; border-radius: 22px; background: #eaf6fb; box-shadow: 0 13px 30px rgba(18, 59, 89, .08); }
+        .membership-hero::after { position: absolute; top: -94px; right: 7%; width: 230px; height: 230px; border: 25px solid rgba(31, 119, 190, .11); border-radius: 50%; content: ''; pointer-events: none; }
+        .membership-kicker { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 11px; color: #125a96; font-size: 11px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+        .membership-kicker svg { color: #f39402; }
+        .membership-hero h1 { position: relative; max-width: 650px; margin: 0; color: #123b59; font-size: clamp(28px, 4vw, 42px); font-weight: 850; letter-spacing: -.045em; line-height: 1.08; }
+        .membership-hero p { position: relative; max-width: 640px; margin: 12px 0 0; color: #426477; font-size: 15px; line-height: 1.65; }
+        .membership-clarity { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 24px; border: 1px solid #c7deea; border-radius: 14px; overflow: hidden; background: #c7deea; }
+        .membership-clarity-item { min-height: 82px; padding: 14px 15px; background: rgba(255, 255, 255, .8); }
+        .membership-clarity-item svg { margin-bottom: 7px; }
+        .membership-clarity-item strong { display: block; color: #123b59; font-size: 12px; font-weight: 850; }
+        .membership-clarity-item span { display: block; margin-top: 3px; color: #5c7888; font-size: 11px; line-height: 1.42; }
+        .membership-current { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 14px 16px; border: 1px solid #b7ddc8; border-radius: 14px; background: #f0fbf4; }
+        .membership-current svg { flex: 0 0 auto; }
+        .membership-current strong { display: block; color: #17633f; font-size: 14px; }
+        .membership-current span { display: block; margin-top: 3px; color: #3f7657; font-size: 12px; }
+        .membership-section { margin-top: 28px; }
+        .membership-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 13px; }
+        .membership-section-heading h2 { margin: 0; color: #123b59; font-size: 21px; font-weight: 850; letter-spacing: -.025em; }
+        .membership-section-heading p { max-width: 550px; margin: 5px 0 0; color: #597889; font-size: 13px; line-height: 1.55; }
+        .membership-section-badge { flex: 0 0 auto; padding: 6px 9px; border: 1px solid #c5dfe9; border-radius: 999px; background: #f2f9fc; color: #125a96; font-size: 11px; font-weight: 800; }
+        .membership-plan-grid { display: grid; grid-template-columns: minmax(250px, .72fr) minmax(0, 1.28fr); gap: 14px; align-items: stretch; }
+        .membership-base-plan { display: flex; flex-direction: column; padding: 23px; border: 1px solid #d6e5eb; border-radius: 18px; background: #f8fbfc; }
+        .membership-plan-eyebrow { display: inline-flex; width: fit-content; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 999px; background: #e8f1f5; color: #526f80; font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+        .membership-base-plan h3, .membership-premium-plan h3 { margin: 14px 0 0; color: #123b59; font-size: 21px; font-weight: 850; letter-spacing: -.025em; }
+        .membership-base-plan > p { margin: 7px 0 0; color: #5d7887; font-size: 13px; line-height: 1.55; }
+        .membership-base-price { margin-top: auto; padding-top: 20px; color: #3f6173; font-size: 18px; font-weight: 850; }
+        .membership-base-price span { display: block; margin-top: 3px; color: #6b8492; font-size: 11px; font-weight: 600; }
+        .membership-includes { display: grid; gap: 9px; margin: 18px 0 0; padding: 0; list-style: none; }
+        .membership-includes li { display: flex; align-items: flex-start; gap: 8px; color: #365568; font-size: 12px; line-height: 1.45; }
+        .membership-includes li svg { flex: 0 0 auto; margin-top: 1px; }
+        .membership-premium-plans { display: grid; gap: 12px; }
+        .membership-premium-plan { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; min-width: 0; padding: 22px; border: 1px solid #a9ccdf; border-radius: 18px; background: #fff; text-align: left; transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background-color .16s ease; }
+        button.membership-premium-plan { width: 100%; cursor: pointer; font: inherit; }
+        button.membership-premium-plan:hover { border-color: #1f77be; box-shadow: 0 9px 20px rgba(31,119,190,.12); transform: translateY(-2px); }
+        button.membership-premium-plan:focus-visible { outline: 3px solid rgba(243,148,2,.35); outline-offset: 3px; }
+        .membership-premium-plan.is-selected { border: 2px solid #1f77be; background: #f7fcfe; box-shadow: 0 10px 22px rgba(31,119,190,.13); }
+        .membership-premium-plan.is-selected::after { position: absolute; top: 14px; right: 14px; width: 8px; height: 8px; border-radius: 50%; background: #1f77be; box-shadow: 0 0 0 4px #dceef6; content: ''; }
+        .membership-premium-plan h3 { margin-top: 11px; }
+        .membership-premium-plan p { max-width: 500px; margin: 6px 0 0; color: #557483; font-size: 13px; line-height: 1.5; }
+        .membership-price { align-self: center; color: #125a96; font-size: 24px; font-weight: 900; letter-spacing: -.035em; text-align: right; white-space: nowrap; }
+        .membership-price span { display: block; margin-top: 4px; color: #647f8e; font-size: 11px; font-weight: 700; letter-spacing: 0; }
+        .membership-plan-action { display: inline-flex; width: fit-content; min-height: 38px; align-items: center; gap: 6px; margin-top: 16px; padding: 0 12px; border: 1px solid #1f77be; border-radius: 10px; background: #1f77be; color: #fff; font-size: 12px; font-weight: 800; }
+        .membership-plan-action svg { color: #fff; }
+        .membership-empty { padding: 25px; border: 1px dashed #abc9d8; border-radius: 16px; background: #f8fbfc; color: #557483; font-size: 13px; line-height: 1.6; }
+        .membership-payment { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; margin-top: 16px; padding: 21px; border: 1px solid #90c0d8; border-left: 5px solid #f39402; border-radius: 14px; background: #fff; box-shadow: 0 8px 18px rgba(18,59,89,.07); }
+        .membership-payment h2 { margin: 0; color: #123b59; font-size: 17px; font-weight: 850; letter-spacing: -.02em; }
+        .membership-payment > div > p { margin: 5px 0 0; color: #5c7787; font-size: 12px; line-height: 1.5; }
+        .membership-payment-data { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .membership-payment-data div { min-width: 145px; padding: 10px 11px; border: 1px solid #e0ebf0; border-radius: 10px; background: #f8fbfc; }
+        .membership-payment-data span { display: block; color: #718996; font-size: 10px; font-weight: 700; }
+        .membership-payment-data strong { display: block; margin-top: 4px; color: #125a96; font-size: 14px; font-weight: 850; }
+        .membership-payment-qr { width: 132px; height: 132px; padding: 7px; border: 1px solid #c9dfe9; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(18,59,89,.08); }
+        .membership-payment-no-qr { margin-top: 12px !important; color: #9a5b00 !important; }
+        @media (max-width: 720px) { .membership-clarity, .membership-plan-grid, .membership-payment { grid-template-columns: 1fr; } .membership-payment-qr { order: -1; } .membership-section-heading { align-items: flex-start; flex-direction: column; gap: 8px; } }
+        @media (max-width: 480px) { .membership-page { padding: 20px 14px 48px; } .membership-hero { border-radius: 18px; } .membership-clarity { grid-template-columns: 1fr; } .membership-premium-plan { grid-template-columns: 1fr; } .membership-price { align-self: start; text-align: left; } }
+        @media (prefers-reduced-motion: reduce) { .membership-premium-plan { transition: none; } }
+    </style>
 
-    <div style="max-width:720px; margin:0 auto;">
-        <div class="text-center mb-6">
-            <h1 style="font-size:1.5rem; font-weight:800; color:#1A1A1A;">Gói thành viên</h1>
-            <p style="font-size:0.875rem; color:#5C5C66; margin-top:0.375rem;">Mở toàn bộ lộ trình học tập, Challenge và sự kiện trong {{ brand()->name }}.</p>
+    <header class="membership-hero">
+        <div class="membership-kicker"><x-icon name="shield" size="15" /> {{ brand()->name }}</div>
+        <h1>Gói thành viên, nói rõ quyền lợi.</h1>
+        <p>Bạn đã là thành viên của community thì vẫn có thể đọc, đăng bài và tương tác. Membership Premium chỉ mở quyền <strong>mua</strong> mọi challenge và khóa học trong community này.</p>
+        <div class="membership-clarity" aria-label="Membership hoạt động như thế nào">
+            <div class="membership-clarity-item"><x-icon name="users" size="18" /><strong>Tham gia community</strong><span>Không cần mua Membership để đăng bài và tương tác.</span></div>
+            <div class="membership-clarity-item"><x-icon name="graduation" size="18" /><strong>Học theo lựa chọn</strong><span>Không có Membership vẫn mua lẻ khóa học hoặc challenge được.</span></div>
+            <div class="membership-clarity-item"><x-icon name="shopping-cart" size="18" /><strong>Marketplace riêng</strong><span>Các sản phẩm khác trong Marketplace luôn mua theo từng sản phẩm.</span></div>
         </div>
+    </header>
 
-        {{-- Current membership status --}}
-        @if($membership && $membership->isActive())
-        <div class="card mb-4" style="background:#D1FAE5; border:1px solid #A7F3D0;">
-                <div class="flex items-center gap-2">
-                <span style="font-size:1.25rem;">✓</span>
-                <div>
-                    <p style="font-size:0.85rem; font-weight:700; color:#065F46;">{{ $membershipLabel }} đang hoạt động</p>
-                    <p style="font-size:0.75rem; color:#065F46;">Hết hạn: {{ $membership->expires_at?->format('d/m/Y') ?? 'Không giới hạn' }}</p>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        @if(isset($communityPlans) && $communityPlans->isNotEmpty())
-        <section class="card" style="margin-bottom:1rem;padding:1rem;border-color:#B8D7E6;background:#F7FCFD;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:.75rem;"><div><h2 style="font-size:1rem;font-weight:800;color:#123B59;margin:0;">Membership của community</h2><p style="font-size:.75rem;color:#61798A;margin:.2rem 0 0;">Thành viên cộng đồng cơ bản · {{ $membershipLabel }} mở toàn bộ nội dung.</p></div><span style="font-size:.7rem;padding:.3rem .55rem;border-radius:999px;background:#E1F4F7;color:#125A96;font-weight:700;">{{ brand()->name }}</span></div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;">
-            @foreach($communityPlans as $communityPlan)
-                <button type="button" wire:click="selectCommunityPlan({{ $communityPlan->id }})" class="community-plan-option card" style="text-align:left;padding:.85rem;cursor:pointer;{{ $selectedCommunityPlan?->id === $communityPlan->id ? 'border:2px solid #1F77BE;background:#fff;' : '' }}">
-                    <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="font-size:.9rem;color:#123B59;">{{ $communityPlan->name }}</strong><span style="font-size:.7rem;color:#1F77BE;font-weight:700;">{{ $communityPlan->price ? number_format($communityPlan->price,0,',','.').'đ' : 'Miễn phí' }}</span></div>
-                    <div style="font-size:.72rem;color:#61798A;margin-top:.45rem;line-height:1.45;">{{ is_array($communityPlan->benefits) ? implode(' · ', array_slice($communityPlan->benefits,0,2)) : 'Quyền lợi theo community' }}</div>
-                </button>
-            @endforeach
-            </div>
-            @if($selectedCommunityPlan)
-                @php $communityTransferCode = 'MC'.brand()->id.'P'.$selectedCommunityPlan->id.'U'.auth()->id(); $communityQr = config('services.sepay.bank_account') ? 'https://qr.sepay.vn/img?'.http_build_query(['acc'=>config('services.sepay.bank_account'),'bank'=>config('services.sepay.bank_name'),'amount'=>$selectedCommunityPlan->price,'des'=>$communityTransferCode,'template'=>'compact']) : null; @endphp
-                <div class="card" style="margin-top:.8rem;border-left:3px solid #1F77BE;padding:.9rem;"><strong style="font-size:.85rem;color:#123B59;">Thanh toán {{ $membershipLabel }}</strong><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:.55rem;"><div><div style="font-size:.7rem;color:#61798A;">Nội dung chuyển khoản</div><strong style="font-size:.9rem;letter-spacing:.05em;color:#1F77BE;">{{ $communityTransferCode }}</strong></div><div><div style="font-size:.7rem;color:#61798A;">Số tiền</div><strong style="font-size:.9rem;color:#123B59;">{{ number_format($selectedCommunityPlan->price,0,',','.') }}đ</strong></div>@if($communityQr)<img src="{{ $communityQr }}" alt="QR thanh toán" style="width:118px;height:118px;border-radius:8px;">@endif</div><p style="font-size:.7rem;color:#61798A;margin:.6rem 0 0;">{{ $membershipLabel }} sẽ được kích hoạt sau khi hệ thống xác nhận giao dịch.</p></div>
-            @endif
+    @if($membership && $membership->isPremium() && $membership->isActive())
+        <section class="membership-current" aria-live="polite">
+            <x-icon name="check-circle" size="24" />
+            <div><strong>{{ $membershipLabel }} của bạn đang hoạt động</strong><span>Hết hạn: {{ $membership->expires_at?->format('d/m/Y') ?? 'Không giới hạn' }}</span></div>
         </section>
-        @endif
+    @endif
 
-        {{-- Pricing cards --}}
-        <div class="grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));">
-            @foreach($plans as $weeks => $plan)
-            @php
-                $total = $plan['weeks'] * $plan['price_per_week'];
-                $isPopular = $weeks === 52;
-                $isSelected = $selectedPlan === $weeks;
-            @endphp
-            <button type="button" wire:click="selectPlan({{ $weeks }})"
-                class="membership-plan-option card text-center" style="padding:1.25rem 0.75rem; cursor:pointer; position:relative;
-                    {{ $isSelected ? 'border:2px solid #1F77BE; background:#F7FCFD;' : 'border:1px solid #E1E1E1;' }}
-                    {{ $isPopular ? 'border-color:#F39402;' : '' }}">
-                @if($isPopular)
-                <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#F39402; color:#FFF; font-size:0.6rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:999px; white-space:nowrap;">HOT</div>
-                @endif
-                @if($plan['save'] > 0)
-                <div style="position:absolute; top:-10px; right:8px; background:#DC2626; color:#FFF; font-size:0.6rem; font-weight:700; padding:0.15rem 0.375rem; border-radius:999px;">-{{ $plan['save'] }}%</div>
-                @endif
-                <p style="font-size:0.8rem; font-weight:700; color:#1A1A1A; margin-bottom:0.5rem;">{{ $plan['label'] }}</p>
-                <p style="font-size:1.25rem; font-weight:800; color:#d17856;">{{ number_format($plan['price_per_week'], 0, ',', '.') }}đ</p>
-                <p style="font-size:0.65rem; color:#5C5C66;">/tuần</p>
-                <div style="height:1px; background:#E1E1E1; margin:0.75rem 0;"></div>
-                <p style="font-size:0.85rem; font-weight:700; color:#1A1A1A;">{{ number_format($total, 0, ',', '.') }}đ</p>
-                <p style="font-size:0.65rem; color:#5C5C66;">tổng</p>
-            </button>
-            @endforeach
+    <section class="membership-section" aria-labelledby="membership-plans-title">
+        <div class="membership-section-heading">
+            <div><h2 id="membership-plans-title">Chọn quyền mua nội dung học tập</h2><p>Gói áp dụng riêng cho {{ brand()->name }}. Gói nào cũng không tự bao gồm học phí của khóa học hoặc challenge.</p></div>
+            <span class="membership-section-badge">{{ brand()->name }}</span>
         </div>
 
-        {{-- Payment info --}}
-        @if($selectedPlan)
-        @php
-            $plan = $plans[$selectedPlan];
-            $total = $plan['weeks'] * $plan['price_per_week'];
-        @endphp
-        <div class="card mt-4" style="border-left:3px solid #d17856;">
-            <h2 style="font-size:0.9rem; font-weight:700; color:#1B5E20; margin-bottom:0.75rem;">▣ Thanh toán — {{ $plan['label'] }}</h2>
+        <div class="membership-plan-grid">
+            <article class="membership-base-plan">
+                <span class="membership-plan-eyebrow"><x-icon name="users" size="13" /> Mặc định</span>
+                <h3>Thành viên community</h3>
+                <p>Trạng thái có sẵn sau khi bạn tham gia {{ brand()->name }}.</p>
+                <ul class="membership-includes">
+                    <li><x-icon name="check" size="16" /> Đọc nội dung, đăng bài và bình luận.</li>
+                    <li><x-icon name="check" size="16" /> Mua lẻ khóa học hoặc challenge khi cần.</li>
+                    <li><x-icon name="check" size="16" /> Mua các sản phẩm Marketplace theo giá từng sản phẩm.</li>
+                </ul>
+                <div class="membership-base-price">Không cần mua<span>Không phải một gói thanh toán.</span></div>
+            </article>
 
-            <div class="flex flex-wrap gap-4 mb-4">
-                <div>
-                    <p style="font-size:0.7rem; color:#5C5C66;">Giá/tuần</p>
-                    <p style="font-size:0.9rem; font-weight:700; color:#1A1A1A;">{{ number_format($plan['price_per_week'], 0, ',', '.') }}đ</p>
-                </div>
-                <div>
-                    <p style="font-size:0.7rem; color:#5C5C66;">Thời gian</p>
-                    <p style="font-size:0.9rem; font-weight:700; color:#1A1A1A;">{{ $plan['weeks'] }} tuần</p>
-                </div>
-                <div>
-                    <p style="font-size:0.7rem; color:#5C5C66;">Tổng thanh toán</p>
-                    <p style="font-size:1.1rem; font-weight:800; color:#d17856;">{{ number_format($total, 0, ',', '.') }}đ</p>
-                </div>
-            </div>
-
-            @php
-                $transferCode = 'MEM' . $plan['weeks'] . 'WU' . auth()->id();
-                $bankAccount = config('services.sepay.bank_account');
-                $bankName = config('services.sepay.bank_name');
-                $qrUrl = $bankAccount
-                    ? 'https://qr.sepay.vn/img?' . http_build_query(['acc' => $bankAccount, 'bank' => $bankName, 'amount' => $total, 'des' => $transferCode, 'template' => 'compact'])
-                    : null;
-            @endphp
-
-            <div style="background:#F7F5F3; border-radius:0.5rem; padding:0.75rem; margin-bottom:0.75rem;">
-                <p style="font-size:0.8rem; font-weight:600; color:#1A1A1A; margin-bottom:0.5rem;">Chuyển khoản qua SePay</p>
-
-                @if($qrUrl)
-                <div class="text-center" style="margin-bottom:0.75rem;">
-                    <img src="{{ $qrUrl }}" alt="QR Thanh toán" style="max-width:220px; margin:0 auto; border-radius:0.5rem;">
-                    <p style="font-size:0.7rem; color:#5C5C66; margin-top:0.375rem;">Quét mã QR bằng app ngân hàng</p>
-                </div>
-                @endif
-
-                <div style="background:#FFFFFF; border:1px solid #E1E1E1; border-radius:0.375rem; padding:0.625rem; margin-bottom:0.375rem;">
-                    <div class="flex justify-between items-center" style="margin-bottom:0.25rem;">
-                        <span style="font-size:0.75rem; color:#5C5C66;">Nội dung CK:</span>
-                        <strong style="font-size:0.85rem; color:#d17856; letter-spacing:0.05em;">{{ $transferCode }}</strong>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span style="font-size:0.75rem; color:#5C5C66;">Số tiền:</span>
-                        <strong style="font-size:0.85rem; color:#1A1A1A;">{{ number_format($total, 0, ',', '.') }}đ</strong>
-                    </div>
-                </div>
-
-                <p style="font-size:0.7rem; color:#059669; font-weight:500;">⚡ Hệ thống tự kích hoạt sau khi nhận được tiền (1-3 phút)</p>
-            </div>
-
-            {{-- Benefits --}}
-            <div style="margin-top:0.75rem;">
-                <p style="font-size:0.8rem; font-weight:600; color:#1A1A1A; margin-bottom:0.5rem;">Quyền lợi thành viên:</p>
-                <div class="flex flex-col gap-1">
-                    @foreach(['Truy cập toàn bộ nội dung Feed, CỐT, Tín hiệu', 'Đăng bài, bình luận, tương tác', 'Tham gia Challenge & Khóa học', 'Nhắn tin trực tiếp (DM) với thành viên', 'Tích lũy XP, lên level, nhận badge', 'Hệ thống Affiliate kiếm thêm thu nhập'] as $benefit)
-                    <div class="flex items-center gap-2">
-                        <span style="color:#059669; font-size:0.75rem;">✓</span>
-                        <span style="font-size:0.8rem; color:#2E2E2E;">{{ $benefit }}</span>
-                    </div>
-                    @endforeach
-                </div>
+            <div class="membership-premium-plans">
+                @forelse($premiumPlans as $communityPlan)
+                    <button type="button" wire:click="selectCommunityPlan({{ $communityPlan->id }})" class="membership-premium-plan {{ $selectedCommunityPlan?->id === $communityPlan->id ? 'is-selected' : '' }}" aria-pressed="{{ $selectedCommunityPlan?->id === $communityPlan->id ? 'true' : 'false' }}">
+                        <div>
+                            <span class="membership-plan-eyebrow"><x-icon name="shield" size="13" /> Membership Premium</span>
+                            <h3>{{ $communityPlan->name }}</h3>
+                            <p>Mở quyền mua mọi challenge và khóa học trong {{ brand()->name }}.</p>
+                            <span class="membership-plan-action">{{ $selectedCommunityPlan?->id === $communityPlan->id ? 'Đã chọn gói' : 'Chọn gói này' }} <x-icon name="arrow-right" size="15" /></span>
+                        </div>
+                        <div class="membership-price">{{ number_format($communityPlan->price, 0, ',', '.') }}đ<span>{{ $communityPlan->duration_days ? $communityPlan->duration_days.' ngày' : 'Không giới hạn thời hạn' }}</span></div>
+                    </button>
+                @empty
+                    <div class="membership-empty">Community này chưa mở bán Membership Premium. Bạn vẫn có thể tham gia community và mua lẻ nội dung phù hợp.</div>
+                @endforelse
             </div>
         </div>
+
+        @if($selectedCommunityPlan)
+            @php
+                $communityTransferCode = 'MC'.brand()->id.'P'.$selectedCommunityPlan->id.'U'.auth()->id();
+                $bankAccount = $selectedCommunityPlan->sepay_account ?: config('services.sepay.bank_account');
+                $bankName = $selectedCommunityPlan->sepay_bank ?: config('services.sepay.bank_name');
+                $communityQr = $bankAccount ? 'https://qr.sepay.vn/img?'.http_build_query(['acc' => $bankAccount, 'bank' => $bankName, 'amount' => $selectedCommunityPlan->price, 'des' => $communityTransferCode, 'template' => 'compact']) : null;
+            @endphp
+            <section class="membership-payment" aria-labelledby="membership-payment-title">
+                <div>
+                    <h2 id="membership-payment-title">Thanh toán {{ $selectedCommunityPlan->name }}</h2>
+                    <p>Chuyển đúng số tiền và nội dung dưới đây. Hệ thống sẽ kích hoạt quyền mua sau khi nhận được giao dịch.</p>
+                    <div class="membership-payment-data">
+                        <div><span>Nội dung chuyển khoản</span><strong>{{ $communityTransferCode }}</strong></div>
+                        <div><span>Số tiền</span><strong>{{ number_format($selectedCommunityPlan->price, 0, ',', '.') }}đ</strong></div>
+                    </div>
+                    @unless($communityQr)<p class="membership-payment-no-qr">Gói này chưa có thông tin thanh toán. Vui lòng liên hệ quản trị viên community.</p>@endunless
+                </div>
+                @if($communityQr)<img class="membership-payment-qr" src="{{ $communityQr }}" alt="Mã QR thanh toán {{ $selectedCommunityPlan->name }}" width="132" height="132">@endif
+            </section>
         @endif
-    </div>
+    </section>
 </div>

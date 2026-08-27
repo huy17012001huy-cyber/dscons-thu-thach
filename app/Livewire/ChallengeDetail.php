@@ -2,63 +2,75 @@
 
 namespace App\Livewire;
 
+use App\Mail\ChallengeCompletionMail;
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
 use App\Models\ExpeditionCheckin;
 use App\Models\ExpeditionMember;
+use App\Models\User;
 use App\Notifications\GenericNotification;
+use App\Services\TelegramService;
 use App\Services\XpService;
+use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Modules\Learning\Application\ChallengeAccessService;
 
 class ChallengeDetail extends Component
 {
     use WithPagination;
 
     public Expedition $expedition;
+
     public bool $premiumLocked = false;
+
     #[Rule('required|min:5|max:1000')]
     public string $checkinContent = '';
 
     // Pagination for report & submissions
     public int $reportPage = 1;
+
     public int $submissionPage = 1;
+
     public string $submissionSearch = '';
+
     public string $reportSearch = '';
+
     private const PER_PAGE = 10;
 
-    public function updatedSubmissionSearch(): void { $this->submissionPage = 1; }
-    public function updatedReportSearch(): void { $this->reportPage = 1; }
+    public function updatedSubmissionSearch(): void
+    {
+        $this->submissionPage = 1;
+    }
+
+    public function updatedReportSearch(): void
+    {
+        $this->reportPage = 1;
+    }
 
     public function mount(string $slug): void
     {
-        $this->expedition = Expedition::with(['leader', 'members.user', 'tasks'])
-            ->where('slug', $slug)
-            ->orWhere('id', is_numeric($slug) ? $slug : 0)
-            ->firstOrFail();
-        $user = Auth::user();
-        $hasApprovedAccess = $user && $this->expedition->members()
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['approved', 'paid'])
-            ->whereNull('kicked_at')
-            ->exists();
-        $this->premiumLocked = ($this->expedition->access_tier ?? 'premium') === 'premium'
-            && $user
-            && !$user->hasPremiumMembership()
-            && !$user->isBrandAdmin()
-            && !$hasApprovedAccess;
+        $this->expedition = app(ChallengeAccessService::class)->find($slug);
+        $this->expedition->load(['leader', 'members.user', 'tasks']);
+        $user = $this->currentUser();
+        $this->premiumLocked = app(ChallengeAccessService::class)->isPremiumLocked($this->expedition, $user);
     }
 
     // ─── Enrollment ─────────────────────────────────────────
     public function requestJoin(): void
     {
-        if (!Auth::check()) return;
-        $user = Auth::user();
+        if (! Auth::check()) {
+            return;
+        }
+        $user = $this->currentUser();
 
         if ($this->premiumLocked) {
             $this->dispatch('toast', message: 'Challenge này thuộc Premium. Hãy nâng hạng membership để tham gia.', type: 'info');
+
             return;
         }
 
@@ -69,6 +81,7 @@ class ChallengeDetail extends Component
                 $existingMember->delete();
             } else {
                 $this->dispatch('toast', message: 'Bạn đã đăng ký Challenge này rồi', type: 'error');
+
                 return;
             }
         }
@@ -81,7 +94,7 @@ class ChallengeDetail extends Component
 
         // Challenge có giá → chờ chuyển khoản. Webhook SePay tự duyệt khi nhận đủ tiền.
         $price = (int) $this->expedition->price;
-        $needsPayment = !$autoApprove && $price > 0;
+        $needsPayment = ! $autoApprove && $price > 0;
 
         ExpeditionMember::create([
             'expedition_id' => $this->expedition->id,
@@ -97,6 +110,7 @@ class ChallengeDetail extends Component
         if ($autoApprove) {
             $this->dispatch('toast', message: 'Đã tham gia Challenge! Bấm "Bắt đầu" khi bạn sẵn sàng.', type: 'success');
             $this->expedition->refresh();
+
             return;
         }
 
@@ -104,13 +118,14 @@ class ChallengeDetail extends Component
         if ($needsPayment) {
             $this->dispatch('toast', message: 'Quét mã QR để chuyển khoản. Hệ thống tự duyệt ngay khi nhận được tiền.', type: 'success');
             $this->expedition->refresh();
+
             return;
         }
 
         // Notify all admins
-        \App\Models\User::where('is_admin', true)->each(function ($admin) use ($user) {
+        User::where('is_admin', true)->each(function ($admin) use ($user) {
             $admin->notify(new GenericNotification(
-                '★', $user->name . ' đăng ký tham gia ' . $this->expedition->title,
+                '★', $user->name.' đăng ký tham gia '.$this->expedition->title,
                 route('challenge.show', $this->expedition->slug)
             ));
         });
@@ -121,12 +136,16 @@ class ChallengeDetail extends Component
 
     public function cancelRequest(): void
     {
-        if (!Auth::check()) return;
+        if (! Auth::check()) {
+            return;
+        }
         $member = $this->expedition->members()
             ->where('user_id', Auth::id())
             ->whereIn('status', ['pending', 'pending_payment'])
             ->first();
-        if (!$member) return;
+        if (! $member) {
+            return;
+        }
         $member->delete();
         $this->dispatch('toast', message: 'Đã rút yêu cầu tham gia', type: 'success');
         $this->expedition->refresh();
@@ -134,7 +153,9 @@ class ChallengeDetail extends Component
 
     public function approveRequest(int $memberId): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
 
         $member = ExpeditionMember::where('id', $memberId)
             ->where('expedition_id', $this->expedition->id)
@@ -149,17 +170,19 @@ class ChallengeDetail extends Component
         ]);
 
         $member->user->notify(new GenericNotification(
-            '✅', 'Bạn đã được duyệt tham gia ' . $this->expedition->title . '! Bấm "Bắt đầu" khi bạn sẵn sàng.',
+            '✅', 'Bạn đã được duyệt tham gia '.$this->expedition->title.'! Bấm "Bắt đầu" khi bạn sẵn sàng.',
             route('challenge.show', $this->expedition->slug)
         ));
 
-        $this->dispatch('toast', message: 'Đã duyệt ' . $member->user->name, type: 'success');
+        $this->dispatch('toast', message: 'Đã duyệt '.$member->user->name, type: 'success');
         $this->expedition->refresh();
     }
 
     public function rejectRequest(int $memberId): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
 
         $member = ExpeditionMember::where('id', $memberId)
             ->where('expedition_id', $this->expedition->id)
@@ -169,23 +192,27 @@ class ChallengeDetail extends Component
         $member->update(['status' => 'rejected']);
 
         $member->user->notify(new GenericNotification(
-            '❌', 'Yêu cầu tham gia ' . $this->expedition->title . ' đã bị từ chối.',
+            '❌', 'Yêu cầu tham gia '.$this->expedition->title.' đã bị từ chối.',
         ));
 
-        $this->dispatch('toast', message: 'Đã từ chối ' . $member->user->name, type: 'success');
+        $this->dispatch('toast', message: 'Đã từ chối '.$member->user->name, type: 'success');
         $this->expedition->refresh();
     }
 
     // ─── Start challenge (user clicks after approval) ──────
     public function startMyChallenge(): void
     {
-        if (!Auth::check()) return;
+        if (! Auth::check()) {
+            return;
+        }
         $member = $this->expedition->members()
             ->where('user_id', Auth::id())
             ->where('status', 'approved')
             ->whereNull('personal_starts_at')
             ->first();
-        if (!$member) return;
+        if (! $member) {
+            return;
+        }
 
         $member->update(['personal_starts_at' => now()]);
         $this->dispatch('toast', message: 'Challenge đã bắt đầu! Chúc bạn chinh phục thành công!', type: 'success');
@@ -195,13 +222,16 @@ class ChallengeDetail extends Component
     // ─── Check-in ───────────────────────────────────────────
     public function checkin(): void
     {
-        if (!Auth::check()) return;
+        if (! Auth::check()) {
+            return;
+        }
         $this->validate();
 
-        $user = Auth::user();
+        $user = $this->currentUser();
         $member = $this->getApprovedMember($user->id);
-        if (!$member) {
+        if (! $member) {
             $this->addError('checkinContent', 'Bạn chưa được duyệt tham gia Challenge này.');
+
             return;
         }
 
@@ -212,6 +242,7 @@ class ChallengeDetail extends Component
 
         if ($alreadyToday) {
             $this->addError('checkinContent', 'Bạn đã check-in hôm nay rồi.');
+
             return;
         }
 
@@ -225,7 +256,7 @@ class ChallengeDetail extends Component
 
         app(XpService::class)->award(
             $user, 'expedition_checkin', 1.0,
-            'Check-in Challenge: ' . $this->expedition->title,
+            'Check-in Challenge: '.$this->expedition->title,
             $this->expedition
         );
 
@@ -234,46 +265,62 @@ class ChallengeDetail extends Component
     }
 
     // ─── Tasks ──────────────────────────────────────────────
+    /** @var array<int, string> */
     public array $taskEvidence = [];
+
+    /** @var array<int, array<string, mixed>> */
     public array $structuredSubmission = [];
 
     public function completeTask(int $taskId): void
     {
-        if (!Auth::check()) return;
-        $user = Auth::user();
+        if (! Auth::check()) {
+            return;
+        }
+        $user = $this->currentUser();
 
         $task = ChallengeTask::where('id', $taskId)
             ->where('expedition_id', $this->expedition->id)
             ->firstOrFail();
 
         // Block submit during freeze for tasks at/after freeze_from_day (admin bypass)
-        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && !$user->isBrandAdmin()) {
-            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào ' . $this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
+        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && ! $user->isBrandAdmin() && $this->expedition->freeze_ends_at) {
+            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
+
             return;
         }
 
         $member = $this->getApprovedMember($user->id);
-        if (!$member) return;
-
-        $currentDay = $this->expedition->getCurrentDayForMember($member);
-        if ($task->day_number > $currentDay) return;
-
-        if ($task->locked_until && now()->lessThan($task->locked_until)) {
-            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
+        if (! $member) {
             return;
         }
 
-        if ($task->completedByUsers()->where('user_id', $user->id)->exists()) return;
+        $currentDay = $this->expedition->getCurrentDayForMember($member);
+        if ($task->day_number > $currentDay) {
+            return;
+        }
+
+        if ($task->locked_until && now()->lessThan($task->locked_until)) {
+            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
+
+            return;
+        }
+
+        if ($task->completedByUsers()->where('user_id', $user->id)->exists()) {
+            return;
+        }
 
         $evidence = $this->taskEvidence[$taskId] ?? '';
         if (blank($evidence)) {
             $this->dispatch('toast', message: 'Vui lòng cung cấp bằng chứng hoàn thành!', type: 'error');
+
             return;
         }
 
-        if (!$this->validateStructuredSubmission($task)) return;
+        if (! $this->validateStructuredSubmission($task)) {
+            return;
+        }
         $submissionPayload = $this->buildSubmissionPayload($task);
-        $late = $this->expedition->isTaskLateForMember($member, $task->day_number);
+        $late = $this->taskIsLate($member, $task->day_number);
         $task->completedByUsers()->attach($user->id, [
             'evidence' => $evidence,
             'is_late' => $late,
@@ -283,25 +330,29 @@ class ChallengeDetail extends Component
         // XP cộng khi admin approve, KHÔNG cộng khi submit (xem approveSubmission/approveAllPending)
 
         $this->taskEvidence[$taskId] = '';
-        $msg = 'Đã nộp bài ngày ' . $task->day_number . ' — chờ admin duyệt.';
-        if ($late) $msg .= ' (Nộp trễ)';
+        $msg = 'Đã nộp bài ngày '.$task->day_number.' — chờ admin duyệt.';
+        if ($late) {
+            $msg .= ' (Nộp trễ)';
+        }
         $this->dispatch('toast', message: $msg, type: $late ? 'warning' : 'success');
 
         // Notify admin via Telegram
-        \App\Services\TelegramService::sendToAdmin(
+        TelegramService::sendToAdmin(
             "📝 <b>Bài nộp mới</b>\n"
-            . "👤 {$user->name}\n"
-            . "📋 Ngày {$task->day_number}: {$task->title}\n"
-            . ($late ? "⚠️ Nộp trễ\n" : '')
-            . "🔗 " . route('challenge.show', $this->expedition->slug)
+            ."👤 {$user->name}\n"
+            ."📋 Ngày {$task->day_number}: {$task->title}\n"
+            .($late ? "⚠️ Nộp trễ\n" : '')
+            .'🔗 '.route('challenge.show', $this->expedition->slug)
         );
     }
 
     // ─── Submit mini-game ứng dụng (contest task only — 1 row/user) ───
     public function submitMiniGame(int $taskId): void
     {
-        if (!Auth::check()) return;
-        $user = Auth::user();
+        if (! Auth::check()) {
+            return;
+        }
+        $user = $this->currentUser();
 
         $task = ChallengeTask::where('id', $taskId)
             ->where('expedition_id', $this->expedition->id)
@@ -309,25 +360,32 @@ class ChallengeDetail extends Component
             ->firstOrFail();
 
         // Block submit during freeze for tasks at/after freeze_from_day (admin bypass)
-        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && !$user->isBrandAdmin()) {
-            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào ' . $this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
+        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && ! $user->isBrandAdmin() && $this->expedition->freeze_ends_at) {
+            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
+
             return;
         }
 
         $member = $this->getApprovedMember($user->id);
-        if (!$member) return;
+        if (! $member) {
+            return;
+        }
 
         $currentDay = $this->expedition->getCurrentDayForMember($member);
-        if ($task->day_number > $currentDay) return;
+        if ($task->day_number > $currentDay) {
+            return;
+        }
 
         if ($task->locked_until && now()->lessThan($task->locked_until)) {
             $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa.', type: 'warning');
+
             return;
         }
 
         // Mini-game cứng hạn: hết deadline → không cho nộp tiếp
         if ($this->expedition->isTaskLateForMember($member, $task->day_number)) {
             $this->dispatch('toast', message: 'Mini-game đã hết hạn — không nộp ứng dụng được nữa.', type: 'error');
+
             return;
         }
 
@@ -338,16 +396,19 @@ class ChallengeDetail extends Component
             ->orderBy('created_at')
             ->get();
         $daySub = $allRows->first();
-        if (!$daySub) {
+        if (! $daySub) {
             $this->dispatch('toast', message: 'Hãy nộp bài chính ngày 15 trước.', type: 'error');
+
             return;
         }
         if ($daySub->status === 'pending') {
             $this->dispatch('toast', message: 'Bài chính đang chờ admin duyệt — đợi được duyệt mới tham gia mini-game được.', type: 'error');
+
             return;
         }
         if ($daySub->status === 'rejected') {
             $this->dispatch('toast', message: 'Bài chính đang bị từ chối — chỉnh và nộp lại bài chính trước.', type: 'error');
+
             return;
         }
 
@@ -357,16 +418,18 @@ class ChallengeDetail extends Component
 
         if ($latestMiniGame && $latestMiniGame->status === 'pending') {
             $this->dispatch('toast', message: 'Ứng dụng trước đang chờ duyệt — vui lòng đợi rồi mới nộp tiếp.', type: 'error');
+
             return;
         }
 
         $evidence = $this->taskEvidence[$taskId] ?? '';
         if (blank($evidence)) {
             $this->dispatch('toast', message: 'Vui lòng cung cấp bằng chứng ứng dụng.', type: 'error');
+
             return;
         }
 
-        $late = $this->expedition->isTaskLateForMember($member, $task->day_number);
+        $late = $this->taskIsLate($member, $task->day_number);
 
         if ($latestMiniGame && $latestMiniGame->status === 'rejected') {
             // Replace row rejected — reset về pending, KHÔNG động reject_count
@@ -392,33 +455,37 @@ class ChallengeDetail extends Component
         $this->taskEvidence[$taskId] = '';
         $this->dispatch('toast', message: 'Đã nộp ứng dụng. Chờ admin duyệt.', type: 'success');
 
-        \App\Services\TelegramService::sendToAdmin(
+        TelegramService::sendToAdmin(
             "🏆 <b>Mini-game</b>\n"
-            . "👤 {$user->name}\n"
-            . "📋 Ngày {$task->day_number}: {$task->title}\n"
-            . ($late ? "⚠️ Trễ\n" : '')
-            . "🔗 " . route('challenge.show', $this->expedition->slug)
+            ."👤 {$user->name}\n"
+            ."📋 Ngày {$task->day_number}: {$task->title}\n"
+            .($late ? "⚠️ Trễ\n" : '')
+            .'🔗 '.route('challenge.show', $this->expedition->slug)
         );
     }
 
     // ─── Resubmit rejected task ───────────────────────────────
     public function resubmitTask(int $taskId): void
     {
-        if (!Auth::check()) return;
-        $user = Auth::user();
+        if (! Auth::check()) {
+            return;
+        }
+        $user = $this->currentUser();
 
         $task = ChallengeTask::where('id', $taskId)
             ->where('expedition_id', $this->expedition->id)
             ->firstOrFail();
 
         // Block resubmit during freeze for tasks at/after freeze_from_day (admin bypass)
-        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && !$user->isBrandAdmin()) {
-            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào ' . $this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
+        if ($this->expedition->isFreezeActive() && $task->day_number >= $this->expedition->freeze_from_day && ! $user->isBrandAdmin() && $this->expedition->freeze_ends_at) {
+            $this->dispatch('toast', message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'), type: 'warning');
+
             return;
         }
 
         if ($task->locked_until && now()->lessThan($task->locked_until)) {
             $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
+
             return;
         }
 
@@ -429,18 +496,27 @@ class ChallengeDetail extends Component
             ->where('status', 'rejected')
             ->orderBy('created_at')
             ->first();
-        if (!$existing) return;
+        if (! $existing) {
+            return;
+        }
 
         $evidence = $this->taskEvidence[$taskId] ?? '';
         if (blank($evidence)) {
             $this->dispatch('toast', message: 'Vui lòng cung cấp bằng chứng mới!', type: 'error');
+
             return;
         }
 
-        if (!$this->validateStructuredSubmission($task)) return;
+        if (! $this->validateStructuredSubmission($task)) {
+            return;
+        }
         $submissionPayload = $this->buildSubmissionPayload($task);
         $member = $this->getApprovedMember($user->id);
-        $late = $this->expedition->isTaskLateForMember($member, $task->day_number);
+        if (! $member) {
+            return;
+        }
+
+        $late = $this->taskIsLate($member, $task->day_number);
 
         \DB::table('challenge_task_completions')
             ->where('id', $existing->id)
@@ -468,11 +544,15 @@ class ChallengeDetail extends Component
         return true;
     }
 
+    /** @return array<string, mixed>|null */
     private function buildSubmissionPayload(ChallengeTask $task): ?array
     {
-        if (empty($task->instruction_payload)) return null;
+        if (empty($task->instruction_payload)) {
+            return null;
+        }
 
         $fields = $this->structuredSubmission[$task->id] ?? [];
+
         return [
             'checklist' => array_values(array_filter($fields['checklist'] ?? [], fn ($value) => (bool) $value)),
             'reflection' => [
@@ -488,11 +568,16 @@ class ChallengeDetail extends Component
 
     public function submitVideoFeedback(): void
     {
-        if (!Auth::check()) return;
-        $member = $this->getApprovedMember(Auth::id());
-        if (!$member) return;
+        if (! Auth::check()) {
+            return;
+        }
+        $member = $this->getApprovedMember((int) Auth::id());
+        if (! $member) {
+            return;
+        }
         if (blank($this->videoFeedbackUrl)) {
             $this->dispatch('toast', message: 'Vui lòng paste link video!', type: 'error');
+
             return;
         }
 
@@ -503,9 +588,9 @@ class ChallengeDetail extends Component
         ]);
 
         // Notify admins
-        \App\Models\User::where('is_admin', true)->each(function ($admin) {
+        User::where('is_admin', true)->each(function ($admin) {
             $admin->notify(new GenericNotification(
-                '▶', Auth::user()->name . ' gửi Video Feedback cho ' . $this->expedition->title,
+                '▶', $this->currentUser()->name.' gửi Video Feedback cho '.$this->expedition->title,
                 route('challenge.show', $this->expedition->slug)
             ));
         });
@@ -517,7 +602,9 @@ class ChallengeDetail extends Component
 
     public function approveVideoFeedback(int $memberId): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
         $member = ExpeditionMember::findOrFail($memberId);
         $member->update([
             'video_feedback_status' => 'approved',
@@ -532,7 +619,9 @@ class ChallengeDetail extends Component
 
     public function rejectVideoFeedback(int $memberId, string $note = ''): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
         $member = ExpeditionMember::findOrFail($memberId);
         $member->update([
             'video_feedback_status' => 'rejected',
@@ -540,7 +629,7 @@ class ChallengeDetail extends Component
             'video_feedback_url' => null, // allow resubmit
         ]);
         $member->user->notify(new GenericNotification(
-            '✗', 'Video Feedback chưa đạt: ' . ($note ?: 'Hãy quay lại video chân thật hơn.'),
+            '✗', 'Video Feedback chưa đạt: '.($note ?: 'Hãy quay lại video chân thật hơn.'),
             route('challenge.show', $this->expedition->slug)
         ));
         $this->dispatch('toast', message: 'Đã từ chối video feedback', type: 'success');
@@ -548,18 +637,28 @@ class ChallengeDetail extends Component
 
     // ─── Admin: update task video/SOP ────────────────────────
     public ?int $editingTaskId = null;
+
     public string $editTaskTitle = '';
+
     public string $editTaskDesc = '';
+
     public string $editTaskVideo = '';
+
     public string $editTaskMeetingAt = '';
+
     public string $editTaskSop = '';
+
     public string $editTaskEvidenceLabel = '';
+
     public string $editTaskAdminNote = '';
+
     public string $editTaskQuizJson = '';
 
     public function startEditTask(int $taskId): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
         $task = ChallengeTask::findOrFail($taskId);
         $this->editingTaskId = $taskId;
         $this->editTaskTitle = $task->title ?? '';
@@ -570,40 +669,49 @@ class ChallengeDetail extends Component
         $this->editTaskEvidenceLabel = $task->evidence_label ?? '';
         $this->editTaskAdminNote = $task->admin_note ?? '';
         $this->editTaskQuizJson = $task->quiz_json
-            ? json_encode($task->quiz_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            ? (string) json_encode($task->quiz_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
             : '';
     }
 
     public function saveEditTask(): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin() || !$this->editingTaskId) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin() || ! $this->editingTaskId) {
+            return;
+        }
 
         $quizJson = null;
         if (trim($this->editTaskQuizJson) !== '') {
             $decoded = json_decode($this->editTaskQuizJson, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $this->addError('editTaskQuizJson', 'JSON không hợp lệ: '.json_last_error_msg());
+
                 return;
             }
-            if (!is_array($decoded) || !array_is_list($decoded)) {
+            if (! is_array($decoded) || ! array_is_list($decoded)) {
                 $this->addError('editTaskQuizJson', 'Quiz phải là MẢNG (array) các câu hỏi.');
+
                 return;
             }
             foreach ($decoded as $i => $q) {
                 $missing = [];
                 foreach (['q', 'options', 'correct'] as $key) {
-                    if (!isset($q[$key])) $missing[] = $key;
+                    if (! isset($q[$key])) {
+                        $missing[] = $key;
+                    }
                 }
                 if ($missing) {
-                    $this->addError('editTaskQuizJson', "Câu ".($i+1).": thiếu field ".implode(', ', $missing));
+                    $this->addError('editTaskQuizJson', 'Câu '.($i + 1).': thiếu field '.implode(', ', $missing));
+
                     return;
                 }
-                if (!is_array($q['options']) || !isset($q['options']['A'], $q['options']['B'], $q['options']['C'], $q['options']['D'])) {
-                    $this->addError('editTaskQuizJson', "Câu ".($i+1).": options phải có đủ A/B/C/D");
+                if (! is_array($q['options']) || ! isset($q['options']['A'], $q['options']['B'], $q['options']['C'], $q['options']['D'])) {
+                    $this->addError('editTaskQuizJson', 'Câu '.($i + 1).': options phải có đủ A/B/C/D');
+
                     return;
                 }
-                if (!in_array($q['correct'], ['A', 'B', 'C', 'D'], true)) {
-                    $this->addError('editTaskQuizJson', "Câu ".($i+1).": correct phải là A/B/C/D");
+                if (! in_array($q['correct'], ['A', 'B', 'C', 'D'], true)) {
+                    $this->addError('editTaskQuizJson', 'Câu '.($i + 1).': correct phải là A/B/C/D');
+
                     return;
                 }
             }
@@ -615,7 +723,7 @@ class ChallengeDetail extends Component
             'description' => $this->editTaskDesc ?: null,
             'video_url' => $this->editTaskVideo ?: null,
             'meeting_at' => $this->editTaskMeetingAt
-                ? \Carbon\Carbon::parse($this->editTaskMeetingAt, 'Asia/Ho_Chi_Minh')->utc()
+                ? Carbon::parse($this->editTaskMeetingAt, 'Asia/Ho_Chi_Minh')->utc()
                 : null,
             'sop_content' => $this->editTaskSop ?: null,
             'evidence_label' => $this->editTaskEvidenceLabel ?: null,
@@ -636,12 +744,17 @@ class ChallengeDetail extends Component
     }
 
     // ─── Admin: review submissions ──────────────────────────
+    /** @var array<int, int|string> */
     public array $reviewScores = [];
+
+    /** @var array<int, array<string, mixed>> */
     public array $reviewRubrics = [];
 
     public function approveAllPending(): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
         $taskIds = $this->expedition->tasks()->pluck('id');
 
         // Lấy pending rows TRƯỚC khi update — để biết XP target (user x task pairs chưa có approval)
@@ -655,7 +768,7 @@ class ChallengeDetail extends Component
             ->whereIn('challenge_task_id', $taskIds)
             ->where('status', 'approved')
             ->get(['user_id', 'challenge_task_id'])
-            ->map(fn($r) => $r->user_id . ':' . $r->challenge_task_id)
+            ->map(fn ($r) => $r->user_id.':'.$r->challenge_task_id)
             ->unique()
             ->flip();
 
@@ -672,7 +785,7 @@ class ChallengeDetail extends Component
 
         if ($pendingIds->isNotEmpty()) {
             \DB::table('challenge_task_reviews')->insert(
-                $pendingIds->map(fn($id) => [
+                $pendingIds->map(fn ($id) => [
                     'completion_id' => $id,
                     'reviewer_id' => Auth::id(),
                     'status' => 'approved',
@@ -687,15 +800,17 @@ class ChallengeDetail extends Component
         $tasksById = ChallengeTask::whereIn('id', $taskIds)->get()->keyBy('id');
         $awardedPairs = [];
         foreach ($pendingRows as $row) {
-            $key = $row->user_id . ':' . $row->challenge_task_id;
-            if (isset($existingApprovedPairs[$key]) || isset($awardedPairs[$key])) continue;
+            $key = $row->user_id.':'.$row->challenge_task_id;
+            if (isset($existingApprovedPairs[$key]) || isset($awardedPairs[$key])) {
+                continue;
+            }
             $awardedPairs[$key] = true;
-            $user = \App\Models\User::find($row->user_id);
+            $user = User::query()->whereKey($row->user_id)->first();
             $task = $tasksById->get($row->challenge_task_id);
             if ($user && $task) {
                 app(XpService::class)->award(
                     $user, 'expedition_checkin', 1.0,
-                    'Hoàn thành nhiệm vụ ngày ' . $task->day_number . ': ' . $task->title,
+                    'Hoàn thành nhiệm vụ ngày '.$task->day_number.': '.$task->title,
                     $this->expedition
                 );
             }
@@ -703,7 +818,7 @@ class ChallengeDetail extends Component
 
         // Notify all affected users
         $userIds = $pendingRows->pluck('user_id')->unique();
-        \App\Models\User::whereIn('id', $userIds)->each(function ($user) {
+        User::whereIn('id', $userIds)->each(function ($user) {
             $user->notify(new GenericNotification(
                 '✓', 'Bài nộp đã được duyệt!',
                 route('challenge.show', $this->expedition->slug)
@@ -720,9 +835,13 @@ class ChallengeDetail extends Component
 
     public function approveSubmission(int $completionId): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
         $completion = \DB::table('challenge_task_completions')->where('id', $completionId)->first();
-        if (!$completion || $completion->status === 'approved') return;
+        if (! $completion || $completion->status === 'approved') {
+            return;
+        }
 
         // First approval per (user, task) → award XP. Các approval sau (vd contest entries) KHÔNG award thêm.
         $hadPriorApproval = \DB::table('challenge_task_completions')
@@ -755,14 +874,14 @@ class ChallengeDetail extends Component
             'created_at' => now(),
         ]);
 
-        $user = \App\Models\User::find($completion->user_id);
+        $user = User::query()->whereKey($completion->user_id)->first();
         if ($user) {
-            if (!$hadPriorApproval) {
-                $task = ChallengeTask::find($completion->challenge_task_id);
+            if (! $hadPriorApproval) {
+                $task = ChallengeTask::query()->whereKey($completion->challenge_task_id)->first();
                 if ($task) {
                     app(XpService::class)->award(
                         $user, 'expedition_checkin', 1.0,
-                        'Hoàn thành nhiệm vụ ngày ' . $task->day_number . ': ' . $task->title,
+                        'Hoàn thành nhiệm vụ ngày '.$task->day_number.': '.$task->title,
                         $this->expedition
                     );
                 }
@@ -780,12 +899,16 @@ class ChallengeDetail extends Component
 
     public function rejectSubmission(int $completionId, string $note = ''): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
         $completion = \DB::table('challenge_task_completions')->where('id', $completionId)->first();
-        if (!$completion) return;
+        if (! $completion) {
+            return;
+        }
 
         // Mini-game entry (row thứ 2+ của contest task) → không tăng reject_count, không phí 34k
-        $task = ChallengeTask::find($completion->challenge_task_id);
+        $task = ChallengeTask::query()->whereKey($completion->challenge_task_id)->first();
         $isMiniGameEntry = false;
         if ($task && $task->is_contest) {
             $firstRow = \DB::table('challenge_task_completions')
@@ -806,11 +929,11 @@ class ChallengeDetail extends Component
             'score' => isset($this->reviewScores[$completionId]) && $this->reviewScores[$completionId] !== ''
                 ? max(0, min(100, (int) $this->reviewScores[$completionId]))
                 : null,
-            'rubric_payload' => !empty($this->reviewRubrics[$completionId])
+            'rubric_payload' => ! empty($this->reviewRubrics[$completionId])
                 ? json_encode($this->reviewRubrics[$completionId], JSON_UNESCAPED_UNICODE)
                 : null,
         ];
-        if (!$isMiniGameEntry) {
+        if (! $isMiniGameEntry) {
             $updates['reject_count'] = \DB::raw('reject_count + 1');
         }
 
@@ -827,11 +950,11 @@ class ChallengeDetail extends Component
         ]);
 
         // Notify user
-        $user = \App\Models\User::find($completion->user_id);
+        $user = User::query()->whereKey($completion->user_id)->first();
         if ($user) {
             $user->notify(new GenericNotification(
                 '✗',
-                'Bài nộp bị từ chối: ' . $rejectNote . '. Vui lòng nộp lại.',
+                'Bài nộp bị từ chối: '.$rejectNote.'. Vui lòng nộp lại.',
                 route('challenge.show', $this->expedition->slug)
             ));
         }
@@ -844,8 +967,12 @@ class ChallengeDetail extends Component
     // Admin có thể toggle riêng từng loại trên cùng submission.
     public function toggleVote(int $completionId, string $type = 'good'): void
     {
-        if (!Auth::check() || !Auth::user()->isBrandAdmin()) return;
-        if (!in_array($type, ['good', 'excellent'], true)) return;
+        if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
+            return;
+        }
+        if (! in_array($type, ['good', 'excellent'], true)) {
+            return;
+        }
 
         $row = \DB::table('submission_votes')
             ->where('completion_id', $completionId)
@@ -857,10 +984,10 @@ class ChallengeDetail extends Component
         } else {
             \DB::table('submission_votes')->insert([
                 'completion_id' => $completionId,
-                'user_id'       => Auth::id(),
-                'vote_type'     => $type,
-                'created_at'    => now(),
-                'updated_at'    => now(),
+                'user_id' => Auth::id(),
+                'vote_type' => $type,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }
@@ -886,12 +1013,16 @@ class ChallengeDetail extends Component
             ->whereNull('kicked_at')
             ->whereNull('completion_notified_at')
             ->first();
-        if (!$member) return;
+        if (! $member) {
+            return;
+        }
 
         $tasks = $this->expedition->tasks()
             ->orderBy('day_number')
             ->get(['id', 'day_number', 'title', 'label']);
-        if ($tasks->isEmpty()) return;
+        if ($tasks->isEmpty()) {
+            return;
+        }
 
         // Bài chính = row đầu tiên per task (theo created_at).
         $main = \DB::table('challenge_task_completions')
@@ -906,10 +1037,12 @@ class ChallengeDetail extends Component
         $days = [];
         foreach ($tasks as $task) {
             $row = $main->get($task->id);
-            if (!$row || $row->status !== 'approved') return;
+            if (! $row || $row->status !== 'approved') {
+                return;
+            }
             $days[] = [
-                'day'     => (int) $task->day_number,
-                'label'   => (string) ($task->title ?: $task->label ?: ('Ngày ' . $task->day_number)),
+                'day' => (int) $task->day_number,
+                'label' => (string) ($task->title ?: $task->label ?: ('Ngày '.$task->day_number)),
                 'is_late' => (bool) $row->is_late,
             ];
         }
@@ -920,57 +1053,70 @@ class ChallengeDetail extends Component
         $lateCount = collect($days)->where('is_late', true)->count();
 
         // Email chúc mừng (không chặn flow nếu mail lỗi)
-        if (!empty($u->email)) {
+        if (! empty($u->email)) {
             try {
-                \Illuminate\Support\Facades\Mail::to($u->email)->send(new \App\Mail\ChallengeCompletionMail(
-                    userName:       $u->name,
+                Mail::to($u->email)->send(new ChallengeCompletionMail(
+                    userName: $u->name,
                     challengeTitle: $this->expedition->title,
-                    brandName:      config('app.name'),
-                    days:           $days,
-                    completedAt:    now()->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y'),
-                    challengeUrl:   route('challenge.show', $this->expedition->slug),
+                    brandName: config('app.name'),
+                    days: $days,
+                    completedAt: now()->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y'),
+                    challengeUrl: route('challenge.show', $this->expedition->slug),
                 ));
             } catch (\Throwable $e) {
                 report($e);
             }
         }
 
-        $summary = $lateCount > 0 ? "(có {$lateCount} ngày trễ)" : "(không có ngày trễ)";
-        \App\Services\TelegramService::sendCompletion(
-            "🏆 <b>Hoàn thành " . $tasks->count() . " ngày</b>\n"
-            . "Member {$u->name} ({$u->email}) đã hoàn thành thử thách {$summary}."
+        $summary = $lateCount > 0 ? "(có {$lateCount} ngày trễ)" : '(không có ngày trễ)';
+        TelegramService::sendCompletion(
+            '🏆 <b>Hoàn thành '.$tasks->count()." ngày</b>\n"
+            ."Member {$u->name} ({$u->email}) đã hoàn thành thử thách {$summary}."
         );
     }
 
     // Day calculation + late check moved to Expedition model (freeze-aware)
 
-    public function render()
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
+    }
+
+    private function taskIsLate(ExpeditionMember $member, int $dayNumber): bool
+    {
+        return $this->expedition->isTaskLateForMember($member, $dayNumber);
+    }
+
+    public function render(): View
     {
         $user = Auth::user();
         $myMember = $user
             ? $this->expedition->members()->where('user_id', $user->id)->first()
             : null;
 
-        $isApproved = $myMember && in_array($myMember->status, ['approved', 'paid']) && !$myMember->kicked_at;
+        $isApproved = $myMember && in_array($myMember->status, ['approved', 'paid']) && ! $myMember->kicked_at;
         $isPending = $myMember && $myMember->status === 'pending';
         $isPendingPayment = $myMember && $myMember->status === 'pending_payment';
         $currentDay = $isApproved ? $this->expedition->getCurrentDayForMember($myMember) : 0;
 
-        $isAdminUser = Auth::check() && Auth::user()->isBrandAdmin();
+        $isAdminUser = Auth::check() && $this->currentUser()->isBrandAdmin();
 
         // Admin preview: nếu admin chưa join challenge, vẫn render full task UI như thành viên
         // Synthesize virtual member (in-memory only) để blade rendering không vỡ
         $isAdminPreview = false;
-        if (!$isApproved && $isAdminUser) {
+        if (! $isApproved && $isAdminUser) {
             $isAdminPreview = true;
             $requiredDays = $this->expedition->required_days ?? 21;
             $myMember = new ExpeditionMember([
-                'expedition_id'           => $this->expedition->id,
-                'user_id'                 => $user->id,
-                'status'                  => 'approved',
-                'class_at_join'           => $user->class ?? 'offer_architect',
-                'joined_at'               => now(),
-                'personal_starts_at'      => now()->subDays($requiredDays),
+                'expedition_id' => $this->expedition->id,
+                'user_id' => $this->currentUser()->id,
+                'status' => 'approved',
+                'class_at_join' => $this->currentUser()->class ?? 'offer_architect',
+                'joined_at' => now(),
+                'personal_starts_at' => now()->subDays($requiredDays),
                 'consecutive_missed_days' => 0,
             ]);
             $isApproved = true;
@@ -987,7 +1133,7 @@ class ChallengeDetail extends Component
             ->whereNull('kicked_at')
             ->values();
 
-        $pendingMembers = Auth::check() && Auth::user()->isBrandAdmin()
+        $pendingMembers = Auth::check() && $this->currentUser()->isBrandAdmin()
             ? $this->expedition->members->where('status', 'pending')->values()
             : collect();
 
@@ -1010,13 +1156,13 @@ class ChallengeDetail extends Component
                 ->join('challenge_tasks', 'challenge_tasks.id', '=', 'challenge_task_completions.challenge_task_id')
                 ->join('users', 'users.id', '=', 'challenge_task_completions.user_id')
                 ->where('challenge_tasks.expedition_id', $this->expedition->id)
-                ->when(!$user->isBrandAdmin(), fn($q) => $q->where('challenge_task_completions.user_id', $user->id))
-                ->when($this->submissionSearch && $user->isBrandAdmin(), fn($q) => $q->where(function ($q2) {
-                    $s = '%' . $this->submissionSearch . '%';
+                ->when(! $user->isBrandAdmin(), fn ($q) => $q->where('challenge_task_completions.user_id', $user->id))
+                ->when($this->submissionSearch && $user->isBrandAdmin(), fn ($q) => $q->where(function ($q2) {
+                    $s = '%'.$this->submissionSearch.'%';
                     $q2->where('users.name', 'ilike', $s)
-                       ->orWhere('users.email', 'ilike', $s)
-                       ->orWhere('users.username', 'ilike', $s)
-                       ->orWhere('challenge_task_completions.evidence', 'ilike', $s);
+                        ->orWhere('users.email', 'ilike', $s)
+                        ->orWhere('users.username', 'ilike', $s)
+                        ->orWhere('challenge_task_completions.evidence', 'ilike', $s);
                 }))
                 ->leftJoin('submission_votes', 'submission_votes.completion_id', '=', 'challenge_task_completions.id')
                 ->selectRaw("challenge_task_completions.id as completion_id,
@@ -1095,7 +1241,7 @@ class ChallengeDetail extends Component
         }
 
         $personalDaysLeft = null;
-        if ($isApproved && $myMember->personal_starts_at) {
+        if ($isApproved && $myMember instanceof ExpeditionMember && $myMember->personal_starts_at) {
             $adjustedHours = $this->expedition->getAdjustedHoursForMember($myMember);
             $totalHoursNeeded = $this->expedition->required_days * 24;
             $personalDaysLeft = max(0, (int) ceil(($totalHoursNeeded - $adjustedHours) / 24));
@@ -1103,72 +1249,81 @@ class ChallengeDetail extends Component
 
         // Admin: member progress report
         $memberReport = collect();
-        if (Auth::check() && Auth::user()->isBrandAdmin() && $tasks->count() > 0 && $approvedMembers->count() > 0) {
+        if (Auth::check() && $this->currentUser()->isBrandAdmin() && $tasks->count() > 0 && $approvedMembers->count() > 0) {
             $allCompletions = \DB::table('challenge_task_completions')
                 ->whereIn('challenge_task_id', $tasks->pluck('id'))
                 ->orderBy('created_at')
                 ->get()
                 ->groupBy('user_id');
 
-            $dayByTask = $tasks->keyBy('id')->map(fn($t) => (int) $t->day_number);
+            $dayByTask = $tasks->keyBy('id')->map(fn ($t) => (int) $t->day_number);
 
             $memberReport = $approvedMembers
-                ->filter(fn($m) => $m->personal_starts_at !== null)
+                ->filter(fn ($m) => $m->personal_starts_at !== null)
                 ->map(function ($member) use ($tasks, $allCompletions, $dayByTask) {
-                $memberDay = $this->expedition->getCurrentDayForMember($member);
-                $completed = $allCompletions->get($member->user_id, collect());
-                // Bài chính = row đầu tiên per task (theo created_at). Các row sau = mini-game entries, KHÔNG đếm vô báo cáo.
-                $mainSubs = $completed->groupBy('challenge_task_id')->map(fn($rows) => $rows->first());
-                $completedCount = $mainSubs->count();
-                $lateCount = $mainSubs->where('is_late', true)->count();
-                $rejectedCount = $mainSubs->where('status', 'rejected')->count();
+                    $memberDay = $this->expedition->getCurrentDayForMember($member);
+                    $completed = $allCompletions->get($member->user_id, collect());
+                    // Bài chính = row đầu tiên per task (theo created_at). Các row sau = mini-game entries, KHÔNG đếm vô báo cáo.
+                    $mainSubs = $completed->groupBy('challenge_task_id')->map(fn ($rows) => $rows->first());
+                    $completedCount = $mainSubs->count();
+                    $lateCount = $mainSubs->where('is_late', true)->count();
+                    $rejectedCount = $mainSubs->where('status', 'rejected')->count();
 
-                $validCount = $completedCount - $rejectedCount;
-                $expiredDays = $this->expedition->getExpiredDaysForMember($member);
-                $missedCount = max(0, $expiredDays - $validCount);
+                    $validCount = $completedCount - $rejectedCount;
+                    $expiredDays = $this->expedition->getExpiredDaysForMember($member);
+                    $missedCount = max(0, $expiredDays - $validCount);
 
-                // KPI mới: Miss = ngày đã qua deadline (1..K-1) mà chưa có bài duyệt.
-                // Day đang trong giờ (Day K) còn hạn nên không tính Miss; nhưng nếu đã duyệt rồi thì tính vào "có trễ".
-                $approvedDayLateMap = [];
-                foreach ($completed as $row) {
-                    if ($row->status !== 'approved') continue;
-                    $day = $dayByTask[$row->challenge_task_id] ?? null;
-                    if ($day === null) continue;
-                    $approvedDayLateMap[$day] = ($approvedDayLateMap[$day] ?? false) || (bool) $row->is_late;
-                }
-                $missingPastDeadline = 0;
-                for ($d = 1; $d < $memberDay; $d++) {
-                    if (!array_key_exists($d, $approvedDayLateMap)) $missingPastDeadline++;
-                }
-                $lateInApproved = false;
-                foreach ($approvedDayLateMap as $d => $wasLate) {
-                    if ($d <= $memberDay && $wasLate) { $lateInApproved = true; break; }
-                }
+                    // KPI mới: Miss = ngày đã qua deadline (1..K-1) mà chưa có bài duyệt.
+                    // Day đang trong giờ (Day K) còn hạn nên không tính Miss; nhưng nếu đã duyệt rồi thì tính vào "có trễ".
+                    $approvedDayLateMap = [];
+                    foreach ($completed as $row) {
+                        if ($row->status !== 'approved') {
+                            continue;
+                        }
+                        $day = $dayByTask[$row->challenge_task_id] ?? null;
+                        if ($day === null) {
+                            continue;
+                        }
+                        $approvedDayLateMap[$day] = ($approvedDayLateMap[$day] ?? false) || (bool) $row->is_late;
+                    }
+                    $missingPastDeadline = 0;
+                    for ($d = 1; $d < $memberDay; $d++) {
+                        if (! array_key_exists($d, $approvedDayLateMap)) {
+                            $missingPastDeadline++;
+                        }
+                    }
+                    $lateInApproved = false;
+                    foreach ($approvedDayLateMap as $d => $wasLate) {
+                        if ($d <= $memberDay && $wasLate) {
+                            $lateInApproved = true;
+                            break;
+                        }
+                    }
 
-                return (object) [
-                    'member' => $member,
-                    'current_day' => $memberDay,
-                    'completed' => $validCount,
-                    'rejected' => $rejectedCount,
-                    'late' => $lateCount,
-                    'missed' => $missedCount,
-                    'total' => $tasks->count(),
-                    'pct' => $tasks->count() > 0 ? round($validCount / $tasks->count() * 100) : 0,
-                    'missing_past_deadline' => $missingPastDeadline,
-                    'late_in_approved' => $lateInApproved,
-                ];
-            })->sortBy([
-                ['missed', 'asc'],       // ít miss trước
-                ['rejected', 'asc'],     // ít bị reject trước
-                ['completed', 'desc'],   // hoàn thành nhiều trước
-            ])->values();
+                    return (object) [
+                        'member' => $member,
+                        'current_day' => $memberDay,
+                        'completed' => $validCount,
+                        'rejected' => $rejectedCount,
+                        'late' => $lateCount,
+                        'missed' => $missedCount,
+                        'total' => $tasks->count(),
+                        'pct' => round($validCount / max(1, $tasks->count()) * 100),
+                        'missing_past_deadline' => $missingPastDeadline,
+                        'late_in_approved' => $lateInApproved,
+                    ];
+                })->sortBy([
+                    ['missed', 'asc'],       // ít miss trước
+                    ['rejected', 'asc'],     // ít bị reject trước
+                    ['completed', 'desc'],   // hoàn thành nhiều trước
+                ])->values();
         }
 
         // Filter member report by search
         if ($this->reportSearch) {
             $s = mb_strtolower($this->reportSearch);
             $memberReport = $memberReport->filter(
-                fn($r) => str_contains(mb_strtolower($r->member->user->name), $s)
+                fn ($r) => str_contains(mb_strtolower($r->member->user->name), $s)
             )->values();
         }
 
@@ -1176,12 +1331,12 @@ class ChallengeDetail extends Component
         $reportStats = null;
         if ($memberReport->count() > 0) {
             $reportStats = (object) [
-                'total'      => $memberReport->count(),
-                'on_track'      => $memberReport->filter(fn($r) => $r->missing_past_deadline === 0 && !$r->late_in_approved && $r->completed < $r->total)->count(),
-                'on_track_late' => $memberReport->filter(fn($r) => $r->missing_past_deadline === 0 &&  $r->late_in_approved)->count(),
-                'completed'     => $memberReport->filter(fn($r) => $r->completed === $r->total && !$r->late_in_approved)->count(),
-                'miss'          => $memberReport->filter(fn($r) => $r->missing_past_deadline > 0)->count(),
-                'submissions_total'   => $totalPendingSubmissions + \DB::table('challenge_task_completions')
+                'total' => $memberReport->count(),
+                'on_track' => $memberReport->filter(fn ($r) => $r->missing_past_deadline === 0 && ! $r->late_in_approved && $r->completed < $r->total)->count(),
+                'on_track_late' => $memberReport->filter(fn ($r) => $r->missing_past_deadline === 0 && $r->late_in_approved)->count(),
+                'completed' => $memberReport->filter(fn ($r) => $r->completed === $r->total && ! $r->late_in_approved)->count(),
+                'miss' => $memberReport->filter(fn ($r) => $r->missing_past_deadline > 0)->count(),
+                'submissions_total' => $totalPendingSubmissions + \DB::table('challenge_task_completions')
                     ->whereIn('challenge_task_id', $tasks->pluck('id'))
                     ->whereIn('status', ['approved', 'rejected'])
                     ->count(),
@@ -1204,7 +1359,7 @@ class ChallengeDetail extends Component
         // Task deadlines for current user (freeze-aware, per-member anchor rounding)
         $taskDeadlines = [];
         $contestEnds = [];
-        if ($isApproved && $myMember->personal_starts_at) {
+        if ($isApproved && $myMember instanceof ExpeditionMember && $myMember->personal_starts_at) {
             foreach ($tasks as $task) {
                 $taskDeadlines[$task->id] = $this->expedition->getDeadlineForMemberAtDay($myMember, $task->day_number);
                 if ($task->is_contest && $task->contest_duration_hours) {
@@ -1253,6 +1408,6 @@ class ChallengeDetail extends Component
             'myVotedIds' => $myVotedIds,
             'reviewHistory' => $reviewHistory,
             'premiumLocked' => $this->premiumLocked,
-        ])->layout('layouts.app', ['title' => $this->expedition->title . ' — Challenge']);
+        ])->layout('layouts.app', ['title' => $this->expedition->title.' — Challenge']);
     }
 }

@@ -4,8 +4,10 @@ namespace App\Livewire;
 
 use App\Models\ChallengeTask;
 use App\Models\QuizAttempt;
+use App\Models\User;
 use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -25,17 +27,22 @@ class QuizSection extends Component
     #[Locked]
     public ChallengeTask $task;
 
+    /** @var array<int, array{letter: string, is_correct: bool}> */
     public array $submitted = [];
 
     public function mount(ChallengeTask $task): void
     {
         $this->task = $task;
 
-        if (!Auth::check()) return;
+        if (! Auth::check()) {
+            return;
+        }
 
         // Only load persisted attempts for actual challenge members.
         // Admin previewing without joining → fresh state, no persistence.
-        if (!$this->isPersistingMember()) return;
+        if (! $this->isPersistingMember()) {
+            return;
+        }
 
         $attempts = QuizAttempt::where('user_id', Auth::id())
             ->where('challenge_task_id', $task->id)
@@ -43,7 +50,7 @@ class QuizSection extends Component
 
         foreach ($attempts as $a) {
             $this->submitted[$a->question_index] = [
-                'letter'     => $a->selected_letter,
+                'letter' => $a->selected_letter,
                 'is_correct' => (bool) $a->is_correct,
             ];
         }
@@ -51,9 +58,13 @@ class QuizSection extends Component
 
     private function isPersistingMember(): bool
     {
-        if (!Auth::check()) return false;
+        $user = $this->authenticatedUser();
+        if (! $user || ! $this->task->expedition) {
+            return false;
+        }
+
         return $this->task->expedition->members()
-            ->where('user_id', Auth::id())
+            ->where('user_id', $user->id)
             ->whereIn('status', ['approved', 'paid'])
             ->whereNull('kicked_at')
             ->exists();
@@ -66,12 +77,21 @@ class QuizSection extends Component
      */
     public function answerQuestion(int $idx, string $letter): void
     {
-        if (!Auth::check()) return;
-        if (isset($this->submitted[$idx])) return;
-        if (!in_array($letter, ['A', 'B', 'C', 'D'])) return;
+        $user = $this->authenticatedUser();
+        if (! $user) {
+            return;
+        }
+        if (isset($this->submitted[$idx])) {
+            return;
+        }
+        if (! in_array($letter, ['A', 'B', 'C', 'D'])) {
+            return;
+        }
 
         $questions = $this->task->quiz_json ?? [];
-        if (!isset($questions[$idx])) return;
+        if (! isset($questions[$idx])) {
+            return;
+        }
 
         $isCorrect = ($letter === ($questions[$idx]['correct'] ?? null));
 
@@ -79,17 +99,17 @@ class QuizSection extends Component
         if ($this->isPersistingMember()) {
             // firstOrCreate guard: nếu DB đã có row (somehow), không award lại — chống mọi đường tránh
             $attempt = QuizAttempt::firstOrNew([
-                'user_id'           => Auth::id(),
+                'user_id' => $user->id,
                 'challenge_task_id' => $this->task->id,
-                'question_index'    => $idx,
+                'question_index' => $idx,
             ]);
-            $isFirstAttempt = !$attempt->exists;
+            $isFirstAttempt = ! $attempt->exists;
             $attempt->selected_letter = $letter;
-            $attempt->is_correct      = $isCorrect;
-            $attempt->answered_at     = now();
+            $attempt->is_correct = $isCorrect;
+            $attempt->answered_at = now();
             if ($isCorrect && $isFirstAttempt) {
                 app(XpService::class)->award(
-                    Auth::user(),
+                    $user,
                     'quiz_correct',
                     1.0,
                     'Quiz Day '.$this->task->day_number.' · Câu '.($idx + 1),
@@ -111,7 +131,7 @@ class QuizSection extends Component
 
     public function getScoreProperty(): int
     {
-        return count(array_filter($this->submitted, fn ($s) => $s['is_correct'] ?? false));
+        return count(array_filter($this->submitted, fn (array $submission): bool => $submission['is_correct']));
     }
 
     public function getTotalProperty(): int
@@ -119,7 +139,14 @@ class QuizSection extends Component
         return count($this->task->quiz_json ?? []);
     }
 
-    public function render()
+    private function authenticatedUser(): ?User
+    {
+        $user = Auth::user();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    public function render(): View
     {
         return view('livewire.quiz-section');
     }

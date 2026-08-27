@@ -15,16 +15,18 @@ class QuizAttempt extends Model
     ];
 
     protected $casts = [
-        'is_correct'  => 'boolean',
-        'xp_awarded'  => 'boolean',
+        'is_correct' => 'boolean',
+        'xp_awarded' => 'boolean',
         'answered_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<ChallengeTask, $this> */
     public function task(): BelongsTo
     {
         return $this->belongsTo(ChallengeTask::class, 'challenge_task_id');

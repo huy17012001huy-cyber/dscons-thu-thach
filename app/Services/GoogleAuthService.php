@@ -19,7 +19,7 @@ class GoogleAuthService
             throw new GoogleAuthException('Tài khoản Google không cung cấp đủ thông tin để đăng nhập.');
         }
 
-        if (!$this->providerEmailIsVerified($providerUser)) {
+        if (! $this->providerEmailIsVerified($providerUser)) {
             throw new GoogleAuthException('Email Google chưa được xác minh nên không thể đăng nhập.');
         }
 
@@ -30,16 +30,18 @@ class GoogleAuthService
 
         $existingEmailUser = User::whereRaw('LOWER(email) = ?', [$email])->first();
         if ($existingEmailUser) {
-            if (!$existingEmailUser->hasVerifiedEmail()) {
+            if (! $existingEmailUser->hasVerifiedEmail()) {
                 throw new GoogleAuthException('Tài khoản hiện tại chưa xác minh email nên chưa thể liên kết Google.');
             }
 
             $existingEmailUser->forceFill(['google_id' => $googleId])->save();
 
-            return $existingEmailUser->fresh();
+            $existingEmailUser->refresh();
+
+            return $existingEmailUser;
         }
 
-        if (!app()->bound('brand') || brand()->registration_mode !== 'open') {
+        if (! app()->bound('brand') || brand()->registration_mode !== 'open') {
             throw new GoogleAuthException('Cộng đồng hiện không mở đăng ký tài khoản mới.');
         }
 
@@ -84,13 +86,14 @@ class GoogleAuthService
         $ascii = transliterator_transliterate(
             'Any-Latin; Latin-ASCII; Lower()',
             trim($name)
-        );
-        $username = preg_replace('/[^a-z0-9._]/', '', preg_replace('/\s+/', '.', $ascii)) ?: 'user';
+        ) ?: '';
+        $normalized = preg_replace('/\s+/', '.', $ascii) ?? '';
+        $username = preg_replace('/[^a-z0-9._]/', '', $normalized) ?: 'user';
         $base = $username;
         $suffix = 1;
 
         while (User::where('username', $username)->exists()) {
-            $username = $base . $suffix++;
+            $username = $base.$suffix++;
         }
 
         return $username;

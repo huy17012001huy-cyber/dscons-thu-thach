@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Brand;
+use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
@@ -10,11 +11,12 @@ use Illuminate\Support\Facades\Hash;
 class SeedTestLearners extends Command
 {
     protected $signature = 'test:seed-learners {--password= : Mật khẩu dùng cho hai tài khoản test}';
+
     protected $description = 'Tạo hoặc cập nhật hai tài khoản học viên test không có membership';
 
     public function handle(): int
     {
-        $password = (string) ($this->option('password') ?: env('TEST_LEARNER_PASSWORD', 'DsConsTest123!'));
+        $password = (string) ($this->option('password') ?: config('testing.test_learner_password'));
         $brand = app()->bound('brand') ? brand() : Brand::query()->findOrFail(1);
         app()->instance('brand', $brand);
 
@@ -39,7 +41,7 @@ class SeedTestLearners extends Command
                 'email_verified_at' => now(),
             ])->save();
 
-            \App\Models\Membership::withoutGlobalScopes()
+            Membership::withoutGlobalScopes()
                 ->where('user_id', $user->id)
                 ->where('brand_id', $brand->id)
                 ->delete();

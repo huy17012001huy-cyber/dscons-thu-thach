@@ -59,6 +59,7 @@
         'close' => '<path d="m6 6 12 12M18 6 6 18"/>',
         'image' => '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-4.5-4.5L7 20"/>',
         'briefcase' => '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/>',
+        'tool' => '<path d="m14.7 6.3 3-3a4 4 0 0 1-5.2 5.2l-7.7 7.7a2.4 2.4 0 1 0 3.4 3.4l7.7-7.7a4 4 0 0 1 5.2-5.2l-3 3-3.4-1.1Z"/>',
         'cv' => '<path d="M6 3h9l3 3v15H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v4h4M8 11h8M8 15h6M8 18h4"/>',
         'lock' => '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
         'mail' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
@@ -100,6 +101,7 @@
         'grid' => 'var(--ds-brand, #1F77BE)',
         'refresh' => 'var(--ds-brand, #1F77BE)',
         'logout' => '#C43D3D',
+        'tool' => 'var(--ds-brand, #1F77BE)',
     ];
     $iconColor = $color ?: ($colors[$name] ?? 'var(--ds-brand, #1F77BE)');
     $iconClass = trim('ds-icon '.($attributes->get('class') ?? ''));

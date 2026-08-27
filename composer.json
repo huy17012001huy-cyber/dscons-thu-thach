@@ -13,6 +13,7 @@
         "livewire/livewire": "^3.7",
         "resend/resend-laravel": "^1.4",
         "sepayvn/laravel-sepay": "^1.2",
+        "pragmarx/google2fa": "^8.0",
         "symfony/brevo-mailer": "^7.4",
         "symfony/http-client": "^7.4"
     },
@@ -21,6 +22,7 @@
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
+        "larastan/larastan": "^3.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^11.5.50"
@@ -28,6 +30,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         },
@@ -56,6 +59,13 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "lint": "pint --test app/Core app/Http/Requests app/Http/Responses app/Http/Middleware/SecurityHeaders.php app/Http/Middleware/EnsureRecentAdminTwoFactor.php app/Http/Controllers/AdminSecurityController.php app/Http/Controllers/AdminTwoFactorChallengeController.php app/Http/Controllers/GoogleAuthController.php app/Http/Controllers/ImpersonationController.php app/Http/Controllers/RevitDeviceAuthorizationController.php app/Http/Controllers/RevitToolApiController.php app/Http/Controllers/SepayWebhookController.php app/Models/AuditLog.php app/Models/CommerceWebhookEvent.php app/Models/Concerns/HasBrand.php app/Models/ToolDeviceAuthorization.php app/Models/ToolInstallation.php app/Models/ToolSecurityEvent.php app/Models/ToolSession.php app/Models/User.php app/Providers/CoreServiceProvider.php app/Services/AdminTwoFactorService.php app/Services/AuditLogger.php app/Services/ToolLicenseService.php modules tests/Feature/AdminTwoFactorSecurityTest.php tests/Feature/RevitToolLicenseTest.php tests/Feature/SepayWebhookSecurityTest.php bootstrap/app.php config/admin-security.php config/modules.php config/security.php database/migrations/2026_08_26_100000_add_revit_tool_license_marketplace.php database/migrations/2026_08_26_100001_add_browser_code_to_tool_device_authorizations.php database/migrations/2026_08_26_130000_add_two_factor_fields_to_users_table.php database/migrations/2026_08_26_131000_create_audit_logs_table.php",
+        "stan": "phpstan analyse --configuration=phpstan.neon --memory-limit=512M",
+        "check": [
+            "@lint",
+            "@stan",
+            "@test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
