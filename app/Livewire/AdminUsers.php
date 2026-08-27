@@ -2,13 +2,11 @@
 
 namespace App\Livewire;
 
-use App\Mail\WelcomeMemberMail;
+use App\Core\Auth\UserProvisioningService;
 use App\Models\CommunityRoleAudit;
-use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -58,58 +56,12 @@ class AdminUsers extends Component
             'newRole' => 'vai trò',
         ]);
 
-        // Sinh username duy nhất từ họ tên (transliterate Việt → ASCII)
-        $ascii = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', trim($this->newName)) ?: '';
-        $username = preg_replace('/[^a-z0-9._]/', '', preg_replace('/\s+/', '.', $ascii) ?: '') ?: '';
-        if ($username === '') {
-            $username = 'user';
-        }
-        $base = $username;
-        $i = 1;
-        while (User::where('username', $username)->exists()) {
-            $username = $base.$i++;
-        }
-
-        $user = User::create([
-            'name' => $this->newName,
-            'email' => $this->newEmail,
-            'username' => $username,
-            'source' => 'admin',
-            'level' => 1,
-            'xp' => 0,
-            'aip' => 0,
-            'streak' => 0,
-        ]);
-
-        // is_admin / is_moderator không nằm trong $fillable → set trực tiếp
-        $user->is_admin = $this->newRole === 'admin';
-        $user->is_moderator = $this->newRole === 'mod';
-        $user->save();
-
-        // Admin cấp tài khoản → coi như đã xác minh, khỏi bắt verify email
-        $user->markEmailAsVerified();
-
-        Membership::create([
-            'user_id' => $user->id,
-            'status' => 'active',
-            'plan' => 'lifetime',
-            'expires_at' => '2099-12-31',
-        ]);
-        $user->brandRoles()->syncWithoutDetaching([
-            brand()->id => ['role' => $user->is_admin ? 'admin' : 'member'],
-        ]);
-
-        // Email chào mừng hướng dẫn Google login (không chặn việc tạo nếu mail lỗi).
-        try {
-            Mail::to($user->email)->send(new WelcomeMemberMail(
-                name: $user->name,
-                email: $user->email,
-                loginUrl: route('login'),
-                brandName: config('app.name'),
-            ));
-        } catch (\Throwable $e) {
-            report($e);
-        }
+        $user = app(UserProvisioningService::class)->provisionAdministratorMember(
+            brand(),
+            $this->newName,
+            $this->newEmail,
+            $this->newRole,
+        );
 
         $this->showCreateModal = false;
         $this->reset(['newName', 'newEmail']);
