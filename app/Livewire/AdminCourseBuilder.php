@@ -3,13 +3,11 @@
 namespace App\Livewire;
 
 use App\Models\Course;
-use App\Models\Lesson;
-use App\Models\LessonTask;
-use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Modules\Learning\Application\CourseCurriculumManagementService;
 
 class AdminCourseBuilder extends Component
 {
@@ -56,12 +54,7 @@ class AdminCourseBuilder extends Component
             return;
         }
         $this->validate(['moduleName' => 'required|min:3|max:100']);
-        $maxOrder = $this->course->modules()->max('order_index') ?? -1;
-        Module::create([
-            'course_id' => $this->course->id,
-            'title' => $this->moduleName,
-            'order_index' => $maxOrder + 1,
-        ]);
+        app(CourseCurriculumManagementService::class)->addModule($this->course, Auth::user(), $this->moduleName);
         $this->reset(['moduleName', 'showAddModule']);
         $this->course->refresh();
     }
@@ -71,7 +64,7 @@ class AdminCourseBuilder extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        Module::where('id', $id)->where('course_id', $this->course->id)->delete();
+        app(CourseCurriculumManagementService::class)->deleteModule($this->course, Auth::user(), $id);
         $this->course->refresh();
     }
 
@@ -85,13 +78,10 @@ class AdminCourseBuilder extends Component
             return;
         }
 
-        $maxOrder = Lesson::where('module_id', $this->addLessonToModule)->max('order_index') ?? -1;
-        Lesson::create([
-            'module_id' => $this->addLessonToModule,
+        app(CourseCurriculumManagementService::class)->addLesson($this->course, Auth::user(), $this->addLessonToModule, [
             'title' => $this->lessonTitle,
             'lesson_type' => $this->lessonType,
             'xp_reward' => $this->lessonXp,
-            'order_index' => $maxOrder + 1,
             'is_locked_by_default' => $this->lessonLocked,
         ]);
         $this->reset(['lessonTitle', 'lessonType', 'lessonXp', 'lessonLocked', 'addLessonToModule']);
@@ -106,7 +96,7 @@ class AdminCourseBuilder extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        Lesson::findOrFail($id)->delete();
+        app(CourseCurriculumManagementService::class)->deleteLesson($this->course, Auth::user(), $id);
         $this->course->refresh();
     }
 
@@ -120,13 +110,10 @@ class AdminCourseBuilder extends Component
             return;
         }
 
-        $maxOrder = LessonTask::where('lesson_id', $this->addTaskToLesson)->max('order_index') ?? -1;
-        LessonTask::create([
-            'lesson_id' => $this->addTaskToLesson,
+        app(CourseCurriculumManagementService::class)->addTask($this->course, Auth::user(), $this->addTaskToLesson, [
             'title' => $this->taskTitle,
             'description' => $this->taskDescription ?: null,
             'type' => $this->taskType,
-            'order_index' => $maxOrder + 1,
             'is_required' => $this->taskRequired,
         ]);
         $this->reset(['taskTitle', 'taskDescription', 'taskType', 'taskRequired', 'addTaskToLesson']);
@@ -140,7 +127,7 @@ class AdminCourseBuilder extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        LessonTask::findOrFail($id)->delete();
+        app(CourseCurriculumManagementService::class)->deleteTask($this->course, Auth::user(), $id);
         $this->course->refresh();
     }
 
