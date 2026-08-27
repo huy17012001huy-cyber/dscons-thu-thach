@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Core\Auth\UserProvisioningService;
+use App\Core\Auth\UserAdministrationService;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -97,31 +98,23 @@ class AdminUsers extends Component
         $roles->changeRole(brand(), Auth::user(), $user->id, $currentRole === 'moderator' ? 'member' : 'moderator');
     }
 
-    public function banUser(int $id): void
+    public function banUser(int $id, UserAdministrationService $administration): void
     {
-        if (! Auth::user()?->is_admin) {
-            return;
-        }
-        if ($id === Auth::id()) {
-            return;
-        } // Can't ban yourself
+        $actor = Auth::user();
+        abort_unless($actor instanceof User && $actor->isSuperAdmin(), 403);
         $user = User::findOrFail($id);
-        $membership = $user->membership;
-        if ($membership) {
-            $membership->update(['status' => 'banned']);
+        if ($administration->ban($actor, $user)) {
             $this->dispatch('toast', message: $user->name.' đã bị ban', type: 'success');
         }
     }
 
-    public function unbanUser(int $id): void
+    public function unbanUser(int $id, UserAdministrationService $administration): void
     {
-        if (! Auth::user()?->is_admin) {
-            return;
-        }
+        $actor = Auth::user();
+        abort_unless($actor instanceof User && $actor->isSuperAdmin(), 403);
         $user = User::findOrFail($id);
-        $membership = $user->membership;
-        if ($membership && $membership->status === 'banned') {
-            $membership->update(['status' => 'active']);
+        if ($administration->unban($actor, $user)) {
+            $this->dispatch('toast', message: $user->name.' đã được mở khóa', type: 'success');
         }
     }
 
