@@ -15,6 +15,7 @@ use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Modules\Learning\Application\ChallengeFreezeService;
 
 class AdminChallenges extends Component
 {
@@ -284,11 +285,10 @@ class AdminChallenges extends Component
             return;
         }
 
-        $exp->update([
-            'freeze_from_day' => $this->freezeFromDay,
-            'freeze_starts_at' => $exp->freeze_starts_at ?: now(),
-            'freeze_ends_at' => $endsAt,
-        ]);
+        $actor = Auth::user();
+        if (! app(ChallengeFreezeService::class)->freeze($exp, $actor, $this->freezeFromDay, $endsAt)) {
+            return;
+        }
 
         $this->dispatch('toast', message: "Đã tạm dừng từ ngày {$this->freezeFromDay}", type: 'success');
         $this->showFreezeModal = false;
@@ -299,11 +299,11 @@ class AdminChallenges extends Component
         if (! Auth::user()?->isBrandAdmin()) {
             return;
         }
-        Expedition::findOrFail($id)->update([
-            'freeze_from_day' => null,
-            'freeze_starts_at' => null,
-            'freeze_ends_at' => null,
-        ]);
+        $actor = Auth::user();
+        $expedition = Expedition::findOrFail($id);
+        if (! app(ChallengeFreezeService::class)->clear($expedition, $actor)) {
+            return;
+        }
         $this->dispatch('toast', message: 'Đã bỏ đóng băng', type: 'success');
     }
 
