@@ -9,6 +9,7 @@ use App\Models\Brand;
 use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -24,13 +25,19 @@ final class UserProvisioningService
         return $this->provision($brand, $name, $email, null, 'admin', $role === 'admin', $role === 'mod');
     }
 
-    private function provision(Brand $brand, string $name, string $email, ?User $referrer, string $source, bool $isAdmin, bool $isModerator): User
+    public function provisionPasswordMember(Brand $brand, string $name, string $email, string $password, ?User $referrer): User
     {
-        return DB::transaction(function () use ($brand, $name, $email, $referrer, $source, $isAdmin, $isModerator): User {
+        return $this->provision($brand, $name, $email, $referrer, 'web', false, false, Hash::make($password), false);
+    }
+
+    private function provision(Brand $brand, string $name, string $email, ?User $referrer, string $source, bool $isAdmin, bool $isModerator, ?string $passwordHash = null, bool $markVerified = true): User
+    {
+        return DB::transaction(function () use ($brand, $name, $email, $referrer, $source, $isAdmin, $isModerator, $passwordHash, $markVerified): User {
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
                 'username' => $this->uniqueUsername($name),
+                'password' => $passwordHash,
                 'source' => $source,
                 'level' => 1,
                 'xp' => 0,
@@ -39,7 +46,9 @@ final class UserProvisioningService
                 'referred_by' => $referrer?->id,
             ]);
             $user->forceFill(['is_admin' => $isAdmin, 'is_moderator' => $isModerator])->save();
-            $user->markEmailAsVerified();
+            if ($markVerified) {
+                $user->markEmailAsVerified();
+            }
 
             Membership::create([
                 'user_id' => $user->id,
