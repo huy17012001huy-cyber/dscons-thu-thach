@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Core\Gamification\XpService;
 use App\Models\Bookmark;
 use App\Models\Membership;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\XpTransaction;
-use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;

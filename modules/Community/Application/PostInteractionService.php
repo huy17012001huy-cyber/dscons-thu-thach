@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Modules\Community\Application;
 
 use App\Core\CommunityContext;
+use App\Core\Gamification\XpService;
 use App\Models\Bookmark;
 use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\GenericNotification;
-use App\Services\XpService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 

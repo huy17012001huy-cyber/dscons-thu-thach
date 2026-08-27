@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Learning\Application;
 
 use App\Core\CommunityContext;
+use App\Core\Gamification\XpService;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Lesson;
@@ -12,7 +13,6 @@ use App\Models\LessonProgress;
 use App\Models\LessonTask;
 use App\Models\TaskSubmission;
 use App\Models\User;
-use App\Services\XpService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;

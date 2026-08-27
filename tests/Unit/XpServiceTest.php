@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Core\Gamification\XpService;
+use App\Models\Post;
 use App\Models\User;
-use App\Models\XpTransaction;
-use App\Services\XpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -292,13 +292,13 @@ class XpServiceTest extends TestCase
     public function test_award_stores_reference_model(): void
     {
         $user = User::factory()->create(['xp' => 0]);
-        $post = \App\Models\Post::factory()->create(['user_id' => $user->id]);
+        $post = Post::factory()->create(['user_id' => $user->id]);
 
         $this->xpService->award($user, 'comment', 1.0, 'Posted', $post);
 
         $this->assertDatabaseHas('xp_transactions', [
             'user_id' => $user->id,
-            'reference_type' => \App\Models\Post::class,
+            'reference_type' => Post::class,
             'reference_id' => $post->id,
         ]);
     }

@@ -2,10 +2,13 @@
 
 namespace Tests\Unit;
 
+use App\Core\Gamification\BadgeService;
 use App\Models\Badge;
+use App\Models\Bookmark;
+use App\Models\Comment;
+use App\Models\Post;
 use App\Models\User;
 use App\Models\UserBadge;
-use App\Services\BadgeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -107,7 +110,7 @@ class BadgeServiceTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        \App\Models\Post::factory()->count(10)->create(['user_id' => $user->id]);
+        Post::factory()->count(10)->create(['user_id' => $user->id]);
 
         $this->badgeService->check($user);
 
@@ -131,8 +134,8 @@ class BadgeServiceTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        $post = \App\Models\Post::factory()->create();
-        \App\Models\Comment::factory()->count(20)->create(['user_id' => $user->id, 'post_id' => $post->id]);
+        $post = Post::factory()->create();
+        Comment::factory()->count(20)->create(['user_id' => $user->id, 'post_id' => $post->id]);
 
         $this->badgeService->check($user);
 
@@ -179,9 +182,9 @@ class BadgeServiceTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        $posts = \App\Models\Post::factory()->count(5)->create();
+        $posts = Post::factory()->count(5)->create();
         foreach ($posts as $post) {
-            \App\Models\Bookmark::create(['user_id' => $user->id, 'post_id' => $post->id]);
+            Bookmark::create(['user_id' => $user->id, 'post_id' => $post->id]);
         }
 
         $this->badgeService->check($user);
@@ -306,7 +309,7 @@ class BadgeServiceTest extends TestCase
         ]);
 
         $user = User::factory()->create(['level' => 5]);
-        \App\Models\Post::factory()->count(5)->create(['user_id' => $user->id]);
+        Post::factory()->count(5)->create(['user_id' => $user->id]);
 
         $this->badgeService->check($user);
 

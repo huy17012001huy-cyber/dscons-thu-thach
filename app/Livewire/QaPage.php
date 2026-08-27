@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Core\Gamification\XpService;
 use App\Models\Answer;
 use App\Models\Question;
 use App\Models\User;
-use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;

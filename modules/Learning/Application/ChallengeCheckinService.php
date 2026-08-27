@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Modules\Learning\Application;
 
 use App\Core\CommunityContext;
+use App\Core\Gamification\XpService;
 use App\Models\Expedition;
 use App\Models\ExpeditionCheckin;
 use App\Models\ExpeditionMember;
 use App\Models\User;
-use App\Services\XpService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 

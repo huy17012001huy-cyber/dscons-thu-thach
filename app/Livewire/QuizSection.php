@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Core\Gamification\XpService;
 use App\Models\ChallengeTask;
 use App\Models\QuizAttempt;
 use App\Models\User;
-use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;

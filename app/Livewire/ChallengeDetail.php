@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Core\Gamification\XpService;
 use App\Mail\ChallengeCompletionMail;
 use App\Models\ChallengeTask;
 use App\Models\ChallengeTaskCompletion;
@@ -12,7 +13,6 @@ use App\Models\ExpeditionMember;
 use App\Models\User;
 use App\Notifications\GenericNotification;
 use App\Services\TelegramService;
-use App\Services\XpService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;

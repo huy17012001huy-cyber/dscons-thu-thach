@@ -1,22 +1,23 @@
 <?php
 
-namespace App\Services;
+declare(strict_types=1);
+
+namespace App\Core\Gamification;
 
 use App\Models\Badge;
 use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Models\UserBadge;
 
-class BadgeService
+final class BadgeService
 {
     public function check(User $user): void
     {
-        $badges = Badge::all();
-        foreach ($badges as $badge) {
+        Badge::all()->each(function (Badge $badge) use ($user): void {
             if ($this->evaluate($user, $badge) && ! $this->hasEarned($user, $badge)) {
                 $this->award($user, $badge);
             }
-        }
+        });
     }
 
     public function award(User $user, Badge $badge): void
@@ -34,7 +35,10 @@ class BadgeService
 
     private function hasEarned(User $user, Badge $badge): bool
     {
-        return UserBadge::where('user_id', $user->id)->where('badge_id', $badge->id)->exists();
+        return UserBadge::query()
+            ->where('user_id', $user->id)
+            ->where('badge_id', $badge->id)
+            ->exists();
     }
 
     private function evaluate(User $user, Badge $badge): bool
@@ -49,14 +53,13 @@ class BadgeService
             'comment_count_gte' => $user->comments()->count() >= (int) $badge->condition_value,
             'streak_gte' => $user->streak >= (int) $badge->condition_value,
             'bookmark_count_gte' => $user->bookmarks()->count() >= (int) $badge->condition_value,
-            'answer_count_gte' => $user->questions()->count() >= (int) $badge->condition_value, // answers given
+            'answer_count_gte' => $user->questions()->count() >= (int) $badge->condition_value,
             'da_count_gte' => $user->da_count >= (int) $badge->condition_value,
             'expedition_created' => $user->expeditionMembers()
-                ->whereHas('expedition', fn ($q) => $q->where('created_by', $user->id))
+                ->whereHas('expedition', fn ($query) => $query->where('created_by', $user->id))
                 ->exists(),
             'course_completed' => ! $user->affiliateEarnings()->exists()
-                && CourseEnrollment::where('user_id', $user->id)
-                    ->whereNotNull('completed_at')->exists(),
+                && CourseEnrollment::query()->where('user_id', $user->id)->whereNotNull('completed_at')->exists(),
             default => false,
         };
     }

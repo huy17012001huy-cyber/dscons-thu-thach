@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Core\Gamification\CommunityStatsService;
 use App\Models\AipTransaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;

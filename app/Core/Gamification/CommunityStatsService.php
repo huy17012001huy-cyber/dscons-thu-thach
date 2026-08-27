@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Core\Gamification;
 
 use App\Core\CommunityContext;
 use App\Models\CommunityUserStat;
 use App\Models\User;
 
-class CommunityStatsService
+final class CommunityStatsService
 {
     public function __construct(private readonly CommunityContext $context) {}
 
@@ -20,18 +20,7 @@ class CommunityStatsService
     public function for(User $user): ?CommunityUserStat
     {
         $brandId = $this->brandId();
-        if (!$brandId) {
-            return null;
-        }
-
-        // A host-level brand can be bound for every request, including
-        // onboarding, admin, CLI and legacy records. Only switch a user to
-        // community-scoped stats after they actually belong to this brand.
-        $belongsToBrand = $user->memberships()
-            ->withoutGlobalScopes()
-            ->where('brand_id', $brandId)
-            ->exists();
-        if (!$belongsToBrand) {
+        if (! $brandId || ! $this->belongsToCurrentCommunity($user, $brandId)) {
             return null;
         }
 
@@ -43,14 +32,14 @@ class CommunityStatsService
                 'aip' => (int) ($user->getRawOriginal('aip') ?? 0),
                 'streak' => (int) ($user->getRawOriginal('streak') ?? 0),
                 'last_active_at' => $user->getRawOriginal('last_active_at'),
-            ]
+            ],
         );
     }
 
     public function syncUser(User $user): ?CommunityUserStat
     {
         $stats = $this->for($user);
-        if (!$stats) {
+        if (! $stats) {
             return null;
         }
 
@@ -60,11 +49,19 @@ class CommunityStatsService
         $user->setAttribute('streak', (int) $stats->streak);
         $user->setAttribute('last_active_at', $stats->last_active_at);
 
-        if (!$stats->last_active_at || $stats->last_active_at->lt(now()->subMinutes(5))) {
+        if (! $stats->last_active_at || $stats->last_active_at->lt(now()->subMinutes(5))) {
             $stats->forceFill(['last_active_at' => now()])->save();
             $user->setAttribute('last_active_at', $stats->last_active_at);
         }
 
         return $stats;
+    }
+
+    private function belongsToCurrentCommunity(User $user, int $brandId): bool
+    {
+        return $user->memberships()
+            ->withoutGlobalScopes()
+            ->where('brand_id', $brandId)
+            ->exists();
     }
 }

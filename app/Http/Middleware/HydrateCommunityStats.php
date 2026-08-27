@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\CommunityStatsService;
+use App\Core\Gamification\CommunityStatsService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

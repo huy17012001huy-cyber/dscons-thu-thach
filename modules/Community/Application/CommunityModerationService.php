@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Modules\Community\Application;
 
 use App\Core\CommunityContext;
+use App\Core\Gamification\XpService;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Report;
 use App\Models\User;
 use App\Notifications\GenericNotification;
-use App\Services\XpService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 

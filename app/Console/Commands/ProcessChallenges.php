@@ -2,15 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Core\Gamification\XpService;
 use App\Models\Expedition;
-use App\Models\ExpeditionCheckin;
 use App\Notifications\GenericNotification;
-use App\Services\XpService;
 use Illuminate\Console\Command;
 
 class ProcessChallenges extends Command
 {
     protected $signature = 'aip:process-challenges';
+
     protected $description = 'Auto-complete/fail expired challenges and kick inactive members';
 
     public function handle(): void
@@ -24,15 +24,17 @@ class ProcessChallenges extends Command
 
         foreach ($expired as $ch) {
             $activeMembers = $ch->members()->whereNull('kicked_at')->get();
-            $allCompleted = $activeMembers->every(fn($m) => $m->consecutive_missed_days < 3);
+            $allCompleted = $activeMembers->every(fn ($m) => $m->consecutive_missed_days < 3);
 
             if ($allCompleted && $activeMembers->count() >= 2) {
                 $ch->complete();
                 foreach ($activeMembers as $member) {
-                    $xp->award($member->user, 'expedition_complete', $ch->getXpBonusMultiplier(), 'Hoàn thành Challenge: ' . $ch->title, $ch);
+                    $xp->award($member->user, 'expedition_complete', $ch->getXpBonusMultiplier(), 'Hoàn thành Challenge: '.$ch->title, $ch);
                     $member->update(['completed_at' => now()]);
                 }
-                if ($ch->leader) $xp->award($ch->leader, 'expedition_captain', 1.0, 'Leader hoàn thành: ' . $ch->title, $ch);
+                if ($ch->leader) {
+                    $xp->award($ch->leader, 'expedition_captain', 1.0, 'Leader hoàn thành: '.$ch->title, $ch);
+                }
                 $this->info("Completed: {$ch->title}");
             } else {
                 $ch->fail();
@@ -53,7 +55,9 @@ class ProcessChallenges extends Command
                 // Exclude days whose per-member deadline is still in the future (override cascade can push any day)
                 $pendingDays = 0;
                 foreach ($ch->tasks as $t) {
-                    if ($t->day_number > $expiredDays) continue;
+                    if ($t->day_number > $expiredDays) {
+                        continue;
+                    }
                     if ($ch->getDeadlineForMemberAtDay($member, $t->day_number)->greaterThan(now())) {
                         $pendingDays++;
                     }
@@ -72,9 +76,9 @@ class ProcessChallenges extends Command
 
                 $member->update(['consecutive_missed_days' => $missedDays]);
 
-                if ($missedDays >= 3 && !$member->miss_warned) {
+                if ($missedDays >= 3 && ! $member->miss_warned) {
                     $member->update(['miss_warned' => true]);
-                    $member->user->notify(new GenericNotification('⚠', 'Bạn đã miss ' . $missedDays . ' ngày trong Challenge "' . $ch->title . '". Hãy nộp bài sớm!'));
+                    $member->user->notify(new GenericNotification('⚠', 'Bạn đã miss '.$missedDays.' ngày trong Challenge "'.$ch->title.'". Hãy nộp bài sớm!'));
                     $this->info("Warned {$member->user->name} in {$ch->title} (missed {$missedDays})");
                 }
             }

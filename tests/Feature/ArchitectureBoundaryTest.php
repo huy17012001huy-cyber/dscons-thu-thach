@@ -70,6 +70,11 @@ final class ArchitectureBoundaryTest extends TestCase
                     Str::contains($contents, ['App\\Livewire\\', 'App\\Http\\Controllers\\']),
                     $path.' imports a presentation layer.',
                 );
+                self::assertStringNotContainsString(
+                    'App\\Services\\',
+                    $contents,
+                    $path.' imports an application service instead of an App Core contract.',
+                );
             }
         }
     }

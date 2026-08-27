@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Core\Gamification\XpService;
+use App\Models\Bookmark;
+use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Membership;
 use App\Models\Post;
+use App\Models\Topic;
 use App\Models\User;
-use App\Services\XpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -250,9 +253,9 @@ class PostTest extends TestCase
     {
         $post = Post::factory()->create();
 
-        $comment1 = \App\Models\Comment::factory()->create(['post_id' => $post->id, 'parent_id' => null]);
-        $comment2 = \App\Models\Comment::factory()->create(['post_id' => $post->id, 'parent_id' => null]);
-        $reply = \App\Models\Comment::factory()->create(['post_id' => $post->id, 'parent_id' => $comment1->id]);
+        $comment1 = Comment::factory()->create(['post_id' => $post->id, 'parent_id' => null]);
+        $comment2 = Comment::factory()->create(['post_id' => $post->id, 'parent_id' => null]);
+        $reply = Comment::factory()->create(['post_id' => $post->id, 'parent_id' => $comment1->id]);
 
         $this->assertEquals(2, $post->comments()->count());
         $this->assertEquals(3, $post->allComments()->count());
@@ -297,7 +300,7 @@ class PostTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->create();
 
-        \App\Models\Bookmark::create([
+        Bookmark::create([
             'user_id' => $user->id,
             'post_id' => $post->id,
         ]);
@@ -341,7 +344,7 @@ class PostTest extends TestCase
     public function test_post_with_topic(): void
     {
         $user = User::factory()->create();
-        $topic = \App\Models\Topic::factory()->create();
+        $topic = Topic::factory()->create();
 
         $post = Post::factory()->create([
             'user_id' => $user->id,
