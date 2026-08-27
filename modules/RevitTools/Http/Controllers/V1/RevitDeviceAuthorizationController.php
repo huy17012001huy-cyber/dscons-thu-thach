@@ -7,7 +7,6 @@ namespace Modules\RevitTools\Http\Controllers\V1;
 use App\Http\Requests\Revit\PollDeviceAuthorizationRequest;
 use App\Http\Requests\Revit\StartDeviceAuthorizationRequest;
 use App\Http\Responses\ApiResponse;
-use App\Models\ToolDeviceAuthorization;
 use App\Models\ToolSession;
 use Illuminate\Http\JsonResponse;
 use Modules\RevitTools\Application\ToolLicenseService;
@@ -30,24 +29,29 @@ final class RevitDeviceAuthorizationController
 
     public function poll(PollDeviceAuthorizationRequest $request): JsonResponse
     {
-        $authorization = $this->authorization($request->string('authorization_code')->toString());
-        if (! $authorization || $authorization->expires_at->isPast()) {
+        $result = $this->licenses->pollDeviceAuthorization(
+            $this->licenses->revitBrand(),
+            $request->string('authorization_code')->toString(),
+        );
+        if ($result->status === 'expired') {
             return ApiResponse::error('Mã kích hoạt đã hết hạn.', 410, ['authorization' => ['expired']]);
         }
-        if ($authorization->status === 'pending') {
+        if ($result->status === 'pending') {
             return ApiResponse::success(['status' => 'pending'], 'Đang chờ người dùng xác nhận.');
         }
-        if ($authorization->status !== 'approved' || ! $authorization->tool_session_id || $authorization->consumed_at) {
+        $approval = $result->approval();
+        if ($approval === null) {
             return ApiResponse::error('Yêu cầu kích hoạt chưa được chấp thuận.', 403, ['authorization' => ['denied']]);
         }
 
-        $credential = cache()->pull('revit:authorization-credential:'.$authorization->id);
+        /** @var mixed $credential */
+        $credential = $approval['credential'];
         if (! is_string($credential) || $credential === '') {
             return ApiResponse::error('Phiên kích hoạt đã hết hạn. Hãy tạo mã mới trong Revit.', 410, ['authorization' => ['expired']]);
         }
 
-        $authorization->update(['consumed_at' => now()]);
-        $session = $authorization->session;
+        /** @var mixed $session */
+        $session = $approval['session'];
         if (! $session instanceof ToolSession) {
             return ApiResponse::error('Không thể hoàn tất phiên kích hoạt.', 403, ['authorization' => ['denied']]);
         }
@@ -57,10 +61,5 @@ final class RevitDeviceAuthorizationController
             'access_token' => $credential,
             'expires_at' => $session->expires_at->toIso8601String(),
         ], 'Revit đã được kết nối.');
-    }
-
-    private function authorization(string $code): ?ToolDeviceAuthorization
-    {
-        return $this->licenses->findAuthorizationByCode($this->licenses->revitBrand(), $code);
     }
 }

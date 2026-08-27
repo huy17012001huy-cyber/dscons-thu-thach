@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Revit\PollDeviceAuthorizationRequest;
@@ -30,26 +32,26 @@ final class RevitToolApiController extends Controller
 
     public function poll(PollDeviceAuthorizationRequest $request): JsonResponse
     {
-        $input = $request->validated();
-        $authorization = $this->licenses->findAuthorizationByCode($this->licenses->revitBrand(), $input['authorization_code']);
-        if (! $authorization || $authorization->expires_at->isPast()) {
+        $result = $this->licenses->pollDeviceAuthorization(
+            $this->licenses->revitBrand(),
+            $request->string('authorization_code')->toString(),
+        );
+        if ($result->status === 'expired') {
             return response()->json(['status' => 'expired', 'message' => 'Mã kích hoạt đã hết hạn.'], 410);
         }
-        if ($authorization->status === 'pending') {
+        if ($result->status === 'pending') {
             return response()->json(['status' => 'pending']);
         }
-        if ($authorization->status !== 'approved' || ! $authorization->tool_session_id || $authorization->consumed_at) {
+        $approval = $result->approval();
+        if ($approval === null) {
             return response()->json(['status' => 'denied', 'message' => 'Yêu cầu kích hoạt chưa được chấp thuận.'], 403);
         }
 
-        // The raw token is intentionally kept only in the short-lived cache record.
-        $sessionCredential = cache()->pull('revit:authorization-credential:'.$authorization->id);
+        $sessionCredential = $approval['credential'];
         if (! $sessionCredential) {
             return response()->json(['status' => 'expired', 'message' => 'Phiên kích hoạt đã hết hạn. Hãy tạo mã mới trong Revit.'], 410);
         }
-        $authorization->update(['consumed_at' => now()]);
-        $session = $authorization->session;
-        abort_unless($session instanceof ToolSession, 403);
+        $session = $approval['session'];
 
         return response()->json(['status' => 'approved', 'access_token' => $sessionCredential, 'expires_at' => $session->expires_at->toIso8601String()]);
     }

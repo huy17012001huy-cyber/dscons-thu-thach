@@ -39,6 +39,39 @@ final class ToolLicenseService
             ->first();
     }
 
+    public function pollDeviceAuthorization(Brand $brand, string $code): DeviceAuthorizationPollResult
+    {
+        return DB::transaction(function () use ($brand, $code): DeviceAuthorizationPollResult {
+            $authorization = ToolDeviceAuthorization::withoutGlobalScopes()
+                ->where('brand_id', $brand->id)
+                ->where('code_hash', hash('sha256', $code))
+                ->lockForUpdate()
+                ->first();
+
+            if (! $authorization || $authorization->expires_at->isPast()) {
+                return new DeviceAuthorizationPollResult('expired');
+            }
+            if ($authorization->status === 'pending') {
+                return new DeviceAuthorizationPollResult('pending');
+            }
+            if ($authorization->status !== 'approved' || ! $authorization->tool_session_id || $authorization->consumed_at) {
+                return new DeviceAuthorizationPollResult('denied');
+            }
+
+            $credential = cache()->pull('revit:authorization-credential:'.$authorization->id);
+            if (! is_string($credential) || $credential === '') {
+                return new DeviceAuthorizationPollResult('expired');
+            }
+
+            $authorization->update(['consumed_at' => now()]);
+            $session = $authorization->session;
+
+            return $session instanceof ToolSession
+                ? new DeviceAuthorizationPollResult('approved', $credential, $session)
+                : new DeviceAuthorizationPollResult('denied');
+        });
+    }
+
     public function findAuthorizationByBrowserCode(string $code): ?ToolDeviceAuthorization
     {
         return ToolDeviceAuthorization::withoutGlobalScopes()

@@ -54,7 +54,7 @@ class RevitToolLicenseTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'approved');
         $this->assertNotEmpty($first->json('access_token'));
-        $this->postJson('/api/revit/device/poll', ['authorization_code' => $code])
+        $this->postJson('/api/v1/revit/device/poll', ['authorization_code' => $code])
             ->assertForbidden();
     }
 
