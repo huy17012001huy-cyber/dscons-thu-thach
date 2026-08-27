@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Core\Gamification\XpService;
 use App\Models\ChallengeTask;
 use App\Models\QuizAttempt;
 use App\Models\User;
@@ -10,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Modules\Learning\Application\QuizAttemptService;
 
 /**
  * Renders an inline interactive quiz embedded inside the challenge task panel.
@@ -93,32 +93,14 @@ class QuizSection extends Component
             return;
         }
 
-        $isCorrect = ($letter === ($questions[$idx]['correct'] ?? null));
-
-        // Persist + award XP only for real members. Admin/non-members → in-memory preview only.
+        $isCorrect = $letter === ($questions[$idx]['correct'] ?? null);
         if ($this->isPersistingMember()) {
-            // firstOrCreate guard: nếu DB đã có row (somehow), không award lại — chống mọi đường tránh
-            $attempt = QuizAttempt::firstOrNew([
-                'user_id' => $user->id,
-                'challenge_task_id' => $this->task->id,
-                'question_index' => $idx,
-            ]);
-            $isFirstAttempt = ! $attempt->exists;
-            $attempt->selected_letter = $letter;
-            $attempt->is_correct = $isCorrect;
-            $attempt->answered_at = now();
-            if ($isCorrect && $isFirstAttempt) {
-                app(XpService::class)->award(
-                    $user,
-                    'quiz_correct',
-                    1.0,
-                    'Quiz Day '.$this->task->day_number.' · Câu '.($idx + 1),
-                    $this->task
-                );
-                $attempt->xp_awarded = true;
+            $result = app(QuizAttemptService::class)->answer($this->task, $user, $idx, $letter);
+            $letter = $result->selectedLetter;
+            $isCorrect = $result->isCorrect;
+            if ($result->xpAwarded) {
                 $this->dispatch('toast', message: '+2 XP — câu '.($idx + 1).' chính xác!', type: 'success');
             }
-            $attempt->save();
         }
 
         $this->submitted[$idx] = ['letter' => $letter, 'is_correct' => $isCorrect];
