@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Core\CommunityContext;
 use App\Exceptions\GoogleAuthException;
 use App\Models\Membership;
 use App\Models\User;
@@ -10,6 +13,8 @@ use Laravel\Socialite\Contracts\User as ProviderUser;
 
 class GoogleAuthService
 {
+    public function __construct(private readonly CommunityContext $context) {}
+
     public function resolveUser(ProviderUser $providerUser): User
     {
         $googleId = trim((string) $providerUser->getId());
@@ -41,11 +46,12 @@ class GoogleAuthService
             return $existingEmailUser;
         }
 
-        if (! app()->bound('brand') || brand()->registration_mode !== 'open') {
+        $brand = $this->context->current();
+        if (! $brand || $brand->registration_mode !== 'open') {
             throw new GoogleAuthException('Cộng đồng hiện không mở đăng ký tài khoản mới.');
         }
 
-        return DB::transaction(function () use ($providerUser, $googleId, $email): User {
+        return DB::transaction(function () use ($providerUser, $googleId, $email, $brand): User {
             $user = User::create([
                 'name' => trim((string) ($providerUser->getName() ?: $email)),
                 'email' => $email,
@@ -67,7 +73,7 @@ class GoogleAuthService
                 'expires_at' => '2099-12-31',
             ]);
             $user->brandRoles()->syncWithoutDetaching([
-                brand()->id => ['role' => 'member'],
+                $brand->id => ['role' => 'member'],
             ]);
 
             return $user;
