@@ -65,7 +65,7 @@ test.describe('QA member feature regression', () => {
         await app.goto('/feed');
         const trigger = testInfo.project.name === 'mobile-chromium'
             ? page.locator('#mobile-account-trigger')
-            : page.locator('#user-panel:visible').last();
+            : page.locator('#user-panel:visible').first();
         await trigger.click();
         const menu = page.locator('.account-menu:visible').last();
         await expect(menu.getByText('Hồ sơ của bạn')).toBeVisible();
