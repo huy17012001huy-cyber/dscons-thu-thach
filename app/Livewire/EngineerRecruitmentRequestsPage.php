@@ -4,10 +4,10 @@ namespace App\Livewire;
 
 use App\Models\RecruitmentContactRequest;
 use App\Models\User;
-use App\Services\RecruiterContactService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
+use Modules\Recruitment\Application\RecruiterContactService;
 
 class EngineerRecruitmentRequestsPage extends Component
 {

@@ -5,27 +5,37 @@ namespace App\Livewire;
 use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
 use App\Models\RecruiterEntitlement;
-use App\Models\RecruitmentContactRequest;
 use App\Models\RecruiterProfile;
+use App\Models\RecruitmentContactRequest;
 use App\Models\User;
 use App\Services\CandidateMatcher;
 use App\Services\JobDescriptionParser;
-use App\Services\RecruiterContactService;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Modules\Recruitment\Application\RecruiterContactService;
 
 class RecruiterDashboard extends Component
 {
     public bool $isAdminPreview = false;
+
     public ?int $recruiterUserId = null;
+
     public string $jobDescription = '';
+
     public string $discipline = '';
+
     public string $skill = '';
+
     public string $workMode = '';
+
     public string $availability = '';
+
     public int $minYears = 0;
+
     public ?int $selectedCandidate = null;
+
     public string $contactMessage = '';
+
     public string $activeTab = 'candidates';
 
     public function mount(?RecruiterProfile $recruiter = null): void
@@ -94,8 +104,12 @@ class RecruiterDashboard extends Component
     public function render(): View
     {
         $criteria = app(JobDescriptionParser::class)->parse($this->jobDescription);
-        if ($this->discipline !== '') $criteria['discipline'] = $this->discipline;
-        if ($this->minYears > 0) $criteria['years'] = $this->minYears;
+        if ($this->discipline !== '') {
+            $criteria['discipline'] = $this->discipline;
+        }
+        if ($this->minYears > 0) {
+            $criteria['years'] = $this->minYears;
+        }
         if ($this->skill !== '') {
             $skills = preg_split('/[,\n]+/', $this->skill) ?: [];
             $criteria['skills'] = array_values(array_filter(array_map('trim', $skills)));
@@ -119,6 +133,7 @@ class RecruiterDashboard extends Component
                 assert($cv instanceof EngineerCv);
                 $match = app(CandidateMatcher::class)->score($criteria, $cv);
                 $skills = collect($cv->skills())->map(fn ($skill) => is_array($skill) ? ($skill['name'] ?? '') : $skill)->filter()->take(8)->values()->all();
+
                 return [
                     'id' => $profile->user_id,
                     'code' => $profile->anonymized_code,
@@ -138,8 +153,11 @@ class RecruiterDashboard extends Component
                 ];
             })
             ->filter(function (array $candidate): bool {
-                if ($this->skill === '') return true;
+                if ($this->skill === '') {
+                    return true;
+                }
                 $needle = strtolower($this->skill);
+
                 return collect($candidate['skills'])->contains(fn ($skill) => str_contains(strtolower((string) $skill), $needle));
             })
             ->sortByDesc('score')
@@ -168,6 +186,7 @@ class RecruiterDashboard extends Component
         return view('livewire.recruiter-dashboard', compact('candidates', 'criteria', 'connections', 'creditSummary', 'selected'))
             ->layout('layouts.recruiter', ['title' => 'TÃ¬m á»©ng viÃªn BIM/MEP']);
     }
+
     private function currentRecruiterUserId(): int
     {
         abort_unless($this->recruiterUserId !== null, 403);

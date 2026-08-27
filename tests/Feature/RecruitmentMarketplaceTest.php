@@ -2,24 +2,23 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\RecruiterDashboard;
+use App\Livewire\AdminRecruitment;
 use App\Livewire\EngineerCvPage;
 use App\Livewire\EngineerRecruitmentRequestsPage;
-use App\Livewire\AdminRecruitment;
-use App\Models\Brand;
-use App\Models\Conversation;
+use App\Livewire\RecruiterDashboard;
 use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
+use App\Models\Membership;
 use App\Models\RecruiterEntitlement;
 use App\Models\RecruiterOrder;
 use App\Models\RecruiterPlan;
 use App\Models\RecruiterProfile;
 use App\Models\RecruitmentContactRequest;
 use App\Models\User;
-use App\Services\RecruiterContactService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use Modules\Recruitment\Application\RecruiterContactService;
 use Tests\TestCase;
 
 class RecruitmentMarketplaceTest extends TestCase
@@ -52,12 +51,28 @@ class RecruitmentMarketplaceTest extends TestCase
         $this->assertSame('pending', $request->status);
         $this->assertSame(1, $entitlement->fresh()->credits_reserved);
         $this->assertDatabaseMissing('conversations', ['contact_request_id' => $request->id]);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $recruiter->id,
+            'domain' => 'recruitment',
+            'action' => 'contact_request_created',
+            'subject_type' => RecruitmentContactRequest::class,
+            'subject_id' => $request->id,
+        ]);
 
         app(RecruiterContactService::class)->respond($request, $engineer, true);
 
         $this->assertDatabaseHas('recruitment_contact_requests', ['id' => $request->id, 'status' => 'accepted']);
         $this->assertDatabaseHas('conversations', ['contact_request_id' => $request->id, 'conversation_type' => 'recruitment']);
         $this->assertSame(1, $entitlement->fresh()->credits_used);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $engineer->id,
+            'domain' => 'recruitment',
+            'action' => 'contact_request_accepted',
+            'subject_type' => RecruitmentContactRequest::class,
+            'subject_id' => $request->id,
+        ]);
     }
 
     public function test_rejected_contact_request_refunds_reserved_credit(): void
@@ -93,7 +108,7 @@ class RecruitmentMarketplaceTest extends TestCase
     public function test_recruitment_roles_cannot_cross_into_each_other(): void
     {
         [$recruiter, $engineer] = $this->makeAccounts();
-        \App\Models\Membership::factory()->active()->create(['user_id' => $recruiter->id]);
+        Membership::factory()->active()->create(['user_id' => $recruiter->id]);
 
         $this->actingAs($engineer)->get('/nha-tuyen-dung/dashboard')->assertForbidden();
         $this->actingAs($recruiter)->get('/ho-so-cv')->assertForbidden();
@@ -160,12 +175,14 @@ class RecruitmentMarketplaceTest extends TestCase
         $recruiter = User::factory()->create(['account_type' => 'recruiter']);
         RecruiterProfile::create(['user_id' => $recruiter->id, 'company_name' => 'BIM Test Co', 'company_slug' => 'bim-test-'.$recruiter->id, 'verification_status' => 'verified', 'verified_at' => now()]);
         $engineer = User::factory()->create(['email' => 'engineer@example.test', 'account_type' => 'engineer']);
+
         return [$recruiter, $engineer];
     }
 
     private function makeCv(User $engineer): EngineerCv
     {
         $profile = EngineerProfile::create(['brand_id' => brand()->id, 'user_id' => $engineer->id, 'anonymized_code' => 'KYS-'.$engineer->id, 'headline' => 'BIM Coordinator', 'discipline' => 'BIM', 'years_experience' => 5, 'contact_email' => $engineer->email, 'contact_phone' => '0900000000', 'is_searchable' => true]);
+
         return EngineerCv::create(['brand_id' => brand()->id, 'user_id' => $engineer->id, 'status' => 'published', 'data' => ['years_experience' => 5, 'skills' => [['name' => 'Revit'], ['name' => 'Navisworks']], 'experiences' => [['role' => 'BIM Coordinator']]]]);
     }
 
@@ -173,6 +190,7 @@ class RecruitmentMarketplaceTest extends TestCase
     {
         $plan = RecruiterPlan::create(['name' => 'Test', 'contact_credits' => 3, 'duration_days' => 30, 'price' => 0, 'is_active' => true]);
         $order = RecruiterOrder::create(['recruiter_id' => $recruiter->id, 'plan_id' => $plan->id, 'status' => 'active', 'payment_ref' => 'TEST-'.$recruiter->id, 'amount' => 0, 'amount_paid' => 0, 'paid_at' => now()]);
+
         return RecruiterEntitlement::create(['recruiter_id' => $recruiter->id, 'order_id' => $order->id, 'credits_total' => 3, 'starts_at' => now(), 'expires_at' => now()->addDays(30)]);
     }
 }

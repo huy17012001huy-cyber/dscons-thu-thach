@@ -6,36 +6,56 @@ use App\Models\EngineerCv;
 use App\Models\EngineerProfile;
 use App\Models\RecruitmentContactRequest;
 use App\Models\User;
-use App\Services\RecruiterContactService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Modules\Recruitment\Application\EngineerCvService;
+use Modules\Recruitment\Application\RecruiterContactService;
 
 class EngineerCvPage extends Component
 {
     public bool $isAdminPreview = false;
+
     public ?int $profileUserId = null;
+
     public string $profileEmail = '';
 
     public string $headline = '';
+
     public string $discipline = 'BIM';
+
     public string $summary = '';
+
     public int $yearsExperience = 0;
+
     public string $location = '';
+
     public string $workMode = 'Hybrid';
+
     public string $availability = 'Đang cập nhật';
+
     public string $skillsText = '';
+
     public string $experiencesText = '';
+
     public string $educationText = '';
+
     public string $projectsText = '';
+
     public string $certificationsText = '';
+
     public string $languagesText = '';
+
     public string $template = 'technical-clean';
+
     public string $accentColor = '#1F77BE';
+
     public string $contactPhone = '';
+
     public bool $showEmail = true;
+
     public bool $showPhone = false;
+
     public bool $isPublished = false;
 
     public function mount(?EngineerCv $cv = null): void
@@ -56,7 +76,7 @@ class EngineerCvPage extends Component
             $cv = $workspace['cv'];
         }
 
-        $profile ??= new EngineerProfile();
+        $profile ??= new EngineerProfile;
 
         $this->fill([
             'profileEmail' => $profile->contact_email ?? ($cv->user instanceof User ? $cv->user->email : $user->email),
