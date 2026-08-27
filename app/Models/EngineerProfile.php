@@ -33,8 +33,14 @@ class EngineerProfile extends Model
     protected $casts = ['contact_visibility' => 'array', 'is_searchable' => 'boolean'];
 
     /** @return BelongsTo<User, $this> */
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /** @return HasOne<EngineerCv, $this> */
-    public function cv(): HasOne { return $this->hasOne(EngineerCv::class, 'user_id', 'user_id'); }
+    public function cv(): HasOne
+    {
+        return $this->hasOne(EngineerCv::class, 'user_id', 'user_id');
+    }
 }

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Livewire\AdminSettings;
-use App\Models\Setting;
 use App\Models\User;
 use App\Support\CommunityBrandSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,7 +32,7 @@ class AdminSettingsTest extends TestCase
         $this->assertSame('#123456', CommunityBrandSettings::badgeColors($brand)['newcomer']);
         $this->assertSame(44, CommunityBrandSettings::memberAvatarSize($brand));
         $this->assertDatabaseHas('settings', [
-            'key' => 'community.' . $brand->id . '.membership_label',
+            'key' => 'community.'.$brand->id.'.membership_label',
             'value' => 'Kỹ sư VIP',
         ]);
     }

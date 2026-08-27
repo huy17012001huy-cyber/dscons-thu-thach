@@ -21,7 +21,7 @@ abstract class Cad21DaysSeeder extends Seeder
             ->where('slug', '21-ngay-lam-tool-revit-voi-ai-agent')
             ->first();
 
-        if (!$source) {
+        if (! $source) {
             throw new RuntimeException(
                 'Không tìm thấy challenge Revit để đồng bộ giá và quyền truy cập. '
                 .'Hãy chạy challenge:seed-revit-21 trước.'

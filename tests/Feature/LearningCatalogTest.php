@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\ChallengePage;
 use App\Livewire\AcademyDetail;
+use App\Livewire\ChallengePage;
 use App\Livewire\MarketplacePage;
 use App\Livewire\OrdersPage;
 use App\Models\ChallengeTask;

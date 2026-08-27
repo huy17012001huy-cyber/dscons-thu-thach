@@ -5,10 +5,10 @@ namespace App\Livewire;
 use App\Models\Brand;
 use App\Models\DigitalProduct;
 use App\Models\ToolInstallation;
-use Modules\RevitTools\Application\ToolLicenseService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\RevitTools\Application\ToolLicenseService;
 
 class RevitDevicePage extends Component
 {

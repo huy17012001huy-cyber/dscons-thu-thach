@@ -80,6 +80,6 @@ class ElearningCourseSeeder extends Seeder
             }
         }
 
-        $this->command->info("✅ Created e-learning course with " . $course->modules()->count() . " modules");
+        $this->command->info('✅ Created e-learning course with '.$course->modules()->count().' modules');
     }
 }

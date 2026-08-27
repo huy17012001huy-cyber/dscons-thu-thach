@@ -21,7 +21,7 @@ class WelcomeMemberMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Chào mừng bạn tới ' . $this->brandName);
+        return new Envelope(subject: 'Chào mừng bạn tới '.$this->brandName);
     }
 
     public function content(): Content

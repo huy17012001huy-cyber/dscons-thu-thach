@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\CommunityManage;
 use App\Livewire\AdminFeedbacks;
+use App\Livewire\CommunityManage;
 use App\Models\Feedback;
 use App\Models\User;
 use App\Support\CommunityContentDefaults;
@@ -83,7 +83,7 @@ class CommunityGuidanceTest extends TestCase
     public function test_corrupted_custom_guidance_falls_back_to_clean_defaults(): void
     {
         $brand = brand();
-        $brand->update(['rules_content' => "Nội quy d� hi�u"]);
+        $brand->update(['rules_content' => 'Nội quy d� hi�u']);
 
         $this->assertSame(
             CommunityContentDefaults::rules(),

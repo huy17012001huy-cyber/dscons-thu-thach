@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use App\Models\Brand;
 use App\Models\Course;
-use App\Models\CourseEnrollment;
 use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;

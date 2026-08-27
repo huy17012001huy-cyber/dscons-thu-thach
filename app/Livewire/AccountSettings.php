@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Core\Auth\AccountDataService;
 use App\Models\Brand;
 use App\Models\CourseEnrollment;
 use App\Models\ExpeditionMember;
@@ -16,7 +17,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use App\Core\Auth\AccountDataService;
 
 class AccountSettings extends Component
 {

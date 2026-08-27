@@ -36,7 +36,9 @@ class FreezeChallenge extends Command
     public function handle(): int
     {
         $exp = $this->resolveExpedition();
-        if (!$exp) return self::FAILURE;
+        if (! $exp) {
+            return self::FAILURE;
+        }
 
         if ($this->option('clear')) {
             return $this->clearFreeze($exp);
@@ -52,9 +54,10 @@ class FreezeChallenge extends Command
             ? Expedition::find($key)
             : Expedition::where('slug', $key)->first();
 
-        if (!$exp) {
+        if (! $exp) {
             $this->error("Expedition not found: {$key}");
         }
+
         return $exp;
     }
 
@@ -66,6 +69,7 @@ class FreezeChallenge extends Command
             'freeze_ends_at' => null,
         ]);
         $this->info("✓ Freeze cleared for [{$exp->title}]");
+
         return self::SUCCESS;
     }
 
@@ -74,13 +78,15 @@ class FreezeChallenge extends Command
         $fromDay = (int) $this->option('from-day');
         $until = $this->option('until');
 
-        if (!$fromDay || !$until) {
+        if (! $fromDay || ! $until) {
             $this->error('Required: --from-day and --until (or use --clear)');
+
             return self::FAILURE;
         }
 
         if ($fromDay < 1 || $fromDay > $exp->required_days) {
             $this->error("--from-day must be between 1 and {$exp->required_days}");
+
             return self::FAILURE;
         }
 
@@ -88,6 +94,7 @@ class FreezeChallenge extends Command
             $endsAt = Carbon::parse($until, self::TZ)->utc();
         } catch (\Throwable $e) {
             $this->error("Invalid --until: {$until}");
+
             return self::FAILURE;
         }
 
@@ -97,13 +104,14 @@ class FreezeChallenge extends Command
         } elseif ($exp->freeze_starts_at && $exp->freeze_ends_at && $exp->freeze_starts_at->lessThan(now())) {
             // Extending an existing freeze — preserve original start
             $startsAt = $exp->freeze_starts_at;
-            $this->line("  (preserving existing start; pass --starts to override)");
+            $this->line('  (preserving existing start; pass --starts to override)');
         } else {
             $startsAt = now();
         }
 
         if ($endsAt->lessThanOrEqualTo($startsAt)) {
             $this->error('Freeze end must be after freeze start');
+
             return self::FAILURE;
         }
 

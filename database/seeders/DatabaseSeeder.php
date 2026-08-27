@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Membership;
 use App\Models\Brand;
+use App\Models\Membership;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Seeder;

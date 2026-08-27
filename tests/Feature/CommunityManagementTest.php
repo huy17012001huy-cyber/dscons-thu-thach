@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\CommunityManage;
 use App\Livewire\AdminChallenges;
 use App\Livewire\AdminCourses;
+use App\Livewire\CommunityManage;
 use App\Livewire\MembershipPricing;
 use App\Models\Brand;
 use App\Models\Course;

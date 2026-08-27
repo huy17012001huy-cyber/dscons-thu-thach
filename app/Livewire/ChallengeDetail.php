@@ -8,7 +8,6 @@ use App\Models\ChallengeTask;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\User;
-use App\Notifications\GenericNotification;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;

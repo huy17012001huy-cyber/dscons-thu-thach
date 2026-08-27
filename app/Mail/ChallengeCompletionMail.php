@@ -13,7 +13,7 @@ class ChallengeCompletionMail extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * @param array<int,array{day:int,label:string,is_late:bool}> $days  Checklist tất cả các ngày
+     * @param  array<int,array{day:int,label:string,is_late:bool}>  $days  Checklist tất cả các ngày
      */
     public function __construct(
         public string $userName,
@@ -26,7 +26,7 @@ class ChallengeCompletionMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: '🏆 Chúc mừng bạn đã hoàn thành ' . $this->challengeTitle);
+        return new Envelope(subject: '🏆 Chúc mừng bạn đã hoàn thành '.$this->challengeTitle);
     }
 
     public function content(): Content

@@ -11,6 +11,7 @@ class CvEnabled
     public function handle(Request $request, Closure $next): Response
     {
         abort_unless(app()->bound('brand') && brand()->has_cv, 404);
+
         return $next($request);
     }
 }

@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use App\Core\CommunityContext;
 use App\Models\Brand;
-use App\Models\Expedition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Learning\Application\ChallengeManagementService;

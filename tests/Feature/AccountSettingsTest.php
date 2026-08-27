@@ -7,8 +7,6 @@ use App\Livewire\ProfileEditPage;
 use App\Models\Brand;
 use App\Models\Membership;
 use App\Models\User;
-use App\Models\UserBillingProfile;
-use App\Models\UserCommunityPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

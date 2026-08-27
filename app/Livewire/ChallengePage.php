@@ -3,9 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Expedition;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -35,22 +35,22 @@ class ChallengePage extends Component
         $activeIds = $isAdmin
             ? Expedition::whereIn('status', ['active', 'open'])->pluck('id')
             : Expedition::query()
-            ->whereHas('members', function ($query) use ($userId): void {
-                $query->where('user_id', $userId)
-                    ->whereIn('status', ['approved', 'paid'])
-                    ->whereNotNull('personal_starts_at')
-                    ->whereNull('completed_at')
-                    ->whereNull('kicked_at');
-            })
-            ->pluck('id');
+                ->whereHas('members', function ($query) use ($userId): void {
+                    $query->where('user_id', $userId)
+                        ->whereIn('status', ['approved', 'paid'])
+                        ->whereNotNull('personal_starts_at')
+                        ->whereNull('completed_at')
+                        ->whereNull('kicked_at');
+                })
+                ->pluck('id');
 
         $completedIds = $isAdmin
             ? Expedition::where('status', 'completed')->pluck('id')
             : Expedition::query()
-            ->whereHas('members', function ($query) use ($userId): void {
-                $query->where('user_id', $userId)->whereNotNull('completed_at');
-            })
-            ->pluck('id');
+                ->whereHas('members', function ($query) use ($userId): void {
+                    $query->where('user_id', $userId)->whereNotNull('completed_at');
+                })
+                ->pluck('id');
 
         $query = Expedition::query()
             ->withCount([
@@ -109,6 +109,6 @@ class ChallengePage extends Component
             'challenges' => $challenges,
             'activeCount' => $activeIds->count(),
             'completedCount' => $completedIds->count(),
-        ])->layout('layouts.app', ['title' => 'Challenge — ' . brand()->name]);
+        ])->layout('layouts.app', ['title' => 'Challenge — '.brand()->name]);
     }
 }

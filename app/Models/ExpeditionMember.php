@@ -3,14 +3,15 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasBrand;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property User $user
  * @property Expedition|null $expedition
- * @property \Carbon\CarbonInterface|null $created_at
- * @property \Carbon\CarbonInterface|null $joined_at
+ * @property CarbonInterface|null $created_at
+ * @property CarbonInterface|null $joined_at
  */
 class ExpeditionMember extends Model
 {

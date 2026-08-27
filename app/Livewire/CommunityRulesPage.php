@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Support\CommunityContentDefaults;
 use App\Models\User;
+use App\Support\CommunityContentDefaults;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 

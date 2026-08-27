@@ -20,18 +20,32 @@ class EngineerCv extends Model
     use HasBrand;
 
     protected $table = 'engineer_cvs';
+
     protected $fillable = ['brand_id', 'user_id', 'title', 'template', 'accent_color', 'status', 'data', 'published_at'];
+
     protected $casts = ['data' => 'array', 'published_at' => 'datetime'];
 
     /** @return BelongsTo<User, $this> */
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /** @return BelongsTo<Brand, $this> */
-    public function brand(): BelongsTo { return $this->belongsTo(Brand::class); }
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
 
     /** @return array<int, mixed> */
-    public function skills(): array { return is_array($this->data['skills'] ?? null) ? $this->data['skills'] : []; }
+    public function skills(): array
+    {
+        return is_array($this->data['skills'] ?? null) ? $this->data['skills'] : [];
+    }
 
     /** @return array<int, mixed> */
-    public function experiences(): array { return is_array($this->data['experiences'] ?? null) ? $this->data['experiences'] : []; }
+    public function experiences(): array
+    {
+        return is_array($this->data['experiences'] ?? null) ? $this->data['experiences'] : [];
+    }
 }

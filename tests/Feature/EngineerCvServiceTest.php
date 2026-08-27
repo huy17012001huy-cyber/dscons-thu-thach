@@ -10,6 +10,7 @@ use App\Models\EngineerCv;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Recruitment\Application\EngineerCvService;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 final class EngineerCvServiceTest extends TestCase
@@ -68,7 +69,7 @@ final class EngineerCvServiceTest extends TestCase
         ]);
 
         app(CommunityContext::class)->run($disabledBrand, function () use ($engineer): void {
-            $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+            $this->expectException(HttpException::class);
             app(EngineerCvService::class)->ensureWorkspace($engineer);
         });
     }

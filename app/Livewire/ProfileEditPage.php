@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Core\Auth\ProfileUpdateService;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -10,7 +11,6 @@ use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
-use App\Core\Auth\ProfileUpdateService;
 
 class ProfileEditPage extends Component
 {

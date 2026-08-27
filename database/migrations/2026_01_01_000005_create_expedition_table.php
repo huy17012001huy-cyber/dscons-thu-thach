@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('max_members')->default(10);
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->enum('status', [
-                'pending_approval', 'open', 'active', 'completed', 'failed', 'cancelled'
+                'pending_approval', 'open', 'active', 'completed', 'failed', 'cancelled',
             ])->default('open');
             $table->unsignedInteger('deposit_aip')->default(0);
             $table->timestamp('starts_at')->nullable();

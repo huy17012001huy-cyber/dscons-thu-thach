@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class ExpireRecruitmentRequests extends Command
 {
     protected $signature = 'recruitment:expire-requests';
+
     protected $description = 'Expire unanswered recruitment contact requests and refund reserved credits.';
 
     public function handle(): int
@@ -18,7 +19,9 @@ class ExpireRecruitmentRequests extends Command
             foreach ($requests as $request) {
                 DB::transaction(function () use ($request): void {
                     $request = RecruitmentContactRequest::query()->lockForUpdate()->find($request->id);
-                    if (! $request || $request->status !== 'pending') return;
+                    if (! $request || $request->status !== 'pending') {
+                        return;
+                    }
                     $request->update(['status' => 'expired', 'responded_at' => now()]);
                     $entitlement = $request->entitlement()->lockForUpdate()->first();
                     if ($entitlement && $entitlement->credits_reserved > 0) {

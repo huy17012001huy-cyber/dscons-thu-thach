@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\PostCard;
 use App\Models\Post;
 use App\Models\User;
-use App\Livewire\PostCard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;

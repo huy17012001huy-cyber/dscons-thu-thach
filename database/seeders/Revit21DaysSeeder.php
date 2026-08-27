@@ -19,7 +19,7 @@ class Revit21DaysSeeder extends Seeder
         app()->instance('brand', $brand);
 
         $leader = User::query()->where('is_admin', true)->orderBy('id')->first();
-        if (!$leader) {
+        if (! $leader) {
             $leader = User::query()->firstOrCreate(
                 ['email' => 'revit-mentor@dscons.test'],
                 ['name' => 'DSCons Revit Mentor', 'username' => 'dscons-revit-mentor']
@@ -115,7 +115,7 @@ class Revit21DaysSeeder extends Seeder
                 15 => 'Đăng ảnh MVP đang chạy, điều đã làm được và điều bạn muốn được góp ý.',
                 default => 'Đăng thành quả cuối khóa, video demo, bộ cài và một giới hạn bạn đã phát hiện.',
             }
-            : null;
+        : null;
 
         return compact('day', 'modality', 'track', 'title', 'label', 'minutes', 'description', 'outcome', 'focus', 'check', 'feed');
     }

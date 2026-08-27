@@ -45,7 +45,7 @@ class AuthTest extends TestCase
                 [
                     'id' => 'component-1',
                     'tag' => 'app.livewire.auth.register-form',
-                ]
+                ],
             ],
             'updates' => [
                 [
@@ -53,9 +53,9 @@ class AuthTest extends TestCase
                     'payload' => [
                         'name' => 'name',
                         'value' => 'Jane Smith',
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ]);
 
         // Test basic flow without Livewire's full infrastructure

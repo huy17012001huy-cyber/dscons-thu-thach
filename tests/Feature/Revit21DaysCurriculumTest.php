@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\ChallengeDetail;
+use App\Livewire\ChallengeLessonPage;
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
-use App\Livewire\ChallengeLessonPage;
+use App\Models\User;
 use Database\Seeders\Revit21DaysSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -65,10 +67,10 @@ class Revit21DaysCurriculumTest extends TestCase
     public function test_admin_can_render_structured_task_content(): void
     {
         app(Revit21DaysSeeder::class)->run();
-        $admin = \App\Models\User::query()->where('is_admin', true)->firstOrFail();
+        $admin = User::query()->where('is_admin', true)->firstOrFail();
 
         $component = Livewire::actingAs($admin)
-            ->test(\App\Livewire\ChallengeDetail::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent'])
+            ->test(ChallengeDetail::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent'])
             ->assertSee('Prompt copy vào AI Agent')
             ->assertSee('Hướng dẫn thực hiện')
             ->assertDontSee('AI thực hiện')
@@ -113,7 +115,7 @@ class Revit21DaysCurriculumTest extends TestCase
         $this->assertSame('https://example.test/recording', $task->fresh()->video_url);
         $this->assertNotNull($task->fresh()->meeting_at);
 
-        $admin = \App\Models\User::query()->where('is_admin', true)->firstOrFail();
+        $admin = User::query()->where('is_admin', true)->firstOrFail();
         Livewire::actingAs($admin)
             ->test(ChallengeLessonPage::class, ['slug' => '21-ngay-lam-tool-revit-voi-ai-agent', 'day' => 1])
             ->assertSee('Chọn và cài AI Agent để bắt đầu')

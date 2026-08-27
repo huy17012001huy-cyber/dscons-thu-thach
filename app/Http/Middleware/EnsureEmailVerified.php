@@ -18,7 +18,7 @@ class EnsureEmailVerified
         }
 
         $user = $request->user();
-        if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
+        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 

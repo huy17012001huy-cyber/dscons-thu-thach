@@ -11,7 +11,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        if (!\Schema::hasTable('brands')) {
+        if (! \Schema::hasTable('brands')) {
             return;
         }
 

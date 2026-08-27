@@ -53,7 +53,7 @@ return new class extends Migration
     {
         foreach (array_reverse($this->tables) as $table) {
             Schema::table($table, function (Blueprint $blueprint) use ($table) {
-                $blueprint->dropForeign([$table . '_brand_id_foreign']);
+                $blueprint->dropForeign([$table.'_brand_id_foreign']);
                 $blueprint->dropColumn('brand_id');
             });
         }

@@ -6,10 +6,10 @@ use App\Models\Brand;
 use App\Models\ToolInstallation;
 use App\Models\ToolSecurityEvent;
 use App\Models\User;
-use Modules\RevitTools\Application\ToolLicenseService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\RevitTools\Application\ToolLicenseService;
 
 class AdminToolLicenses extends Component
 {

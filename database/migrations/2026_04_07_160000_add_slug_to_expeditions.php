@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Expedition;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,8 +15,8 @@ return new class extends Migration
         });
 
         // Generate slugs for existing expeditions
-        foreach (\App\Models\Expedition::all() as $exp) {
-            $exp->update(['slug' => Str::slug($exp->title) ?: 'challenge-' . $exp->id]);
+        foreach (Expedition::all() as $exp) {
+            $exp->update(['slug' => Str::slug($exp->title) ?: 'challenge-'.$exp->id]);
         }
     }
 

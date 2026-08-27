@@ -54,6 +54,7 @@ class PostHtmlSanitizer
             $tag = strtolower($node->tagName);
             if (! in_array($tag, self::ALLOWED_TAGS, true)) {
                 $this->replaceWithText($node);
+
                 continue;
             }
 

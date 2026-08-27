@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Brand;
+use App\Livewire\ChallengeDetail;
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
+use App\Models\User;
 use Database\Seeders\AutoCAD21DaysSeeder;
 use Database\Seeders\Navisworks21DaysSeeder;
 use Database\Seeders\Revit21DaysSeeder;
@@ -118,14 +119,14 @@ class AutoCadAndNavisworks21DaysCurriculumTest extends TestCase
         app(Revit21DaysSeeder::class)->run();
         app(AutoCAD21DaysSeeder::class)->run();
         app(Navisworks21DaysSeeder::class)->run();
-        $admin = \App\Models\User::query()->where('is_admin', true)->firstOrFail();
+        $admin = User::query()->where('is_admin', true)->firstOrFail();
 
         foreach ([
             '21-ngay-chinh-phuc-tool-autocad-bang-ai-agent' => 'AutoCAD',
             '21-ngay-chinh-phuc-tool-navisworks-bang-ai-agent' => 'Navisworks',
         ] as $slug => $appName) {
             $component = Livewire::actingAs($admin)
-                ->test(\App\Livewire\ChallengeDetail::class, ['slug' => $slug])
+                ->test(ChallengeDetail::class, ['slug' => $slug])
                 ->assertSee($appName)
                 ->assertSee('Prompt copy vào AI Agent')
                 ->assertSee('Hướng dẫn thực hiện')

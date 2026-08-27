@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Models\ChallengeTask;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
-use App\Models\ChallengeTask;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +14,9 @@ use Modules\Learning\Application\ChallengeAccessService;
 class ChallengeLessonPage extends Component
 {
     public Expedition $expedition;
+
     public ChallengeTask $task;
+
     public int $day;
 
     public function mount(string $slug, int $day): void

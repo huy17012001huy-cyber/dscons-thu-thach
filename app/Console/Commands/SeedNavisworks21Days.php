@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 class SeedNavisworks21Days extends Command
 {
     protected $signature = 'challenge:seed-navisworks-21';
+
     protected $description = 'Seed/update challenge 21 Ngày Chinh Phục Tool Navisworks bằng AI Agent';
 
     public function handle(): int

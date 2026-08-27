@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Livewire\ChallengeDetail;
 use App\Models\ChallengeTask;
 use App\Models\ChallengeTaskCompletion;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\User;
-use App\Livewire\ChallengeDetail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;

@@ -100,7 +100,7 @@ class StructuredCourseSeeder extends Seeder
             LessonTask::create([
                 'lesson_id' => $practice->id,
                 'title' => $title,
-                'description' => 'Hoàn thành thử thách #' . ($k + 1) . ' cùng Agent.',
+                'description' => 'Hoàn thành thử thách #'.($k + 1).' cùng Agent.',
                 'type' => 'link',
                 'order_index' => $k,
                 'is_required' => true,
@@ -130,7 +130,7 @@ class StructuredCourseSeeder extends Seeder
 
             LessonTask::create([
                 'lesson_id' => $lesson->id,
-                'title' => 'Bài tập thực hành: ' . $title,
+                'title' => 'Bài tập thực hành: '.$title,
                 'description' => 'Áp dụng kiến thức bài học vào một case study thực tế.',
                 'type' => 'text',
                 'order_index' => 0,
@@ -139,7 +139,7 @@ class StructuredCourseSeeder extends Seeder
         }
 
         echo "✅ Created structured course: {$course->title}\n";
-        echo "   Modules: 2, Lessons: " . ($course->modules()->count()) . "\n";
-        echo "   Tasks: " . LessonTask::whereIn('lesson_id', Lesson::whereIn('module_id', $course->modules()->pluck('id'))->pluck('id'))->count() . "\n";
+        echo '   Modules: 2, Lessons: '.($course->modules()->count())."\n";
+        echo '   Tasks: '.LessonTask::whereIn('lesson_id', Lesson::whereIn('module_id', $course->modules()->pluck('id'))->pluck('id'))->count()."\n";
     }
 }

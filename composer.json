@@ -60,7 +60,7 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
-        "lint": "pint --test app/Core app/Http/Requests app/Http/Responses app/Http/Middleware/SecurityHeaders.php app/Http/Middleware/EnsureRecentAdminTwoFactor.php app/Http/Controllers/AdminSecurityController.php app/Http/Controllers/AdminTwoFactorChallengeController.php app/Http/Controllers/GoogleAuthController.php app/Http/Controllers/ImpersonationController.php app/Http/Controllers/RevitDeviceAuthorizationController.php app/Http/Controllers/RevitToolApiController.php app/Http/Controllers/SepayWebhookController.php app/Models/AuditLog.php app/Models/CommerceWebhookEvent.php app/Models/Concerns/HasBrand.php app/Models/ToolDeviceAuthorization.php app/Models/ToolInstallation.php app/Models/ToolSecurityEvent.php app/Models/ToolSession.php app/Models/User.php app/Providers/CoreServiceProvider.php modules tests/Feature/AdminTwoFactorSecurityTest.php tests/Feature/RevitToolLicenseTest.php tests/Feature/SepayWebhookSecurityTest.php bootstrap/app.php config/admin-security.php config/modules.php config/security.php database/migrations/2026_08_26_100000_add_revit_tool_license_marketplace.php database/migrations/2026_08_26_100001_add_browser_code_to_tool_device_authorizations.php database/migrations/2026_08_26_130000_add_two_factor_fields_to_users_table.php database/migrations/2026_08_26_131000_create_audit_logs_table.php",
+        "lint": "pint --test",
         "stan": "phpstan analyse --configuration=phpstan.neon --memory-limit=512M",
         "check": [
             "@lint",

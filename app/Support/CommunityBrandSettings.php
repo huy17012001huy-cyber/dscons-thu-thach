@@ -19,14 +19,14 @@ final class CommunityBrandSettings
     public static function membershipLabel(Brand $brand): string
     {
         return (string) (self::stored(self::key($brand, 'membership_label'))
-            ?: config('communities.membership_labels.' . $brand->slug)
+            ?: config('communities.membership_labels.'.$brand->slug)
             ?: config('communities.membership_labels.default', 'Premium'));
     }
 
     /** @return array<string, string> */
     public static function stageLabels(Brand $brand): array
     {
-        $defaults = config('communities.stages.' . $brand->slug)
+        $defaults = config('communities.stages.'.$brand->slug)
             ?: config('communities.stages.default', []);
         $configured = self::decodeArray(self::stored(self::key($brand, 'stage_labels')));
 
@@ -57,7 +57,7 @@ final class CommunityBrandSettings
     }
 
     /** @param array<string, string> $stageLabels
-     *  @param array<string, string> $badgeColors
+     * @param  array<string, string>  $badgeColors
      */
     public static function save(
         Brand $brand,
@@ -74,7 +74,7 @@ final class CommunityBrandSettings
 
     private static function key(Brand $brand, string $name): string
     {
-        return 'community.' . $brand->id . '.' . $name;
+        return 'community.'.$brand->id.'.'.$name;
     }
 
     private static function stored(string $key): mixed
@@ -89,7 +89,7 @@ final class CommunityBrandSettings
             return $value;
         }
 
-        if (!is_string($value) || blank($value)) {
+        if (! is_string($value) || blank($value)) {
             return [];
         }
 

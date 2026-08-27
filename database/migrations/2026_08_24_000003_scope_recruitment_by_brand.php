@@ -39,8 +39,14 @@ return new class extends Migration
 
         // A recruiter may operate one company profile in each community.
         if (Schema::hasTable('recruiter_profiles')) {
-            try { Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique('recruiter_profiles_user_id_unique')); } catch (Throwable) {}
-            try { Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique('recruiter_profiles_company_slug_unique')); } catch (Throwable) {}
+            try {
+                Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique('recruiter_profiles_user_id_unique'));
+            } catch (Throwable) {
+            }
+            try {
+                Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique('recruiter_profiles_company_slug_unique'));
+            } catch (Throwable) {
+            }
             Schema::table('recruiter_profiles', function (Blueprint $table): void {
                 $table->unique(['brand_id', 'user_id']);
                 $table->unique(['brand_id', 'company_slug']);
@@ -55,8 +61,14 @@ return new class extends Migration
     public function down(): void
     {
         if (Schema::hasTable('recruiter_profiles')) {
-            try { Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique(['brand_id', 'user_id'])); } catch (Throwable) {}
-            try { Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique(['brand_id', 'company_slug'])); } catch (Throwable) {}
+            try {
+                Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique(['brand_id', 'user_id']));
+            } catch (Throwable) {
+            }
+            try {
+                Schema::table('recruiter_profiles', fn (Blueprint $table) => $table->dropUnique(['brand_id', 'company_slug']));
+            } catch (Throwable) {
+            }
         }
 
         foreach (['recruitment_contact_requests', 'recruiter_credit_ledger', 'recruiter_entitlements', 'recruiter_orders', 'recruiter_plans', 'recruiter_profiles'] as $tableName) {

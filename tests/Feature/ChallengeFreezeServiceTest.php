@@ -9,6 +9,7 @@ use App\Livewire\AdminChallenges;
 use App\Models\Brand;
 use App\Models\Expedition;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Modules\Learning\Application\ChallengeFreezeService;
@@ -49,7 +50,7 @@ final class ChallengeFreezeServiceTest extends TestCase
             'theme_bg' => '#F7FAFC',
         ]);
 
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
 
         app(CommunityContext::class)->run($other, function () use ($challenge, $owner): void {
             app(ChallengeFreezeService::class)->freeze($challenge, $owner, 3, now()->addDays(2));

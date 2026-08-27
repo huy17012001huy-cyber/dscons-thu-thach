@@ -149,7 +149,7 @@ return new class extends Migration
     {
         DB::table('posts')->whereNull('slug')->orWhere('slug', '')->orderBy('id')->eachById(function (object $post): void {
             $base = Str::slug($post->title ?: Str::limit(strip_tags($post->content), 60, '')) ?: 'bai-viet';
-            $slug = $base . '-' . $post->id;
+            $slug = $base.'-'.$post->id;
             DB::table('posts')->where('id', $post->id)->update(['slug' => $slug, 'updated_at' => now()]);
         });
     }

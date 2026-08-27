@@ -19,6 +19,7 @@ class PostContentRenderer
             function (array $match) use (&$embeds): string {
                 $placeholder = 'DSCONSYouTubeToken'.count($embeds);
                 $embeds[$placeholder] = $this->youtubeEmbed($match[1]);
+
                 return "\n\n{$placeholder}\n\n";
             },
             $content
@@ -53,6 +54,7 @@ class PostContentRenderer
     {
         if ($post->content_format === 'html' && filled($post->content_html)) {
             $html = app(PostHtmlSanitizer::class)->sanitize($post->content_html);
+
             return $truncate ? Str::limit(strip_tags($html), $limit) : $html;
         }
 
@@ -62,6 +64,7 @@ class PostContentRenderer
     public function excerpt(string $content, int $limit = 180): string
     {
         $plainText = trim(preg_replace('/\s+/', ' ', strip_tags($this->render($content))) ?? '');
+
         return Str::limit($plainText, $limit);
     }
 

@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schedule;
-use Illuminate\Support\Facades\Artisan;
 use Database\Seeders\DsconsRevitToolSeeder;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('aip:snapshot-leaderboard')->dailyAt('00:00');
 Schedule::command('aip:recalc-pillar-stats')->hourly();

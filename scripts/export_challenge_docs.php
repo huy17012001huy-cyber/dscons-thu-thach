@@ -1,9 +1,12 @@
 <?php
 
+use App\Models\Expedition;
+use Illuminate\Contracts\Console\Kernel;
+
 require __DIR__.'/../vendor/autoload.php';
 
 $app = require_once __DIR__.'/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 $challenges = [
     '21-ngay-lam-tool-revit-voi-ai-agent' => 'revit-21-days',
@@ -12,7 +15,7 @@ $challenges = [
 ];
 
 foreach ($challenges as $slug => $directory) {
-    $challenge = App\Models\Expedition::withoutGlobalScopes()->where('slug', $slug)->firstOrFail();
+    $challenge = Expedition::withoutGlobalScopes()->where('slug', $slug)->firstOrFail();
     $tasks = $challenge->tasks()->withoutGlobalScopes()->orderBy('day_number')->get();
     $root = base_path('docs/challenges/'.$directory);
 

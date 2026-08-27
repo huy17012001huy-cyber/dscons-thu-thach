@@ -6,7 +6,6 @@ use App\Livewire\MessagesPage;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -28,7 +27,7 @@ class MessagesRateLimitingTest extends TestCase
 
         // Send 10 messages (the limit)
         for ($i = 0; $i < 10; $i++) {
-            $component->set('newMessage', 'Message ' . $i)
+            $component->set('newMessage', 'Message '.$i)
                 ->call('sendMessage')
                 ->assertHasNoErrors('newMessage');
         }

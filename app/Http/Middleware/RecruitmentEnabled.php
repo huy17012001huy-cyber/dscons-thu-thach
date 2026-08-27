@@ -11,6 +11,7 @@ class RecruitmentEnabled
     public function handle(Request $request, Closure $next): Response
     {
         abort_unless(app()->bound('brand') && brand()->has_recruitment, 404);
+
         return $next($request);
     }
 }

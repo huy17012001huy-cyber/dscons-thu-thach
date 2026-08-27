@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 class SeedAutoCAD21Days extends Command
 {
     protected $signature = 'challenge:seed-autocad-21';
+
     protected $description = 'Seed/update challenge 21 Ngày Chinh Phục Tool AutoCAD bằng AI Agent';
 
     public function handle(): int

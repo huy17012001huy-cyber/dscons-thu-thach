@@ -41,7 +41,7 @@ class AdminUsersExportTest extends TestCase
 
         Auth::login($admin);
 
-        $response = (new AdminUsers())->exportCsv();
+        $response = (new AdminUsers)->exportCsv();
 
         $this->assertInstanceOf(StreamedResponse::class, $response);
         $this->assertStringContainsString('filename=members-20260522-103000.csv', (string) $response->headers->get('content-disposition'));
@@ -58,7 +58,7 @@ class AdminUsersExportTest extends TestCase
     {
         Auth::login(User::factory()->create(['is_admin' => false]));
 
-        $this->assertNull((new AdminUsers())->exportCsv());
+        $this->assertNull((new AdminUsers)->exportCsv());
     }
 
     /**
@@ -74,8 +74,8 @@ class AdminUsersExportTest extends TestCase
         $content = substr($content, 3);
 
         return collect(preg_split('/\r\n|\n|\r/', trim($content)))
-            ->filter(fn($line) => $line !== '')
-            ->map(fn($line) => str_getcsv($line))
+            ->filter(fn ($line) => $line !== '')
+            ->map(fn ($line) => str_getcsv($line))
             ->values()
             ->all();
     }

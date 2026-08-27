@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
 use App\Models\Brand;
 use App\Models\User;
+use Closure;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CommunityModeratorOnly
@@ -21,6 +21,7 @@ class CommunityModeratorOnly
     private function brandId(Request $request): ?int
     {
         $community = $request->route('community');
+
         return $community instanceof Brand ? $community->id : (app()->bound('brand') ? brand()->id : null);
     }
 }

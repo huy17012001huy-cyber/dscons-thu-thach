@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Brand;
+use App\Models\RecruiterPlan;
 use App\Models\RecruiterProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -56,7 +57,7 @@ final class RecruitmentAdminManagementServiceTest extends TestCase
             'actor_id' => $admin->id,
             'domain' => 'recruitment',
             'action' => 'recruiter_plan_toggled',
-            'subject_type' => \App\Models\RecruiterPlan::class,
+            'subject_type' => RecruiterPlan::class,
             'subject_id' => $plan->id,
         ]);
     }

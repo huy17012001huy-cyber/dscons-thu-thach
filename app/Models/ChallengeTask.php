@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $expedition_id
@@ -14,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int|null $duration_hours
  * @property int|null $contest_duration_hours
  * @property bool $is_contest
- * @property \Illuminate\Support\Carbon|null $deadline_override_at
+ * @property Carbon|null $deadline_override_at
  */
 class ChallengeTask extends Model
 {
@@ -44,7 +46,7 @@ class ChallengeTask extends Model
         return $this->belongsTo(Expedition::class);
     }
 
-    /** @return BelongsToMany<User, $this, \Illuminate\Database\Eloquent\Relations\Pivot> */
+    /** @return BelongsToMany<User, $this, Pivot> */
     public function completedByUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'challenge_task_completions')
