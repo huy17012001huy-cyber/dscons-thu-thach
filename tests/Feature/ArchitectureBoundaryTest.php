@@ -47,6 +47,12 @@ final class ArchitectureBoundaryTest extends TestCase
                 $path = $file->getPathname();
                 $contents = (string) file_get_contents($path);
 
+                self::assertStringContainsString(
+                    'declare(strict_types=1);',
+                    $contents,
+                    $path.' must opt into strict types.',
+                );
+
                 foreach ($moduleNames as $otherModule) {
                     if ($otherModule === $module) {
                         continue;
