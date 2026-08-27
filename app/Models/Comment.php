@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int $id
+ * @property int $brand_id
  * @property int $post_id
  * @property int $user_id
  * @property string $content

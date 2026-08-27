@@ -4,16 +4,15 @@ namespace App\Livewire;
 
 use App\Models\Comment;
 use App\Models\Post;
-use App\Models\Report;
 use App\Models\User;
-use App\Notifications\GenericNotification;
 use App\Support\PostContentRenderer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Modules\Community\Application\PostInteractionService;
+use Modules\Community\Application\PostManagementService;
+use Modules\Community\Application\ReportSubmissionOutcome;
 
 class PostCard extends Component
 {
@@ -130,13 +129,9 @@ class PostCard extends Component
             return;
         }
 
-        $actor = $this->currentUser();
-        if ($actor->id !== $this->post->user_id && ! $actor->is_admin) {
-            return;
+        if (app(PostManagementService::class)->deletePost($this->post, $this->currentUser())) {
+            $this->dispatch('post-created');
         }
-
-        $this->post->delete();
-        $this->dispatch('post-created');
     }
 
     public function startEdit(): void
@@ -152,15 +147,11 @@ class PostCard extends Component
 
     public function saveEdit(): void
     {
-        $actor = $this->currentUser();
-        if ($actor->id !== $this->post->user_id) {
-            return;
-        }
-
         $this->validate(['editContent' => 'required|min:5|max:50000']);
-        $this->post->update(['content' => $this->editContent]);
-        $this->editing = false;
-        $this->post->refresh();
+        if (app(PostManagementService::class)->updatePost($this->post, $this->currentUser(), $this->editContent)) {
+            $this->editing = false;
+            $this->post->refresh();
+        }
     }
 
     public function cancelEdit(): void
@@ -175,27 +166,18 @@ class PostCard extends Component
             return;
         }
 
-        $user = $this->currentUser();
-        if ($user->level < 30 || $this->post->is_cot || $this->post->cot_by) {
-            return;
+        if (app(PostManagementService::class)->nominateCot($this->post, $this->currentUser())) {
+            $this->dispatch('toast', message: 'Đã đề cử bài viết cho CỐT!', type: 'success');
         }
-
-        $this->post->update(['cot_by' => $user->id]);
-        $owner = $this->post->user;
-        if ($owner instanceof User && $owner->id !== $user->id) {
-            $owner->notify(new GenericNotification('★', $user->name.' đề cử bài viết của bạn cho CỐT', null, $this->post->id));
-        }
-
-        $this->dispatch('toast', message: 'Đã đề cử bài viết cho CỐT!', type: 'success');
     }
 
     public function reportPost(): void
     {
-        if (! Auth::check() || $this->currentUser()->id === $this->post->user_id) {
+        if (! Auth::check()) {
             return;
         }
 
-        $this->createReport(Post::class, $this->post->id, 'bài viết');
+        $this->showReportOutcome(app(PostManagementService::class)->reportPost($this->post, $this->currentUser()), 'bài viết');
     }
 
     public function startEditComment(int $commentId): void
@@ -219,15 +201,16 @@ class PostCard extends Component
             return;
         }
 
-        $comment = $this->currentComment($this->editingCommentId);
-        if ($this->currentUser()->id !== $comment->user_id) {
-            return;
-        }
-
         $this->validate(['editCommentContent' => 'required|min:1|max:2000']);
-        $comment->update(['content' => $this->editCommentContent]);
-        $this->cancelEditComment();
-        $this->post->refresh();
+        if (app(PostManagementService::class)->updateComment(
+            $this->post,
+            $this->editingCommentId,
+            $this->currentUser(),
+            $this->editCommentContent,
+        )) {
+            $this->cancelEditComment();
+            $this->post->refresh();
+        }
     }
 
     public function cancelEditComment(): void
@@ -242,14 +225,9 @@ class PostCard extends Component
             return;
         }
 
-        $comment = $this->currentComment($commentId);
-        $actor = $this->currentUser();
-        if ($actor->id !== $comment->user_id && ! $actor->is_admin) {
-            return;
+        if (app(PostManagementService::class)->deleteComment($this->post, $commentId, $this->currentUser())) {
+            $this->post->refresh();
         }
-
-        $comment->delete();
-        $this->post->refresh();
     }
 
     public function reportComment(int $commentId): void
@@ -258,12 +236,10 @@ class PostCard extends Component
             return;
         }
 
-        $comment = $this->currentComment($commentId);
-        if ($this->currentUser()->id === $comment->user_id) {
-            return;
-        }
-
-        $this->createReport(Comment::class, $comment->id, 'bình luận');
+        $this->showReportOutcome(
+            app(PostManagementService::class)->reportComment($this->post, $commentId, $this->currentUser()),
+            'bình luận',
+        );
     }
 
     public function renderContent(bool $showFull): string
@@ -295,31 +271,14 @@ class PostCard extends Component
         return view('livewire.post-card', ['comments' => $comments]);
     }
 
-    private function createReport(string $type, int $id, string $label): void
+    private function showReportOutcome(ReportSubmissionOutcome $outcome, string $label): void
     {
-        $actor = $this->currentUser();
-        $throttleKey = 'report:'.$actor->id;
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
-            $this->dispatch('toast', message: 'Bạn báo cáo quá nhiều. Vui lòng thử lại sau '.round(RateLimiter::availableIn($throttleKey) / 60).' phút.', type: 'error');
-
-            return;
-        }
-
-        if (Report::query()->where('user_id', $actor->id)->where('reportable_type', $type)->where('reportable_id', $id)->exists()) {
-            $this->dispatch('toast', message: 'Bạn đã báo cáo '.$label.' này rồi', type: 'error');
-
-            return;
-        }
-
-        Report::create([
-            'brand_id' => $this->post->brand_id,
-            'user_id' => $actor->id,
-            'reportable_type' => $type,
-            'reportable_id' => $id,
-            'reason' => 'Spam / Vi phạm',
-        ]);
-        RateLimiter::hit($throttleKey, 3600);
-        $this->dispatch('toast', message: 'Đã báo cáo '.$label.' cho Admin', type: 'success');
+        match ($outcome) {
+            ReportSubmissionOutcome::Reported => $this->dispatch('toast', message: 'Đã báo cáo '.$label.' cho Admin', type: 'success'),
+            ReportSubmissionOutcome::AlreadyReported => $this->dispatch('toast', message: 'Bạn đã báo cáo '.$label.' này rồi', type: 'error'),
+            ReportSubmissionOutcome::RateLimited => $this->dispatch('toast', message: 'Bạn báo cáo quá nhiều. Vui lòng thử lại sau.', type: 'error'),
+            ReportSubmissionOutcome::OwnContent => null,
+        };
     }
 
     private function currentComment(int $commentId): Comment

@@ -14,6 +14,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Modules\Community\Application\PostInteractionService;
+use Modules\Community\Application\PostManagementService;
+use Modules\Community\Application\ReportSubmissionOutcome;
 use Tests\TestCase;
 
 final class PostInteractionServiceTest extends TestCase
@@ -132,6 +134,69 @@ final class PostInteractionServiceTest extends TestCase
         $this->assertDatabaseHas('likes', ['likeable_type' => Post::class, 'likeable_id' => $post->id, 'user_id' => $actor->id]);
         $this->assertDatabaseHas('bookmarks', ['post_id' => $post->id, 'user_id' => $actor->id]);
         $this->assertDatabaseHas('comments', ['post_id' => $post->id, 'user_id' => $actor->id, 'content' => 'Livewire comment']);
+    }
+
+    public function test_community_moderator_can_manage_content_but_a_member_cannot(): void
+    {
+        $owner = User::factory()->create();
+        $moderator = User::factory()->create();
+        $member = User::factory()->create();
+        $post = $this->postFor($owner);
+        $comment = Comment::factory()->create([
+            'brand_id' => brand()->id,
+            'post_id' => $post->id,
+            'user_id' => $owner->id,
+        ]);
+        $moderator->brandRoles()->attach(brand()->id, ['role' => 'moderator']);
+        $member->brandRoles()->attach(brand()->id, ['role' => 'member']);
+        $service = app(PostManagementService::class);
+
+        self::assertFalse($service->deleteComment($post, $comment->id, $member));
+        self::assertTrue($service->deleteComment($post, $comment->id, $moderator));
+        $this->assertSoftDeleted('comments', ['id' => $comment->id]);
+    }
+
+    public function test_reports_are_unique_and_cannot_target_the_reporters_own_content(): void
+    {
+        $owner = User::factory()->create();
+        $actor = User::factory()->create();
+        $post = $this->postFor($owner);
+        $service = app(PostManagementService::class);
+
+        self::assertSame(ReportSubmissionOutcome::Reported, $service->reportPost($post, $actor));
+        self::assertSame(ReportSubmissionOutcome::AlreadyReported, $service->reportPost($post, $actor));
+        self::assertSame(ReportSubmissionOutcome::OwnContent, $service->reportPost($post, $owner));
+        $this->assertDatabaseCount('reports', 1);
+        $this->assertDatabaseHas('reports', [
+            'brand_id' => brand()->id,
+            'user_id' => $actor->id,
+            'reportable_type' => Post::class,
+            'reportable_id' => $post->id,
+        ]);
+    }
+
+    public function test_post_management_rejects_a_post_from_another_community(): void
+    {
+        $owner = User::factory()->create();
+        $otherBrand = Brand::create([
+            'name' => 'Other Management Community',
+            'slug' => 'other-management-community',
+            'domain' => 'other-management-community.test',
+            'theme_primary' => '#1F77BE',
+            'theme_accent' => '#DCECF7',
+            'theme_bg' => '#F8FAFC',
+            'registration_mode' => 'invite',
+            'is_invite_only' => true,
+        ]);
+        $post = Post::withoutGlobalScopes()->create([
+            'brand_id' => $otherBrand->id,
+            'user_id' => $owner->id,
+            'content' => 'Other management community post.',
+            'pillar' => 'delivery',
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+        app(PostManagementService::class)->deletePost($post, $owner);
     }
 
     /** @param array<string, mixed> $attributes */
