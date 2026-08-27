@@ -29,6 +29,7 @@ use Modules\Learning\Application\ChallengeTaskManagementService;
 use Modules\Learning\Application\ChallengeVideoFeedbackOutcome;
 use Modules\Learning\Application\ChallengeVideoFeedbackService;
 use Modules\Learning\Application\SubmissionReviewService;
+use Modules\Learning\Application\SubmissionVoteService;
 
 class ChallengeDetail extends Component
 {
@@ -916,26 +917,12 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        if (! in_array($type, ['good', 'excellent'], true)) {
-            return;
-        }
-
-        $row = \DB::table('submission_votes')
-            ->where('completion_id', $completionId)
-            ->where('user_id', Auth::id())
-            ->where('vote_type', $type);
-
-        if ($row->exists()) {
-            $row->delete();
-        } else {
-            \DB::table('submission_votes')->insert([
-                'completion_id' => $completionId,
-                'user_id' => Auth::id(),
-                'vote_type' => $type,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        app(SubmissionVoteService::class)->toggle(
+            $this->expedition,
+            $completionId,
+            $this->currentUser(),
+            $type,
+        );
     }
 
     // ─── Helpers ─────────────────────────────────────────────
