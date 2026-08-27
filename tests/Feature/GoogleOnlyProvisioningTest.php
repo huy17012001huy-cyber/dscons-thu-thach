@@ -29,6 +29,7 @@ class GoogleOnlyProvisioningTest extends TestCase
         $user = User::where('email', 'webhook-member@example.test')->firstOrFail();
         $this->assertNull($user->password);
         $this->assertTrue($user->hasVerifiedEmail());
+        $this->assertSame('member', $user->communityRole(brand()->id));
         Mail::assertSent(WelcomeMemberMail::class, function (WelcomeMemberMail $mail): bool {
             $body = $mail->render();
 
@@ -57,5 +58,21 @@ class GoogleOnlyProvisioningTest extends TestCase
         $this->assertNull($user->password);
         $this->assertTrue($user->hasVerifiedEmail());
         Mail::assertSent(WelcomeMemberMail::class);
+    }
+
+    public function test_register_webhook_validation_returns_a_json_error_contract(): void
+    {
+        config(['services.register_webhook.secret' => 'test-secret']);
+
+        $response = $this->postJson(route('webhook.register'), [
+            'secret' => 'test-secret',
+            'name' => 'A',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('status', 422)
+            ->assertJsonStructure(['message', 'errors' => ['email']]);
     }
 }
