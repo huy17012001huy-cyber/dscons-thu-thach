@@ -1,7 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Bot\BotChallengeProgressRequest;
+use App\Http\Requests\Bot\BotMemberLookupRequest;
+use App\Http\Requests\Bot\BotPendingSubmissionsRequest;
 use App\Models\Expedition;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -26,16 +31,13 @@ class BotApiController extends Controller
      * GET /api/bot/member?q=email_or_username
      * Lookup member info: name, level, XP, class, membership, streak
      */
-    public function lookupMember(Request $request): JsonResponse
+    public function lookupMember(BotMemberLookupRequest $request): JsonResponse
     {
         if (! $this->verify($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $q = $request->input('q', '');
-        if (blank($q)) {
-            return response()->json(['error' => 'Missing q parameter'], 400);
-        }
+        $q = (string) $request->validated('q');
 
         $user = User::where('email', $q)
             ->orWhere('username', $q)
@@ -75,16 +77,13 @@ class BotApiController extends Controller
      * GET /api/bot/challenge-progress?q=email_or_username&challenge=slug_or_id
      * Check member's challenge progress
      */
-    public function challengeProgress(Request $request): JsonResponse
+    public function challengeProgress(BotChallengeProgressRequest $request): JsonResponse
     {
         if (! $this->verify($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $q = $request->input('q', '');
-        if (blank($q)) {
-            return response()->json(['error' => 'Missing q parameter'], 400);
-        }
+        $q = (string) $request->validated('q');
 
         $user = User::where('email', $q)
             ->orWhere('username', $q)
@@ -96,7 +95,7 @@ class BotApiController extends Controller
         }
 
         // Find challenge — by slug, id, or default to first active
-        $challengeParam = $request->input('challenge');
+        $challengeParam = $request->validated('challenge');
         if ($challengeParam) {
             $expedition = Expedition::where('slug', $challengeParam)
                 ->orWhere('id', is_numeric($challengeParam) ? $challengeParam : 0)
@@ -176,13 +175,13 @@ class BotApiController extends Controller
      * GET /api/bot/pending-submissions?challenge=slug_or_id
      * List pending submissions for admin review
      */
-    public function pendingSubmissions(Request $request): JsonResponse
+    public function pendingSubmissions(BotPendingSubmissionsRequest $request): JsonResponse
     {
         if (! $this->verify($request)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $challengeParam = $request->input('challenge');
+        $challengeParam = $request->validated('challenge');
         $expedition = $challengeParam
             ? Expedition::where('slug', $challengeParam)->orWhere('id', is_numeric($challengeParam) ? $challengeParam : 0)->first()
             : Expedition::where('status', 'active')->first();

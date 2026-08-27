@@ -118,4 +118,17 @@ class SepayWebhookSecurityTest extends TestCase
 
         $this->assertNotEquals(401, $response->getStatusCode());
     }
+
+    public function test_bot_api_keeps_the_legacy_missing_query_response(): void
+    {
+        config(['services.bot.api_token' => 'bot-token']);
+
+        $response = $this->getJson('/api/bot/member', [
+            'Authorization' => 'Bearer bot-token',
+        ]);
+
+        $response
+            ->assertStatus(400)
+            ->assertExactJson(['error' => 'Missing q parameter']);
+    }
 }
