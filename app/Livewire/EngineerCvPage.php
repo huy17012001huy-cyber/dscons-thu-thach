@@ -10,6 +10,7 @@ use App\Services\RecruiterContactService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
+use Modules\Recruitment\Application\EngineerCvService;
 
 class EngineerCvPage extends Component
 {
@@ -50,14 +51,9 @@ class EngineerCvPage extends Component
             $profile = EngineerProfile::query()->where('user_id', $cv->user_id)->first();
         } else {
             $this->profileUserId = (int) $user->id;
-            $profile = EngineerProfile::firstOrCreate(
-                ['brand_id' => brand()->id, 'user_id' => $this->profileUserId],
-                ['anonymized_code' => 'KYS-'.str_pad((string) $this->profileUserId, 5, '0', STR_PAD_LEFT), 'contact_email' => $user->email]
-            );
-            $cv = EngineerCv::firstOrCreate(
-                ['brand_id' => brand()->id, 'user_id' => $this->profileUserId],
-                ['data' => []]
-            );
+            $workspace = app(EngineerCvService::class)->ensureWorkspace($user);
+            $profile = $workspace['profile'];
+            $cv = $workspace['cv'];
         }
 
         $profile ??= new EngineerProfile();
@@ -126,8 +122,7 @@ class EngineerCvPage extends Component
             'languages' => $this->lines($this->languagesText, true),
         ];
 
-        EngineerProfile::updateOrCreate(['brand_id' => brand()->id, 'user_id' => $user->id], [
-            'anonymized_code' => 'KYS-'.str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
+        app(EngineerCvService::class)->save($user, $isPublished, [
             'headline' => $this->headline,
             'discipline' => $this->discipline,
             'summary' => $this->summary,
@@ -135,18 +130,12 @@ class EngineerCvPage extends Component
             'location' => $this->location,
             'work_mode' => $this->workMode,
             'availability' => $this->availability,
-            'contact_email' => $user->email,
             'contact_phone' => $this->contactPhone,
             'contact_visibility' => ['email' => $this->showEmail, 'phone' => $this->showPhone],
-            'is_searchable' => $isPublished,
-        ]);
-
-        EngineerCv::updateOrCreate(['brand_id' => brand()->id, 'user_id' => $user->id], [
+        ], [
             'title' => 'CV '.$this->headline,
             'template' => $this->template,
             'accent_color' => $this->accentColor,
-            'status' => $isPublished ? 'published' : 'draft',
-            'published_at' => $isPublished ? now() : null,
             'data' => $data,
         ]);
 
