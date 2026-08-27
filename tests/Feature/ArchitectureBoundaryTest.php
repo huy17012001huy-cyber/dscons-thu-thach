@@ -78,4 +78,34 @@ final class ArchitectureBoundaryTest extends TestCase
             }
         }
     }
+
+    public function test_presentation_layers_do_not_persist_eloquent_models_directly(): void
+    {
+        $forbidden = [
+            '::create(',
+            '::updateOrCreate(',
+            '::firstOrCreate(',
+            '::firstOrNew(',
+            '::destroy(',
+            '->forceFill(',
+            '->saveQuietly(',
+            '->forceDelete(',
+            '->save();',
+            '->update([',
+        ];
+
+        foreach ([base_path('app/Http/Controllers'), base_path('app/Livewire')] as $directory) {
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory)) as $file) {
+                if (! $file->isFile() || $file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                $contents = (string) file_get_contents($file->getPathname());
+                self::assertFalse(
+                    Str::contains($contents, $forbidden),
+                    $file->getPathname().' must delegate persistent writes to an application service.',
+                );
+            }
+        }
+    }
 }
