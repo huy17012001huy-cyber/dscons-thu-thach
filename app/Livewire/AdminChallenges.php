@@ -16,6 +16,7 @@ use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use Modules\Learning\Application\ChallengeFreezeService;
+use Modules\Learning\Application\ChallengeManagementService;
 
 class AdminChallenges extends Component
 {
@@ -198,7 +199,6 @@ class AdminChallenges extends Component
             'is_featured' => $this->expFeatured,
             'starts_at' => $this->expStartsAt ?: null,
             'ends_at' => $this->expEndsAt ?: null,
-            'created_by' => Auth::id(),
         ];
 
         if ($this->expCover) {
@@ -210,18 +210,18 @@ class AdminChallenges extends Component
             $data['cover_path'] = null;
         }
 
+        $savedExpedition = app(ChallengeManagementService::class)->save($expedition, Auth::user(), $data);
+        if (! $savedExpedition) {
+            return;
+        }
+
         if ($expedition) {
-            $expedition->update($data);
             $this->dispatch('toast', message: 'Đã cập nhật challenge', type: 'success');
         } else {
-            Expedition::create($data);
             $this->dispatch('toast', message: 'Đã tạo challenge mới', type: 'success');
         }
 
-        $newCoverPath = $data['cover_path'] ?? $oldCoverPath;
-        if ($oldCoverPath && $oldCoverPath !== $newCoverPath && str_starts_with($oldCoverPath, 'challenge/covers/')) {
-            Storage::disk('public')->delete($oldCoverPath);
-        }
+        app(ChallengeManagementService::class)->deleteReplacedCover($oldCoverPath, $savedExpedition->cover_path);
 
         $this->showExpeditionModal = false;
         $this->resetExpeditionForm();
@@ -233,10 +233,9 @@ class AdminChallenges extends Component
             return;
         }
         $expedition = Expedition::findOrFail($id);
-        if ($expedition->cover_path && str_starts_with($expedition->cover_path, 'challenge/covers/')) {
-            Storage::disk('public')->delete($expedition->cover_path);
+        if (! app(ChallengeManagementService::class)->delete($expedition, Auth::user())) {
+            return;
         }
-        $expedition->delete();
         if ($this->managingExpeditionId === $id) {
             $this->managingExpeditionId = null;
         }
