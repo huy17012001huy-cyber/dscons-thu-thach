@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Core\Integrations\BotQueryService;
+use App\Models\Brand;
 use App\Models\CommerceWebhookEvent;
 use App\Models\Expedition;
 use App\Models\User;
@@ -160,6 +162,7 @@ class SepayWebhookSecurityTest extends TestCase
     {
         config(['services.bot.api_token' => 'bot-token']);
         $user = User::factory()->create(['username' => 'bot-member']);
+        brand()->users()->attach($user->id, ['role' => 'member']);
         $challenge = Expedition::create([
             'title' => 'Bot Challenge',
             'slug' => 'bot-challenge',
@@ -183,5 +186,23 @@ class SepayWebhookSecurityTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.pending_count', 0);
+    }
+
+    public function test_bot_api_cannot_lookup_a_member_from_another_community(): void
+    {
+        config(['services.bot.api_token' => 'bot-token']);
+        $user = User::factory()->create(['username' => 'other-community-member']);
+        $otherBrand = Brand::create([
+            'name' => 'Other Bot Community',
+            'slug' => 'other-bot-community',
+            'domain' => 'other-bot-community.test',
+            'status' => 'active',
+            'theme_primary' => '#1F77BE',
+            'theme_accent' => '#E1F4F7',
+            'theme_bg' => '#F7FAFC',
+        ]);
+        $otherBrand->users()->attach($user->id, ['role' => 'member']);
+
+        $this->assertNull(app(BotQueryService::class)->findUser('other-community-member'));
     }
 }

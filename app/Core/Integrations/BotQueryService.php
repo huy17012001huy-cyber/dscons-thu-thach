@@ -2,35 +2,51 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Core\Integrations;
 
+use App\Core\CommunityContext;
 use App\Models\Expedition;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 final class BotQueryService
 {
+    public function __construct(private readonly CommunityContext $context) {}
+
     public function findUser(string $query): ?User
     {
+        $brand = $this->context->require();
         $nameQuery = '%'.mb_strtolower($query).'%';
 
         return User::query()
-            ->where('email', $query)
-            ->orWhere('username', $query)
-            ->orWhereRaw('LOWER(name) LIKE ?', [$nameQuery])
+            ->where(function ($users) use ($query, $nameQuery): void {
+                $users->where('email', $query)
+                    ->orWhere('username', $query)
+                    ->orWhereRaw('LOWER(name) LIKE ?', [$nameQuery]);
+            })
+            ->where(function ($users) use ($brand): void {
+                $users->where('is_admin', true)
+                    ->orWhereHas('brandRoles', fn ($roles) => $roles->where('brands.id', $brand->id));
+            })
             ->first();
     }
 
     public function findChallenge(?string $query): ?Expedition
     {
+        $brand = $this->context->require();
+        $challenges = Expedition::query()->where('brand_id', $brand->id);
+
         if (filled($query)) {
-            return Expedition::query()
+            return $challenges
                 ->where('slug', $query)
-                ->orWhere('id', is_numeric($query) ? $query : 0)
+                ->orWhere(function ($challenge) use ($query, $brand): void {
+                    $challenge->where('brand_id', $brand->id)
+                        ->where('id', is_numeric($query) ? $query : 0);
+                })
                 ->first();
         }
 
-        return Expedition::query()->where('status', 'active')->first();
+        return $challenges->where('status', 'active')->first();
     }
 
     /** @return array<string, mixed> */

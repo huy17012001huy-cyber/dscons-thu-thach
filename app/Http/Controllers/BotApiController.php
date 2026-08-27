@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Core\Integrations\BotApiAuthenticator;
+use App\Core\Integrations\BotQueryService;
 use App\Http\Requests\Bot\BotChallengeProgressRequest;
 use App\Http\Requests\Bot\BotMemberLookupRequest;
 use App\Http\Requests\Bot\BotPendingSubmissionsRequest;
-use App\Services\BotQueryService;
 use Illuminate\Http\JsonResponse;
 
 final class BotApiController extends Controller
