@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Modules\Community\Application\CommunityFeedbackService;
 
 class AdminFeedbacks extends Component
 {
@@ -31,26 +32,26 @@ class AdminFeedbacks extends Component
     public function markReviewed(int $id): void
     {
         $this->authorizeAdmin();
-        $this->feedbackQuery()->findOrFail($id)->update(['status' => 'reviewed']);
+        app(CommunityFeedbackService::class)->updateStatus($id, $this->currentUser(), 'reviewed');
     }
 
     public function markResolved(int $id): void
     {
         $this->authorizeAdmin();
-        $this->feedbackQuery()->findOrFail($id)->update(['status' => 'resolved']);
+        app(CommunityFeedbackService::class)->updateStatus($id, $this->currentUser(), 'resolved');
     }
 
     public function saveNotes(int $id, string $notes): void
     {
         $this->authorizeAdmin();
-        $this->feedbackQuery()->findOrFail($id)->update(['admin_notes' => $notes]);
+        app(CommunityFeedbackService::class)->saveNotes($id, $this->currentUser(), $notes);
         $this->dispatch('toast', message: 'Đã lưu ghi chú.', type: 'success');
     }
 
     public function deleteFeedback(int $id): void
     {
         $this->authorizeAdmin();
-        $this->feedbackQuery()->findOrFail($id)->delete();
+        app(CommunityFeedbackService::class)->delete($id, $this->currentUser());
         $this->dispatch('toast', message: 'Đã xóa.', type: 'success');
     }
 
@@ -68,8 +69,15 @@ class AdminFeedbacks extends Component
 
     private function authorizeAdmin(): void
     {
+        abort_unless($this->currentUser()->isBrandAdmin(app()->bound('brand') ? brand()->id : null), 403);
+    }
+
+    private function currentUser(): User
+    {
         $user = Auth::user();
-        abort_unless($user instanceof User && $user->isBrandAdmin(app()->bound('brand') ? brand()->id : null), 403);
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 
     /** @return Builder<Feedback> */

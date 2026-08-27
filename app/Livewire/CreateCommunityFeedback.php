@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
-use App\Models\Feedback;
 use App\Models\User;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Modules\Community\Application\CommunityFeedbackService;
 
 class CreateCommunityFeedback extends Component
 {
@@ -59,14 +59,13 @@ class CreateCommunityFeedback extends Component
             ->values()
             ->all();
 
-        Feedback::create([
-            'user_id' => $user->id,
-            'brand_id' => brand()->id,
-            'type' => $this->type,
-            'subject' => trim($this->subject),
-            'content' => trim($this->content),
-            'attachments' => $paths ?: null,
-        ]);
+        app(CommunityFeedbackService::class)->submit(
+            $user,
+            $this->type,
+            $this->subject,
+            $this->content,
+            array_values($paths),
+        );
 
         $this->reset(['type', 'subject', 'content', 'attachments']);
         session()->flash('status', 'Đã gửi thành công. Đội ngũ DSCons sẽ xem và phản hồi cho bạn.');
