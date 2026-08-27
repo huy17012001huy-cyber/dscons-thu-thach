@@ -4,41 +4,30 @@ namespace App\Livewire;
 
 use App\Models\Post;
 use App\Models\User;
-use App\Notifications\GenericNotification;
-use App\Services\XpService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\Community\Application\CommunityModerationService;
 
 class AdminCotReview extends Component
 {
     public function approve(int $postId): void
     {
-        if (! Auth::user()?->is_admin) {
-            return;
-        }
-        $post = Post::with('user')->findOrFail($postId);
-        $post->update(['is_cot' => true, 'cot_at' => now()]);
-
-        // Award XP to author
-        if ($post->user instanceof User) {
-            app(XpService::class)->award($post->user, 'cot', 1.0, 'Bài viết được chọn CỐT', $post);
-            $post->user->notify(new GenericNotification('★', 'Bài viết của bạn đã được duyệt CỐT!'));
-        }
+        $this->authorizeAdmin();
+        app(CommunityModerationService::class)->approveCot($postId, $this->currentUser());
     }
 
     public function reject(int $postId): void
     {
-        if (! Auth::user()?->is_admin) {
-            return;
-        }
-        $post = Post::findOrFail($postId);
-        $post->update(['cot_by' => null]);
+        $this->authorizeAdmin();
+        app(CommunityModerationService::class)->rejectCot($postId, $this->currentUser());
     }
 
     public function render(): View
     {
-        $pending = Post::whereNotNull('cot_by')
+        $this->authorizeAdmin();
+        $pending = Post::query()
+            ->whereNotNull('cot_by')
             ->where('is_cot', false)
             ->with(['user', 'cotBy'])
             ->latest()
@@ -46,5 +35,18 @@ class AdminCotReview extends Component
 
         return view('livewire.admin-cot-review', ['pending' => $pending])
             ->layout('layouts.app', ['title' => 'Duyệt CỐT — Admin']);
+    }
+
+    private function authorizeAdmin(): void
+    {
+        abort_unless($this->currentUser()->isCommunityAdmin(), 403);
+    }
+
+    private function currentUser(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }

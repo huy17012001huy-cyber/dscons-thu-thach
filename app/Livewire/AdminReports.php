@@ -7,30 +7,26 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
+use Modules\Community\Application\CommunityModerationService;
 
 class AdminReports extends Component
 {
     public function dismiss(int $id): void
     {
         $this->authorizeModerator();
-        Report::findOrFail($id)->update(['status' => 'dismissed']);
+        app(CommunityModerationService::class)->dismissReport($id, $this->currentUser());
     }
 
     public function reviewed(int $id): void
     {
         $this->authorizeModerator();
-        Report::findOrFail($id)->update(['status' => 'reviewed']);
+        app(CommunityModerationService::class)->reviewReport($id, $this->currentUser());
     }
 
     public function deleteReportable(int $id): void
     {
         $this->authorizeModerator();
-        $report = Report::findOrFail($id);
-        $reportable = $report->reportable;
-        if ($reportable) {
-            $reportable->delete();
-        }
-        $report->update(['status' => 'reviewed']);
+        app(CommunityModerationService::class)->deleteReportedContent($id, $this->currentUser());
     }
 
     public function render(): View
@@ -47,7 +43,14 @@ class AdminReports extends Component
 
     private function authorizeModerator(): void
     {
+        abort_unless($this->currentUser()->isCommunityModerator(), 403);
+    }
+
+    private function currentUser(): User
+    {
         $user = Auth::user();
-        abort_unless($user instanceof User && $user->isCommunityModerator(), 403);
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }
