@@ -11,6 +11,7 @@ use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Modules\Commerce\Application\ProductCatalogManagementService;
 
 class AdminProducts extends Component
 {
@@ -90,7 +91,8 @@ class AdminProducts extends Component
 
     public function save(): void
     {
-        if (! $this->currentUser()?->isBrandAdmin()) {
+        $actor = $this->currentUser();
+        if (! $actor?->isBrandAdmin()) {
             return;
         }
         $this->validate();
@@ -129,11 +131,18 @@ class AdminProducts extends Component
             }
         }
 
+        $product = app(ProductCatalogManagementService::class)->save(
+            $this->editingId,
+            $actor,
+            $data,
+        );
+        if (! $product) {
+            return;
+        }
+
         if ($this->editingId) {
-            DigitalProduct::where('id', $this->editingId)->update($data);
             $this->dispatch('toast', message: 'Đã cập nhật sản phẩm!', type: 'success');
         } else {
-            DigitalProduct::create($data);
             $this->dispatch('toast', message: 'Đã tạo sản phẩm!', type: 'success');
         }
 
@@ -147,19 +156,23 @@ class AdminProducts extends Component
 
     public function togglePublish(int $id): void
     {
-        if (! $this->currentUser()?->isBrandAdmin()) {
+        $actor = $this->currentUser();
+        if (! $actor?->isBrandAdmin()) {
             return;
         }
-        $product = DigitalProduct::findOrFail($id);
-        $product->update(['is_published' => ! $product->is_published]);
+        app(ProductCatalogManagementService::class)->togglePublished($id, $actor);
     }
 
     public function deleteProduct(int $id): void
     {
-        if (! $this->currentUser()?->isBrandAdmin()) {
+        $actor = $this->currentUser();
+        if (! $actor?->isBrandAdmin()) {
             return;
         }
-        $product = DigitalProduct::findOrFail($id);
+        $product = app(ProductCatalogManagementService::class)->delete($id, $actor);
+        if (! $product) {
+            return;
+        }
         if ($product->file_path) {
             Storage::disk('public')->delete($product->file_path);
         }
