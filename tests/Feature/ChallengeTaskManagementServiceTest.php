@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Core\CommunityContext;
 use App\Livewire\AdminChallenges;
+use App\Livewire\ChallengeDetail;
 use App\Models\Brand;
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
@@ -81,6 +82,26 @@ final class ChallengeTaskManagementServiceTest extends TestCase
         $this->assertDatabaseHas('challenge_tasks', [
             'expedition_id' => $challenge->id,
             'title' => 'Livewire managed task',
+        ]);
+    }
+
+    public function test_challenge_detail_edits_a_task_through_the_management_service(): void
+    {
+        $admin = $this->admin();
+        $challenge = $this->challenge($admin);
+        $task = ChallengeTask::create([...$this->attributes('Original task'), 'expedition_id' => $challenge->id]);
+
+        Livewire::actingAs($admin)
+            ->test(ChallengeDetail::class, ['slug' => $challenge->slug])
+            ->call('startEditTask', $task->id)
+            ->set('editTaskTitle', 'Updated from challenge detail')
+            ->call('saveEditTask')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('challenge_tasks', [
+            'id' => $task->id,
+            'expedition_id' => $challenge->id,
+            'title' => 'Updated from challenge detail',
         ]);
     }
 

@@ -25,6 +25,7 @@ use Modules\Learning\Application\ChallengeCheckinService;
 use Modules\Learning\Application\ChallengeEnrollmentService;
 use Modules\Learning\Application\ChallengeSubmissionOutcome;
 use Modules\Learning\Application\ChallengeSubmissionService;
+use Modules\Learning\Application\ChallengeTaskManagementService;
 use Modules\Learning\Application\ChallengeVideoFeedbackOutcome;
 use Modules\Learning\Application\ChallengeVideoFeedbackService;
 use Modules\Learning\Application\SubmissionReviewService;
@@ -661,7 +662,10 @@ class ChallengeDetail extends Component
         if (! Auth::check() || ! $this->currentUser()->isBrandAdmin()) {
             return;
         }
-        $task = ChallengeTask::findOrFail($taskId);
+        $task = app(ChallengeTaskManagementService::class)->find($taskId, $this->currentUser());
+        if (! $task || $task->expedition_id !== $this->expedition->id) {
+            return;
+        }
         $this->editingTaskId = $taskId;
         $this->editTaskTitle = $task->title ?? '';
         $this->editTaskDesc = $task->description ?? '';
@@ -720,7 +724,11 @@ class ChallengeDetail extends Component
             $quizJson = $decoded;
         }
 
-        ChallengeTask::where('id', $this->editingTaskId)->update([
+        $task = app(ChallengeTaskManagementService::class)->save(
+            $this->expedition->id,
+            $this->editingTaskId,
+            $this->currentUser(),
+            [
             'title' => $this->editTaskTitle ?: 'Nhiệm vụ',
             'description' => $this->editTaskDesc ?: null,
             'video_url' => $this->editTaskVideo ?: null,
@@ -730,8 +738,12 @@ class ChallengeDetail extends Component
             'sop_content' => $this->editTaskSop ?: null,
             'evidence_label' => $this->editTaskEvidenceLabel ?: null,
             'admin_note' => $this->editTaskAdminNote ?: null,
-            'quiz_json' => $quizJson,
-        ]);
+                'quiz_json' => $quizJson,
+            ],
+        );
+        if (! $task) {
+            return;
+        }
         $this->editingTaskId = null;
         $this->editTaskVideo = '';
         $this->editTaskSop = '';
