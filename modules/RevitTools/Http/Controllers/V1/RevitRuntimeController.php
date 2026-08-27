@@ -6,10 +6,10 @@ namespace Modules\RevitTools\Http\Controllers\V1;
 
 use App\Http\Requests\Revit\RevitHeartbeatRequest;
 use App\Http\Responses\ApiResponse;
-use App\Services\ToolLicenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\RevitTools\Application\RevitApiSessionResolver;
+use Modules\RevitTools\Application\ToolLicenseService;
 
 final class RevitRuntimeController
 {

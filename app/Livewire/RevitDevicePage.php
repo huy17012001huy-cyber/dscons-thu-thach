@@ -5,7 +5,7 @@ namespace App\Livewire;
 use App\Models\Brand;
 use App\Models\DigitalProduct;
 use App\Models\ToolInstallation;
-use App\Services\ToolLicenseService;
+use Modules\RevitTools\Application\ToolLicenseService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;

@@ -6,10 +6,10 @@ namespace Modules\RevitTools\Http\Controllers\V1;
 
 use App\Http\Responses\ApiResponse;
 use App\Models\DigitalProduct;
-use App\Services\ToolLicenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\RevitTools\Application\RevitApiSessionResolver;
+use Modules\RevitTools\Application\ToolLicenseService;
 use Modules\RevitTools\Http\Resources\ToolManifestResource;
 
 final class RevitToolManifestController

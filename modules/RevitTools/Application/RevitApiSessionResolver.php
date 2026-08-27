@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\RevitTools\Application;
 
 use App\Models\ToolSession;
-use App\Services\ToolLicenseService;
 
 final readonly class RevitApiSessionResolver
 {

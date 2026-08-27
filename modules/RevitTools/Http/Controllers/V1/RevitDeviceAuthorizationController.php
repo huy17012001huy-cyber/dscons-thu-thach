@@ -10,8 +10,8 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Brand;
 use App\Models\ToolDeviceAuthorization;
 use App\Models\ToolSession;
-use App\Services\ToolLicenseService;
 use Illuminate\Http\JsonResponse;
+use Modules\RevitTools\Application\ToolLicenseService;
 
 final class RevitDeviceAuthorizationController
 {

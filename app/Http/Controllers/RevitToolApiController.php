@@ -9,9 +9,9 @@ use App\Models\Brand;
 use App\Models\DigitalProduct;
 use App\Models\ToolDeviceAuthorization;
 use App\Models\ToolSession;
-use App\Services\ToolLicenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\RevitTools\Application\ToolLicenseService;
 
 final class RevitToolApiController extends Controller
 {

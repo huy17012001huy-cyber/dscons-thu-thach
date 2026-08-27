@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Modules\RevitTools\Http\Controllers\V1;
 
 use App\Http\Responses\ApiResponse;
-use App\Services\ToolLicenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\RevitTools\Application\RevitApiSessionResolver;
+use Modules\RevitTools\Application\ToolLicenseService;
 use Modules\RevitTools\Http\Resources\ToolEntitlementResource;
 
 final class RevitEntitlementController

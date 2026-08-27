@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\ToolDeviceAuthorization;
 use App\Models\User;
-use App\Services\ToolLicenseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\RevitTools\Application\ToolLicenseService;
 
 final class RevitDeviceAuthorizationController extends Controller
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace Modules\RevitTools\Application;
 
 use App\Models\Brand;
 use App\Models\ProductPurchase;
