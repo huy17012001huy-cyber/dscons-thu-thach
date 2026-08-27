@@ -2,11 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Core\Messaging\ConversationMessageService;
 use App\Models\Conversation;
-use App\Models\DirectMessage;
 use App\Models\RecruitmentContactRequest;
 use App\Models\User;
-use App\Notifications\GenericNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -33,28 +32,26 @@ class MessagesPage extends Component
         $userId = request()->query('user');
         if ($userId && (int) $userId !== $user->id) {
             $target = User::find((int) $userId);
-            if ($target?->isRecruiter()) {
+            if (! $target instanceof User) {
+                return;
+            }
+            if ($target->isRecruiter()) {
                 $request = $this->acceptedRecruitmentRequest((int) $userId);
                 $conv = $request ? Conversation::where('contact_request_id', $request->id)->first() : null;
                 $this->activeConversationId = $conv?->id;
             } else {
-                $conv = Conversation::findOrCreateBetween($user->id, (int) $userId);
-                $this->activeConversationId = $conv->id;
+                $this->activeConversationId = app(ConversationMessageService::class)->communityConversation($user, $target)?->id;
             }
         } elseif ($conversation) {
             // Verify current user is a participant
-            $conv = Conversation::find($conversation);
-            if ($conv && ($conv->user_one_id === $user->id || $conv->user_two_id === $user->id)) {
-                $this->activeConversationId = $conversation;
-            }
+            $this->activeConversationId = app(ConversationMessageService::class)->open($user, $conversation)?->id;
         }
     }
 
     public function openConversation(int $id): void
     {
-        $conv = Conversation::findOrFail($id);
         $user = $this->currentUser();
-        if (! $user || ($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) || ! $this->canUseConversation($conv)) {
+        if (! $user || ! app(ConversationMessageService::class)->open($user, $id)) {
             return;
         }
         $this->activeConversationId = $id;
@@ -79,26 +76,9 @@ class MessagesPage extends Component
 
         RateLimiter::hit($throttleKey);
 
-        $conv = Conversation::findOrFail($this->activeConversationId);
-        // Verify user is participant
-        if (($conv->user_one_id !== $user->id && $conv->user_two_id !== $user->id) || ! $this->canUseConversation($conv)) {
+        if (! app(ConversationMessageService::class)->send($user, $this->activeConversationId, $this->newMessage, $user->name.' gửi tin nhắn cho bạn', route('messages', ['conversation' => $this->activeConversationId]))) {
             return;
         }
-
-        DirectMessage::create([
-            'conversation_id' => $conv->id,
-            'sender_id' => $user->id,
-            'content' => $this->newMessage,
-        ]);
-
-        $conv->update(['last_message_at' => now()]);
-
-        // Notify other user
-        $other = $conv->getOtherUser($user->id);
-        $other->notify(new GenericNotification(
-            '💬', $user->name.' gửi tin nhắn cho bạn',
-            route('messages', ['conversation' => $conv->id])
-        ));
 
         $this->newMessage = '';
     }
@@ -110,10 +90,7 @@ class MessagesPage extends Component
             return;
         }
 
-        DirectMessage::where('conversation_id', $conversationId)
-            ->where('sender_id', '!=', $user->id)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+        app(ConversationMessageService::class)->markRead($user, $conversationId);
     }
 
     public function render(): View
@@ -138,7 +115,7 @@ class MessagesPage extends Component
             $conv = $conversations->firstWhere('id', $this->activeConversationId);
             if ($conv) {
                 $otherUser = $conv->getOtherUser($userId);
-                $messages = DirectMessage::where('conversation_id', $this->activeConversationId)
+                $messages = $conv->messages()
                     ->with('sender')
                     ->oldest()
                     ->limit(100)
@@ -165,15 +142,6 @@ class MessagesPage extends Component
             $query->where('recruiter_id', $user->id)->where('engineer_id', $otherUserId)
                 ->orWhere('recruiter_id', $otherUserId)->where('engineer_id', $user->id);
         })->latest()->first();
-    }
-
-    private function canUseConversation(Conversation $conversation): bool
-    {
-        if ($conversation->conversation_type !== 'recruitment') {
-            return true;
-        }
-
-        return $conversation->contactRequest?->status === 'accepted';
     }
 
     private function currentUser(): ?User

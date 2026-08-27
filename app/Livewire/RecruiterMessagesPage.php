@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Core\Messaging\ConversationMessageService;
 use App\Models\Conversation;
-use App\Models\DirectMessage;
 use App\Models\User;
-use App\Notifications\GenericNotification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
@@ -44,9 +43,7 @@ class RecruiterMessagesPage extends Component
 
         $conversation = $this->conversations()->first(fn ($item) => $item->id === $this->activeConversationId);
         abort_unless($conversation instanceof Conversation, 404);
-        DirectMessage::create(['conversation_id' => $conversation->id, 'sender_id' => $user->id, 'content' => $this->newMessage, 'brand_id' => brand()->id]);
-        $conversation->update(['last_message_at' => now()]);
-        $conversation->getOtherUser($user->id)->notify(new GenericNotification('💬', 'Nhà tuyển dụng gửi tin nhắn cho bạn.', community_route('messages', ['conversation' => $conversation->id])));
+        app(ConversationMessageService::class)->send($user, $conversation->id, $this->newMessage, 'Nhà tuyển dụng gửi tin nhắn cho bạn.', community_route('messages', ['conversation' => $conversation->id]));
         $this->newMessage = '';
     }
 
@@ -67,14 +64,14 @@ class RecruiterMessagesPage extends Component
 
     private function markAsRead(int $conversationId): void
     {
-        DirectMessage::where('brand_id', brand()->id)->where('conversation_id', $conversationId)->where('sender_id', '!=', $this->currentUser()->id)->whereNull('read_at')->update(['read_at' => now()]);
+        app(ConversationMessageService::class)->markRead($this->currentUser(), $conversationId);
     }
 
     public function render(): View
     {
         $conversations = $this->conversations();
         $active = $conversations->firstWhere('id', $this->activeConversationId);
-        $messages = $active ? DirectMessage::where('brand_id', brand()->id)->where('conversation_id', $active->id)->with('sender')->oldest()->limit(100)->get() : collect();
+        $messages = $active ? $active->messages()->with('sender')->oldest()->limit(100)->get() : collect();
 
         return view('livewire.recruiter-messages-page', compact('conversations', 'active', 'messages'))->layout('layouts.recruiter', ['title' => 'Tin nhắn tuyển dụng']);
     }
