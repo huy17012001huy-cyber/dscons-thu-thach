@@ -16,6 +16,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Core\Auth\AccountDataService;
 
 class AccountSettings extends Component
 {
@@ -73,18 +74,17 @@ class AccountSettings extends Component
 
         $this->validate($rules);
 
-        UserBillingProfile::updateOrCreate(
-            ['user_id' => Auth::id(), 'type' => $this->invoiceType],
-            [
-                'full_name' => $this->invoiceType === 'personal' ? trim($this->fullName) : null,
-                'company_name' => $this->invoiceType === 'company' ? trim($this->companyName) : null,
-                'invoice_email' => trim($this->invoiceEmail),
-                'identity_number' => $this->invoiceType === 'personal' ? trim($this->identityNumber) ?: null : null,
-                'tax_code' => $this->invoiceType === 'company' ? trim($this->taxCode) : null,
-                'address' => trim($this->address) ?: null,
-                'phone' => trim($this->phone) ?: null,
-            ]
-        );
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+        app(AccountDataService::class)->saveBilling($user, $this->invoiceType, [
+            'full_name' => $this->invoiceType === 'personal' ? trim($this->fullName) : null,
+            'company_name' => $this->invoiceType === 'company' ? trim($this->companyName) : null,
+            'invoice_email' => trim($this->invoiceEmail),
+            'identity_number' => $this->invoiceType === 'personal' ? trim($this->identityNumber) ?: null : null,
+            'tax_code' => $this->invoiceType === 'company' ? trim($this->taxCode) : null,
+            'address' => trim($this->address) ?: null,
+            'phone' => trim($this->phone) ?: null,
+        ]);
 
         $this->dispatch('toast', message: 'Đã lưu thông tin xuất hóa đơn.', type: 'success');
     }
@@ -93,12 +93,11 @@ class AccountSettings extends Component
     {
         abort_unless($this->availableBrands()->contains('id', $brandId), 403);
 
-        $preference = UserCommunityPreference::withoutGlobalScopes()->firstOrCreate(
-            ['user_id' => Auth::id(), 'brand_id' => $brandId],
-            ['notifications_enabled' => true]
-        );
-        $preference->update(['notifications_enabled' => ! $preference->notifications_enabled]);
-        $this->notificationStates[$brandId] = $preference->notifications_enabled;
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+        $community = $this->availableBrands()->firstWhere('id', $brandId);
+        abort_unless($community instanceof Brand, 403);
+        $this->notificationStates[$brandId] = app(AccountDataService::class)->toggleNotifications($user, $community);
     }
 
     public function render(): View
