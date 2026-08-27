@@ -38,11 +38,9 @@ final class BotQueryService
 
         if (filled($query)) {
             return $challenges
-                ->where('slug', $query)
-                ->orWhere(function ($challenge) use ($query, $brand): void {
-                    $challenge->where('brand_id', $brand->id)
-                        ->where('id', is_numeric($query) ? $query : 0);
-                })
+                ->where(fn ($challenge) => $challenge
+                    ->where('slug', $query)
+                    ->orWhere('id', is_numeric($query) ? $query : 0))
                 ->first();
         }
 

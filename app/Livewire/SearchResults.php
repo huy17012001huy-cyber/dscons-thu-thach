@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
 use App\Models\Post;
@@ -21,12 +23,14 @@ class SearchResults extends Component
         $questions = collect();
 
         if (strlen($this->q) >= 2) {
-            $term = '%'.$this->q.'%';
+            $term = '%'.mb_strtolower($this->q).'%';
 
             // Performance: Eager load relationships and use withCount/withExists to avoid N+1 queries
             // when rendering the search results cards.
-            $posts = Post::where('title', 'ilike', $term)
-                ->orWhere('content', 'ilike', $term)
+            $posts = Post::query()
+                ->where(fn ($query) => $query
+                    ->whereRaw('LOWER(title) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(content) LIKE ?', [$term]))
                 ->with(['user.daKhongCuc', 'images'])
                 ->withCount(['likes', 'allComments'])
                 ->withExists(['likes' => fn ($q) => $q->where('user_id', auth()->id())])
@@ -35,13 +39,20 @@ class SearchResults extends Component
                 ->take(20)
                 ->get();
 
-            $users = User::where('name', 'ilike', $term)
-                ->orWhere('username', 'ilike', $term)
+            $users = User::query()
+                ->where(fn ($query) => $query
+                    ->whereRaw('LOWER(name) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(username) LIKE ?', [$term]))
+                ->where(fn ($query) => $query
+                    ->where('is_admin', true)
+                    ->orWhereHas('brandRoles', fn ($roles) => $roles->whereKey(brand()->id)))
                 ->take(10)
                 ->get();
 
-            $questions = Question::where('title', 'ilike', $term)
-                ->orWhere('body', 'ilike', $term)
+            $questions = Question::query()
+                ->where(fn ($query) => $query
+                    ->whereRaw('LOWER(title) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(body) LIKE ?', [$term]))
                 ->with('user')
                 ->withCount('answers')
                 ->latest()
