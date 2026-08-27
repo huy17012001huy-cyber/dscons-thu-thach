@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\AdminTwoFactorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 final class AdminTwoFactorSecurityTest extends TestCase
@@ -39,5 +42,40 @@ final class AdminTwoFactorSecurityTest extends TestCase
 
         $this->assertArrayNotHasKey('two_factor_secret', $admin->fresh()->toArray());
         $this->assertArrayNotHasKey('two_factor_recovery_codes', $admin->fresh()->toArray());
+    }
+
+    public function test_super_admin_can_confirm_totp_and_a_recovery_code_can_only_be_used_once(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $service = app(AdminTwoFactorService::class);
+        $setup = $service->prepare($admin);
+        $code = app(Google2FA::class)->getCurrentOtp($setup['secret']);
+
+        $this->assertTrue($service->confirm($admin, $setup['secret'], $code, $setup['recovery_codes']));
+        $this->assertTrue($service->verify($admin->fresh(), $code));
+
+        $recoveryCode = $setup['recovery_codes'][0];
+        $this->assertTrue($service->useRecoveryCode($admin->fresh(), $recoveryCode));
+        $this->assertFalse($service->useRecoveryCode($admin->fresh(), $recoveryCode));
+        $this->assertNotSame($recoveryCode, $admin->fresh()->two_factor_recovery_codes[0]);
+    }
+
+    public function test_super_admin_can_revoke_other_database_sessions(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        DB::table('sessions')->insert([
+            'id' => 'other-admin-session',
+            'user_id' => $admin->id,
+            'ip_address' => '127.0.0.2',
+            'user_agent' => 'Test browser',
+            'payload' => 'test',
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.security.sessions.revoke'))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'other-admin-session']);
     }
 }
