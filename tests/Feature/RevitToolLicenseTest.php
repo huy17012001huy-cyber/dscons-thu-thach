@@ -102,6 +102,13 @@ class RevitToolLicenseTest extends TestCase
         $this->withToken($token)->postJson('/api/revit/logout')->assertOk();
         $this->withToken($token)->getJson('/api/revit/entitlements')->assertUnauthorized();
         $this->assertNotNull(ToolSession::withoutGlobalScopes()->firstOrFail()->revoked_at);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $user->id,
+            'domain' => 'revit_tools',
+            'action' => 'user_logout',
+            'subject_type' => ToolSecurityEvent::class,
+        ]);
     }
 
     public function test_v1_revit_api_uses_the_standard_response_contract_without_changing_legacy_routes(): void

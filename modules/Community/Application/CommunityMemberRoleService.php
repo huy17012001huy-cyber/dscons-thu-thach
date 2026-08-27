@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Community\Application;
 
+use App\Core\Audit\AuditLogger;
 use App\Core\CommunityContext;
 use App\Models\Brand;
 use App\Models\CommunityRoleAudit;
@@ -14,7 +15,10 @@ final class CommunityMemberRoleService
 {
     private const ROLES = ['member', 'moderator', 'admin'];
 
-    public function __construct(private readonly CommunityContext $context) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly CommunityContext $context,
+    ) {}
 
     public function changeRole(Brand $community, User $actor, int $targetId, string $role): void
     {
@@ -43,6 +47,14 @@ final class CommunityMemberRoleService
                 'to_role' => $role,
                 'action' => 'role_changed',
             ]);
+            DB::afterCommit(fn () => $this->audit->record(
+                'community',
+                'member_role_changed',
+                $actor,
+                $target,
+                $community->id,
+                ['from_role' => $currentRole, 'to_role' => $role],
+            ));
         });
     }
 
@@ -85,6 +97,14 @@ final class CommunityMemberRoleService
                     'updated_at' => now(),
                 ],
             ]);
+            DB::afterCommit(fn () => $this->audit->record(
+                'community',
+                'ownership_transferred',
+                $currentOwner,
+                $community,
+                $community->id,
+                ['new_owner_id' => $target->id],
+            ));
         });
     }
 

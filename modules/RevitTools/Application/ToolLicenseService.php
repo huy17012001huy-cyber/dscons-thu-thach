@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\RevitTools\Application;
 
+use App\Core\Audit\AuditLogger;
 use App\Models\Brand;
 use App\Models\ProductPurchase;
 use App\Models\ToolDeviceAuthorization;
@@ -21,6 +22,8 @@ final class ToolLicenseService
     private const SESSION_DAYS = 7;
 
     private const AUTHORIZATION_MINUTES = 10;
+
+    public function __construct(private readonly AuditLogger $audit) {}
 
     /**
      * @param  array<string, string|null>  $input
@@ -241,7 +244,7 @@ final class ToolLicenseService
     /** @param array<string, scalar|null> $metadata */
     public function recordSecurityEvent(int $brandId, ?int $userId, ?int $installationId, string $event, string $severity, array $metadata = []): void
     {
-        ToolSecurityEvent::withoutGlobalScopes()->create([
+        $securityEvent = ToolSecurityEvent::withoutGlobalScopes()->create([
             'brand_id' => $brandId,
             'user_id' => $userId,
             'tool_installation_id' => $installationId,
@@ -249,6 +252,10 @@ final class ToolLicenseService
             'severity' => $severity,
             'metadata' => $metadata,
         ]);
+        DB::afterCommit(function () use ($securityEvent, $userId, $brandId, $event): void {
+            $actor = $userId === null ? null : User::query()->find($userId);
+            $this->audit->record('revit_tools', $event, $actor, $securityEvent, $brandId);
+        });
     }
 
     private function hashIdentifier(string $value): string

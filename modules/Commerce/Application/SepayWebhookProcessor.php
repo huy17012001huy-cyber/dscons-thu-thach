@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Commerce\Application;
 
+use App\Core\Audit\AuditLogger;
 use App\Models\CommerceWebhookEvent;
 use App\Models\CourseEnrollment;
 use App\Models\DigitalProduct;
@@ -14,7 +15,6 @@ use App\Models\ProductPurchase;
 use App\Models\RecruiterOrder;
 use App\Models\User;
 use App\Notifications\GenericNotification;
-use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Modules\Commerce\Domain\LegacyMembershipPlans;
 use Modules\Commerce\Domain\PaymentReference;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Recruitment\Application;
 
+use App\Core\Audit\AuditLogger;
 use App\Core\CommunityContext;
 use App\Models\Brand;
 use App\Models\EngineerCv;
@@ -13,7 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 final class EngineerCvService
 {
-    public function __construct(private readonly CommunityContext $context) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly CommunityContext $context,
+    ) {}
 
     /** @return array{profile: EngineerProfile, cv: EngineerCv} */
     public function ensureWorkspace(User $engineer): array
@@ -73,6 +77,13 @@ final class EngineerCvService
                 'status' => $publish ? 'published' : 'draft',
                 'published_at' => $publish ? now() : null,
             ]);
+            DB::afterCommit(fn () => $this->audit->record(
+                'recruitment',
+                $publish ? 'engineer_cv_published' : 'engineer_cv_saved',
+                $engineer,
+                $cv,
+                $cv->brand_id,
+            ));
 
             return $cv->refresh();
         });

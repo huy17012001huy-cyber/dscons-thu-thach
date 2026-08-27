@@ -43,6 +43,22 @@ final class RecruitmentAdminManagementServiceTest extends TestCase
         self::assertSame(brand()->id, $plan->brand_id);
         self::assertTrue($plan->is_active);
         self::assertFalse($service->togglePlan($plan->id, $admin, false)->is_active);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $admin->id,
+            'domain' => 'recruitment',
+            'action' => 'recruiter_verified',
+            'subject_type' => RecruiterProfile::class,
+            'subject_id' => $profile->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $admin->id,
+            'domain' => 'recruitment',
+            'action' => 'recruiter_plan_toggled',
+            'subject_type' => \App\Models\RecruiterPlan::class,
+            'subject_id' => $plan->id,
+        ]);
     }
 
     public function test_community_admin_cannot_change_recruitment_data_from_another_community_but_super_admin_can(): void

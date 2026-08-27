@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Core\CommunityContext;
 use App\Models\Brand;
+use App\Models\EngineerCv;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Recruitment\Application\EngineerCvService;
@@ -41,6 +42,14 @@ final class EngineerCvServiceTest extends TestCase
         self::assertSame('published', $cv->status);
         self::assertTrue($workspace['profile']->fresh()->is_searchable);
         $this->assertDatabaseHas('engineer_cvs', ['brand_id' => brand()->id, 'user_id' => $engineer->id, 'status' => 'published']);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $engineer->id,
+            'domain' => 'recruitment',
+            'action' => 'engineer_cv_published',
+            'subject_type' => EngineerCv::class,
+            'subject_id' => $cv->id,
+        ]);
     }
 
     public function test_cv_workspace_is_unavailable_when_community_cv_feature_is_disabled(): void

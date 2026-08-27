@@ -32,6 +32,14 @@ final class CommunityMemberRoleServiceTest extends TestCase
             'from_role' => 'member',
             'to_role' => 'moderator',
         ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $owner->id,
+            'domain' => 'community',
+            'action' => 'member_role_changed',
+            'subject_type' => User::class,
+            'subject_id' => $member->id,
+        ]);
     }
 
     public function test_admin_cannot_manage_another_community_or_promote_admins(): void
@@ -69,6 +77,14 @@ final class CommunityMemberRoleServiceTest extends TestCase
         $this->assertDatabaseHas('brand_user', ['brand_id' => brand()->id, 'user_id' => $owner->id, 'role' => 'admin']);
         $this->assertDatabaseHas('brand_user', ['brand_id' => brand()->id, 'user_id' => $member->id, 'role' => 'owner']);
         $this->assertDatabaseCount('community_role_audits', 2);
+        $this->assertDatabaseHas('audit_logs', [
+            'brand_id' => brand()->id,
+            'actor_id' => $owner->id,
+            'domain' => 'community',
+            'action' => 'ownership_transferred',
+            'subject_type' => Brand::class,
+            'subject_id' => brand()->id,
+        ]);
     }
 
     private function userWithRole(string $role): User

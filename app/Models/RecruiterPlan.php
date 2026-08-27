@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * @property int $brand_id
  * @property int $contact_credits
  * @property int|null $duration_days
  * @property-read Brand|null $brand

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Recruitment\Application;
 
+use App\Core\Audit\AuditLogger;
 use App\Core\CommunityContext;
 use App\Models\RecruiterPlan;
 use App\Models\RecruiterProfile;
@@ -12,7 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 final class RecruitmentAdminManagementService
 {
-    public function __construct(private readonly CommunityContext $context) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly CommunityContext $context,
+    ) {}
 
     public function approveRecruiter(int $profileId, User $actor, bool $global): ?RecruiterProfile
     {
@@ -41,11 +45,14 @@ final class RecruitmentAdminManagementService
                 return null;
             }
 
-            return RecruiterPlan::withoutGlobalScopes()->create([
+            $plan = RecruiterPlan::withoutGlobalScopes()->create([
                 ...$attributes,
                 'brand_id' => $brandId,
                 'is_active' => true,
             ]);
+            DB::afterCommit(fn () => $this->audit->record('recruitment', 'recruiter_plan_created', $actor, $plan, $brandId));
+
+            return $plan;
         });
     }
 
@@ -57,7 +64,16 @@ final class RecruitmentAdminManagementService
                 return null;
             }
 
-            $plan->update(['is_active' => ! $plan->is_active]);
+            $isActive = ! $plan->is_active;
+            $plan->update(['is_active' => $isActive]);
+            DB::afterCommit(fn () => $this->audit->record(
+                'recruitment',
+                'recruiter_plan_toggled',
+                $actor,
+                $plan,
+                $plan->brand_id,
+                ['is_active' => $isActive],
+            ));
 
             return $plan->refresh();
         });
@@ -73,6 +89,13 @@ final class RecruitmentAdminManagementService
             }
 
             $profile->update($attributes);
+            DB::afterCommit(fn () => $this->audit->record(
+                'recruitment',
+                'recruiter_'.(string) $profile->verification_status,
+                $actor,
+                $profile,
+                $profile->brand_id,
+            ));
 
             return $profile->refresh();
         });
