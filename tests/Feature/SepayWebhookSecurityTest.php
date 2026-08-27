@@ -51,6 +51,24 @@ class SepayWebhookSecurityTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_webhook_validation_returns_the_standard_json_error_shape(): void
+    {
+        config(['services.sepay.webhook_token' => 'secret-token']);
+
+        $response = $this->postJson(route('webhook.sepay'), [
+            'transferType' => 'in',
+            'transferAmount' => -1,
+        ], [
+            'Authorization' => 'Apikey secret-token',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('status', 422)
+            ->assertJsonStructure(['message', 'errors' => ['transferAmount']]);
+    }
+
     public function test_webhook_event_is_idempotent_by_provider_event_id(): void
     {
         config(['services.sepay.webhook_token' => 'secret-token']);
