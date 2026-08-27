@@ -13,6 +13,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\Learning\Domain\Events\ChallengeSubmissionReviewed;
 
 final class SubmissionReviewService
 {
@@ -69,7 +71,8 @@ final class SubmissionReviewService
 
             foreach ($pendingCompletions as $completion) {
                 $pairKey = $this->pairKey($completion);
-                if (! isset($approvedPairs[$pairKey]) && ! isset($processedPairs[$pairKey])) {
+                $shouldAwardXp = ! isset($approvedPairs[$pairKey]) && ! isset($processedPairs[$pairKey]);
+                if ($shouldAwardXp) {
                     $awardableCompletions->push($completion);
                     $processedPairs[$pairKey] = true;
                 }
@@ -88,6 +91,13 @@ final class SubmissionReviewService
                     'score' => 70,
                     'created_at' => now(),
                 ]);
+                DB::afterCommit(fn () => Event::dispatch(new ChallengeSubmissionReviewed(
+                    $challenge,
+                    $completion,
+                    $shouldAwardXp,
+                    'approved',
+                    null,
+                )));
             }
 
             return new BulkSubmissionReviewResult($pendingCompletions, $awardableCompletions);
@@ -148,10 +158,19 @@ final class SubmissionReviewService
                 'created_at' => now(),
             ]);
 
-            return new SubmissionReviewResult(
+            $result = new SubmissionReviewResult(
                 $completion->load(['task', 'user']),
                 $status === 'approved' && ! $hasPriorApproval,
             );
+            DB::afterCommit(fn () => Event::dispatch(new ChallengeSubmissionReviewed(
+                $challenge,
+                $completion,
+                $result->shouldAwardXp,
+                $status,
+                $note,
+            )));
+
+            return $result;
         });
     }
 

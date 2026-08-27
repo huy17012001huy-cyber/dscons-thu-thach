@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Core\Gamification\XpService;
-use App\Mail\ChallengeCompletionMail;
+use App\Core\Notifications\TelegramService;
 use App\Models\ChallengeTask;
-use App\Models\ChallengeTaskCompletion;
 use App\Models\Expedition;
 use App\Models\ExpeditionMember;
 use App\Models\User;
 use App\Notifications\GenericNotification;
-use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -770,52 +766,7 @@ class ChallengeDetail extends Component
         if (! $result) {
             return;
         }
-        $taskIds = $this->expedition->tasks()->pluck('id');
-        $pendingRows = $result->completions;
-        $awardablePairs = $result->awardableCompletions
-            ->map(fn (ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
-            ->flip();
-        $existingApprovedPairs = $pendingRows
-            ->filter(fn (ChallengeTaskCompletion $completion): bool => ! isset($awardablePairs[$completion->user_id.':'.$completion->challenge_task_id]))
-            ->map(fn (ChallengeTaskCompletion $completion): string => $completion->user_id.':'.$completion->challenge_task_id)
-            ->flip();
-        $count = $pendingRows->count();
-
-        // Award XP: chỉ first approval per (user, task). Pair đã có approved trước đó → skip.
-        $tasksById = ChallengeTask::whereIn('id', $taskIds)->get()->keyBy('id');
-        $awardedPairs = [];
-        foreach ($pendingRows as $row) {
-            $key = $row->user_id.':'.$row->challenge_task_id;
-            if (isset($existingApprovedPairs[$key]) || isset($awardedPairs[$key])) {
-                continue;
-            }
-            $awardedPairs[$key] = true;
-            $user = User::query()->whereKey($row->user_id)->first();
-            $task = $tasksById->get($row->challenge_task_id);
-            if ($user && $task) {
-                app(XpService::class)->award(
-                    $user, 'expedition_checkin', 1.0,
-                    'Hoàn thành nhiệm vụ ngày '.$task->day_number.': '.$task->title,
-                    $this->expedition
-                );
-            }
-        }
-
-        // Notify all affected users
-        $userIds = $pendingRows->pluck('user_id')->unique();
-        User::whereIn('id', $userIds)->each(function ($user) {
-            $user->notify(new GenericNotification(
-                '✓', 'Bài nộp đã được duyệt!',
-                route('challenge.show', $this->expedition->slug)
-            ));
-        });
-
-        // Báo Telegram nếu ai đó vừa hoàn thành sạch đủ 21 ngày
-        foreach ($userIds as $uid) {
-            $this->notifyIfCompleted($uid);
-        }
-
-        $this->dispatch('toast', message: "Đã duyệt {$count} bài nộp!", type: 'success');
+        $this->dispatch('toast', message: 'Đã duyệt '.$result->completions->count().' bài nộp!', type: 'success');
     }
 
     public function approveSubmission(int $completionId): void
@@ -837,29 +788,6 @@ class ChallengeDetail extends Component
         if (! $result) {
             return;
         }
-        $completion = $result->completion;
-
-        // First approval per (user, task) → award XP. Các approval sau (vd contest entries) KHÔNG award thêm.
-        $user = $completion->user;
-        if ($user) {
-            if ($result->shouldAwardXp) {
-                $task = $completion->task;
-                if ($task) {
-                    app(XpService::class)->award(
-                        $user, 'expedition_checkin', 1.0,
-                        'Hoàn thành nhiệm vụ ngày '.$task->day_number.': '.$task->title,
-                        $this->expedition
-                    );
-                }
-            }
-            $user->notify(new GenericNotification(
-                '✓', 'Bài nộp đã được duyệt!',
-                route('challenge.show', $this->expedition->slug)
-            ));
-        }
-
-        $this->notifyIfCompleted($completion->user_id);
-
         $this->dispatch('toast', message: 'Đã duyệt bài nộp!', type: 'success');
     }
 
@@ -887,18 +815,6 @@ class ChallengeDetail extends Component
         if (! $result) {
             return;
         }
-        $completion = $result->completion;
-
-        // Notify user
-        $user = $completion->user;
-        if ($user) {
-            $user->notify(new GenericNotification(
-                '✗',
-                'Bài nộp bị từ chối: '.$rejectNote.'. Vui lòng nộp lại.',
-                route('challenge.show', $this->expedition->slug)
-            ));
-        }
-
         $this->dispatch('toast', message: 'Đã từ chối bài nộp', type: 'success');
     }
 
@@ -926,79 +842,6 @@ class ChallengeDetail extends Component
             ->whereIn('status', ['approved', 'paid'])
             ->whereNull('kicked_at')
             ->first();
-    }
-
-    // ─── Báo Telegram + email chúc mừng khi member hoàn thành đủ tất cả các ngày ───
-    // Hoàn thành = mọi ngày có bài chính đã DUYỆT (cho phép có ngày trễ; ngày trễ được
-    // đánh dấu "(có trễ)" trong email). Chỉ chạy một lần / member (completion_notified_at).
-    private function notifyIfCompleted(int $userId): void
-    {
-        $member = $this->expedition->members()
-            ->where('user_id', $userId)
-            ->whereIn('status', ['approved', 'paid'])
-            ->whereNull('kicked_at')
-            ->whereNull('completion_notified_at')
-            ->first();
-        if (! $member) {
-            return;
-        }
-
-        $tasks = $this->expedition->tasks()
-            ->orderBy('day_number')
-            ->get(['id', 'day_number', 'title', 'label']);
-        if ($tasks->isEmpty()) {
-            return;
-        }
-
-        // Bài chính = row đầu tiên per task (theo created_at).
-        $main = \DB::table('challenge_task_completions')
-            ->whereIn('challenge_task_id', $tasks->pluck('id'))
-            ->where('user_id', $userId)
-            ->orderBy('created_at')
-            ->get(['challenge_task_id', 'status', 'is_late'])
-            ->groupBy('challenge_task_id')
-            ->map(fn ($rows) => $rows->first());
-
-        // Mọi ngày phải có bài chính đã duyệt; ngày trễ vẫn tính hoàn thành.
-        $days = [];
-        foreach ($tasks as $task) {
-            $row = $main->get($task->id);
-            if (! $row || $row->status !== 'approved') {
-                return;
-            }
-            $days[] = [
-                'day' => (int) $task->day_number,
-                'label' => (string) ($task->title ?: $task->label ?: ('Ngày '.$task->day_number)),
-                'is_late' => (bool) $row->is_late,
-            ];
-        }
-
-        $member->update(['completion_notified_at' => now()]);
-
-        $u = $member->user;
-        $lateCount = collect($days)->where('is_late', true)->count();
-
-        // Email chúc mừng (không chặn flow nếu mail lỗi)
-        if (! empty($u->email)) {
-            try {
-                Mail::to($u->email)->send(new ChallengeCompletionMail(
-                    userName: $u->name,
-                    challengeTitle: $this->expedition->title,
-                    brandName: config('app.name'),
-                    days: $days,
-                    completedAt: now()->timezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y'),
-                    challengeUrl: route('challenge.show', $this->expedition->slug),
-                ));
-            } catch (\Throwable $e) {
-                report($e);
-            }
-        }
-
-        $summary = $lateCount > 0 ? "(có {$lateCount} ngày trễ)" : '(không có ngày trễ)';
-        TelegramService::sendCompletion(
-            '🏆 <b>Hoàn thành '.$tasks->count()." ngày</b>\n"
-            ."Member {$u->name} ({$u->email}) đã hoàn thành thử thách {$summary}."
-        );
     }
 
     // Day calculation + late check moved to Expedition model (freeze-aware)

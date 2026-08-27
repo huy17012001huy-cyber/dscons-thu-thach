@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Livewire\ChallengeDetail;
+use App\Models\ChallengeSubmissionXpAward;
 use App\Models\ChallengeTask;
 use App\Models\ChallengeTaskCompletion;
 use App\Models\Expedition;
 use App\Models\User;
-use App\Livewire\ChallengeDetail;
+use App\Models\XpTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Modules\Learning\Application\SubmissionReviewService;
+use Modules\Learning\Domain\Events\ChallengeSubmissionReviewed;
+use Modules\Learning\Domain\Listeners\HandleChallengeSubmissionReviewed;
 use Tests\TestCase;
 
 final class SubmissionReviewServiceTest extends TestCase
@@ -34,6 +38,23 @@ final class SubmissionReviewServiceTest extends TestCase
         self::assertTrue($result->shouldAwardXp);
         self::assertSame('approved', $result->completion->status);
         self::assertSame(100, $result->completion->score);
+        $this->assertDatabaseHas('challenge_submission_xp_awards', [
+            'challenge_task_completion_id' => $completion->id,
+            'user_id' => $learner->id,
+        ]);
+        $this->assertDatabaseHas('xp_transactions', [
+            'user_id' => $learner->id,
+            'type' => 'expedition_checkin',
+        ]);
+        app(HandleChallengeSubmissionReviewed::class)->handle(new ChallengeSubmissionReviewed(
+            $challenge,
+            $completion,
+            true,
+            'approved',
+            null,
+        ));
+        self::assertSame(1, ChallengeSubmissionXpAward::query()->count());
+        self::assertSame(1, XpTransaction::query()->where('type', 'expedition_checkin')->count());
         $this->assertDatabaseHas('challenge_task_reviews', [
             'completion_id' => $completion->id,
             'reviewer_id' => $admin->id,
@@ -116,6 +137,8 @@ final class SubmissionReviewServiceTest extends TestCase
         self::assertSame('approved', $newCompletion->fresh()->status);
         self::assertSame('approved', $returningCompletion->fresh()->status);
         $this->assertDatabaseCount('challenge_task_reviews', 2);
+        self::assertSame(1, ChallengeSubmissionXpAward::query()->count());
+        self::assertSame(1, XpTransaction::query()->where('type', 'expedition_checkin')->count());
     }
 
     public function test_challenge_detail_uses_the_review_service_for_an_admin_action(): void

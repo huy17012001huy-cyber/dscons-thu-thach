@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Core\Notifications\TelegramService;
 use App\Models\LoginLog;
 use App\Models\Setting;
-use App\Services\TelegramService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -39,8 +39,8 @@ class WatchSuspiciousLogins extends Command
             ->orderByDesc('created_at')
             ->get(['user_id', 'ip_address', 'created_at'])
             ->each(function ($r) use (&$pairs) {
-                $key = $r->ip_address . '|' . $r->user_id;
-                if (!isset($pairs[$key])) { // orderByDesc → giữ lần đăng nhập mới nhất
+                $key = $r->ip_address.'|'.$r->user_id;
+                if (! isset($pairs[$key])) { // orderByDesc → giữ lần đăng nhập mới nhất
                     $pairs[$key] = ['ip' => $r->ip_address, 'uid' => $r->user_id, 'via' => 'đăng nhập mới', 'at' => Carbon::parse($r->created_at)];
                 }
             });
@@ -51,13 +51,13 @@ class WatchSuspiciousLogins extends Command
             ->orderByDesc('last_activity')
             ->get(['user_id', 'ip_address', 'last_activity'])
             ->each(function ($r) use (&$pairs) {
-                $key = $r->ip_address . '|' . $r->user_id;
-                if (!isset($pairs[$key])) {
+                $key = $r->ip_address.'|'.$r->user_id;
+                if (! isset($pairs[$key])) {
                     $pairs[$key] = ['ip' => $r->ip_address, 'uid' => $r->user_id, 'via' => 'đang online', 'at' => Carbon::createFromTimestamp((int) $r->last_activity)];
                 }
             });
 
-        $new = array_filter($pairs, fn ($k) => !isset($alertedSet[$k]), ARRAY_FILTER_USE_KEY);
+        $new = array_filter($pairs, fn ($k) => ! isset($alertedSet[$k]), ARRAY_FILTER_USE_KEY);
         if (empty($new)) {
             return self::SUCCESS;
         }
@@ -66,17 +66,17 @@ class WatchSuspiciousLogins extends Command
             $u = DB::table('users')->where('id', $p['uid'])->first();
             $at = $p['at']->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i:s');
             $msg = "🚨 <b>Phát hiện đăng nhập từ IP theo dõi của nick ảo Minh Khôi</b>\n"
-                 . "IP: <code>{$p['ip']}</code>\n"
-                 . 'Tài khoản: <b>' . e($u->name ?? '?') . '</b> (@' . e($u->username ?? '?') . ")\n"
-                 . 'Email: ' . e($u->email ?? '?') . "\n"
-                 . "Kiểu: {$p['via']}\n"
-                 . "Đăng nhập lúc: {$at} (giờ VN)";
+                 ."IP: <code>{$p['ip']}</code>\n"
+                 .'Tài khoản: <b>'.e($u->name ?? '?').'</b> (@'.e($u->username ?? '?').")\n"
+                 .'Email: '.e($u->email ?? '?')."\n"
+                 ."Kiểu: {$p['via']}\n"
+                 ."Đăng nhập lúc: {$at} (giờ VN)";
             TelegramService::sendToAdmin($msg);
             $alerted[] = $key;
         }
 
         Setting::set('watch_login_alerted', json_encode(array_values(array_unique($alerted))));
-        $this->info('Đã cảnh báo ' . count($new) . ' tài khoản mới từ IP theo dõi.');
+        $this->info('Đã cảnh báo '.count($new).' tài khoản mới từ IP theo dõi.');
 
         return self::SUCCESS;
     }
