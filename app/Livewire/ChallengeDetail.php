@@ -461,14 +461,6 @@ class ChallengeDetail extends Component
             return;
         }
 
-        // Notify admins
-        User::where('is_admin', true)->each(function ($admin) {
-            $admin->notify(new GenericNotification(
-                '▶', $this->currentUser()->name.' gửi Video Feedback cho '.$this->expedition->title,
-                route('challenge.show', $this->expedition->slug)
-            ));
-        });
-
         $this->videoFeedbackUrl = '';
         $this->dispatch('toast', message: 'Đã gửi Video Feedback! Chờ admin duyệt.', type: 'success');
         $this->expedition->refresh();
@@ -487,10 +479,6 @@ class ChallengeDetail extends Component
         if (! $member) {
             return;
         }
-        $member->user->notify(new GenericNotification(
-            '★', 'Video Feedback được duyệt! Ban tổ chức sẽ liên hệ bạn về phần thưởng.',
-            route('challenge.show', $this->expedition->slug)
-        ));
         $this->dispatch('toast', message: 'Đã duyệt video feedback!', type: 'success');
     }
 
@@ -509,10 +497,6 @@ class ChallengeDetail extends Component
         if (! $member) {
             return;
         }
-        $member->user->notify(new GenericNotification(
-            '✗', 'Video Feedback chưa đạt: '.($note ?: 'Hãy quay lại video chân thật hơn.'),
-            route('challenge.show', $this->expedition->slug)
-        ));
         $this->dispatch('toast', message: 'Đã từ chối video feedback', type: 'success');
     }
 

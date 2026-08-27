@@ -8,8 +8,10 @@ use App\Core\Modules\BaseModuleServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Modules\Learning\Domain\Events\ChallengeEnrollmentRequested;
 use Modules\Learning\Domain\Events\ChallengeSubmissionReviewed;
+use Modules\Learning\Domain\Events\ChallengeVideoFeedbackChanged;
 use Modules\Learning\Domain\Listeners\HandleChallengeSubmissionReviewed;
 use Modules\Learning\Domain\Listeners\NotifyChallengeEnrollmentRequested;
+use Modules\Learning\Domain\Listeners\NotifyChallengeVideoFeedbackChanged;
 
 final class LearningServiceProvider extends BaseModuleServiceProvider
 {
@@ -21,5 +23,6 @@ final class LearningServiceProvider extends BaseModuleServiceProvider
 
         Event::listen(ChallengeEnrollmentRequested::class, NotifyChallengeEnrollmentRequested::class);
         Event::listen(ChallengeSubmissionReviewed::class, HandleChallengeSubmissionReviewed::class);
+        Event::listen(ChallengeVideoFeedbackChanged::class, NotifyChallengeVideoFeedbackChanged::class);
     }
 }

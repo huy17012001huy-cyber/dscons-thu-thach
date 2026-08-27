@@ -10,6 +10,8 @@ use App\Models\ExpeditionMember;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\Learning\Domain\Events\ChallengeVideoFeedbackChanged;
 
 final class ChallengeVideoFeedbackService
 {
@@ -33,6 +35,7 @@ final class ChallengeVideoFeedbackService
                 'video_feedback_status' => 'pending',
                 'video_feedback_at' => now(),
             ]);
+            DB::afterCommit(fn () => Event::dispatch(new ChallengeVideoFeedbackChanged($challenge->id, $user->id, 'pending')));
 
             return ChallengeVideoFeedbackOutcome::Submitted;
         });
@@ -43,7 +46,7 @@ final class ChallengeVideoFeedbackService
         return $this->review($challenge, $memberId, $reviewer, [
             'video_feedback_status' => 'approved',
             'video_feedback_note' => 'Video đạt yêu cầu! Ban tổ chức sẽ liên hệ bạn về phần thưởng.',
-        ]);
+        ], 'approved', null);
     }
 
     public function reject(Expedition $challenge, int $memberId, User $reviewer, string $note): ?ExpeditionMember
@@ -52,18 +55,18 @@ final class ChallengeVideoFeedbackService
             'video_feedback_status' => 'rejected',
             'video_feedback_note' => $note,
             'video_feedback_url' => null,
-        ]);
+        ], 'rejected', $note);
     }
 
     /** @param array<string, mixed> $attributes */
-    private function review(Expedition $challenge, int $memberId, User $reviewer, array $attributes): ?ExpeditionMember
+    private function review(Expedition $challenge, int $memberId, User $reviewer, array $attributes, string $status, ?string $note): ?ExpeditionMember
     {
         $this->assertCurrentCommunity($challenge);
         if (! $reviewer->isCommunityAdmin($challenge->brand_id)) {
             return null;
         }
 
-        return DB::transaction(function () use ($challenge, $memberId, $attributes): ?ExpeditionMember {
+        return DB::transaction(function () use ($challenge, $memberId, $attributes, $status, $note): ?ExpeditionMember {
             $member = ExpeditionMember::query()
                 ->whereKey($memberId)
                 ->where('expedition_id', $challenge->id)
@@ -76,6 +79,7 @@ final class ChallengeVideoFeedbackService
             }
 
             $member->update($attributes);
+            DB::afterCommit(fn () => Event::dispatch(new ChallengeVideoFeedbackChanged($challenge->id, $member->user_id, $status, $note)));
 
             return $member->load('user');
         });

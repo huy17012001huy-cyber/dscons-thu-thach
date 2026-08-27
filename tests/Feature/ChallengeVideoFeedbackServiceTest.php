@@ -30,9 +30,11 @@ final class ChallengeVideoFeedbackServiceTest extends TestCase
             $service->submit($challenge, $learner, 'https://video.example.test/final-demo'),
         );
         self::assertSame('pending', $member->fresh()->video_feedback_status);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $admin->id]);
         $approved = $service->approve($challenge, $member->id, $admin);
         self::assertNotNull($approved);
         self::assertSame('approved', $approved->video_feedback_status);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $learner->id]);
 
         $service->submit($challenge, $learner, 'https://video.example.test/revised-demo');
         $rejected = $service->reject($challenge, $member->id, $admin, 'Please show the installed tool running.');
