@@ -22,6 +22,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Modules\Learning\Application\ChallengeAccessService;
 use Modules\Learning\Application\ChallengeEnrollmentService;
+use Modules\Learning\Application\ChallengeSubmissionOutcome;
+use Modules\Learning\Application\ChallengeSubmissionService;
 use Modules\Learning\Application\SubmissionReviewService;
 
 class ChallengeDetail extends Component
@@ -286,12 +288,19 @@ class ChallengeDetail extends Component
             return;
         }
         $submissionPayload = $this->buildSubmissionPayload($task);
-        $late = $this->taskIsLate($member, $task->day_number);
-        $task->completedByUsers()->attach($user->id, [
-            'evidence' => $evidence,
-            'is_late' => $late,
-            'submission_payload' => $submissionPayload ? json_encode($submissionPayload, JSON_UNESCAPED_UNICODE) : null,
-        ]);
+        $result = app(ChallengeSubmissionService::class)->submit(
+            $this->expedition,
+            $taskId,
+            $user,
+            $evidence,
+            $submissionPayload,
+        );
+        if ($result->outcome !== ChallengeSubmissionOutcome::Submitted) {
+            $this->showSubmissionOutcome($result->outcome);
+
+            return;
+        }
+        $late = $result->isLate;
 
         // XP cộng khi admin approve, KHÔNG cộng khi submit (xem approveSubmission/approveAllPending)
 
@@ -482,20 +491,18 @@ class ChallengeDetail extends Component
             return;
         }
 
-        $late = $this->taskIsLate($member, $task->day_number);
+        $result = app(ChallengeSubmissionService::class)->resubmit(
+            $this->expedition,
+            $taskId,
+            $user,
+            $evidence,
+            $submissionPayload,
+        );
+        if ($result->outcome !== ChallengeSubmissionOutcome::Resubmitted) {
+            $this->showSubmissionOutcome($result->outcome, true);
 
-        \DB::table('challenge_task_completions')
-            ->where('id', $existing->id)
-            ->update([
-                'evidence' => $evidence,
-                'status' => 'pending',
-                'is_late' => $late,
-                'reviewed_by' => null,
-                'reviewed_at' => null,
-                'review_note' => null,
-                'submission_payload' => $submissionPayload ? json_encode($submissionPayload, JSON_UNESCAPED_UNICODE) : null,
-                'updated_at' => now(),
-            ]);
+            return;
+        }
 
         $this->taskEvidence[$taskId] = '';
         $this->dispatch('toast', message: 'Đã nộp lại bài! Chờ admin duyệt.', type: 'success');
@@ -528,6 +535,31 @@ class ChallengeDetail extends Component
             ],
             'submitted_at' => now()->toIso8601String(),
         ];
+    }
+
+    private function showSubmissionOutcome(ChallengeSubmissionOutcome $outcome, bool $isResubmission = false): void
+    {
+        if ($outcome === ChallengeSubmissionOutcome::Frozen && $this->expedition->freeze_ends_at) {
+            $this->dispatch(
+                'toast',
+                message: 'Nhiệm vụ tạm dừng trong kỳ nghỉ. Tiếp tục vào '.$this->expedition->freeze_ends_at->timezone('Asia/Ho_Chi_Minh')->format('d/m'),
+                type: 'warning',
+            );
+
+            return;
+        }
+        if ($outcome === ChallengeSubmissionOutcome::TaskLocked) {
+            $this->dispatch('toast', message: 'Nhiệm vụ đang tạm khóa, vui lòng quay lại sau.', type: 'warning');
+
+            return;
+        }
+        if ($outcome === ChallengeSubmissionOutcome::MissingEvidence) {
+            $this->dispatch(
+                'toast',
+                message: $isResubmission ? 'Vui lòng cung cấp bằng chứng mới!' : 'Vui lòng cung cấp bằng chứng hoàn thành!',
+                type: 'error',
+            );
+        }
     }
 
     public string $videoFeedbackUrl = '';
