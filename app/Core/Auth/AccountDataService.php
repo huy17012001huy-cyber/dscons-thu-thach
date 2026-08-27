@@ -42,4 +42,13 @@ final class AccountDataService
             return (bool) $preference->notifications_enabled;
         });
     }
+
+    public function selectClass(User $user, Brand $community, string $class): void
+    {
+        if (! array_key_exists($class, $community->classProfiles())) {
+            throw new AuthorizationException('Invalid community class.');
+        }
+
+        DB::transaction(fn () => $user->update(['class' => $class]));
+    }
 }

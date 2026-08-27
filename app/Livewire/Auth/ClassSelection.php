@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Auth;
 
+use App\Core\Auth\AccountDataService;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -34,7 +35,7 @@ class ClassSelection extends Component
         if (! $user instanceof User) {
             return;
         }
-        $user->update(['class' => $this->selectedClass]);
+        app(AccountDataService::class)->selectClass($user, brand(), $this->selectedClass);
 
         $this->redirect(route('feed'), navigate: true);
     }
