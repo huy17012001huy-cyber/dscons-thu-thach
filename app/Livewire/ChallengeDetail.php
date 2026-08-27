@@ -7,7 +7,6 @@ namespace App\Livewire;
 use App\Mail\ChallengeCompletionMail;
 use App\Models\ChallengeTask;
 use App\Models\Expedition;
-use App\Models\ExpeditionCheckin;
 use App\Models\ExpeditionMember;
 use App\Models\User;
 use App\Notifications\GenericNotification;
@@ -21,6 +20,8 @@ use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Modules\Learning\Application\ChallengeAccessService;
+use Modules\Learning\Application\ChallengeCheckinOutcome;
+use Modules\Learning\Application\ChallengeCheckinService;
 use Modules\Learning\Application\ChallengeEnrollmentService;
 use Modules\Learning\Application\ChallengeSubmissionOutcome;
 use Modules\Learning\Application\ChallengeSubmissionService;
@@ -196,37 +197,21 @@ class ChallengeDetail extends Component
         $this->validate();
 
         $user = $this->currentUser();
-        $member = $this->getApprovedMember($user->id);
-        if (! $member) {
+        $outcome = app(ChallengeCheckinService::class)->checkin(
+            $this->expedition,
+            $user,
+            $this->checkinContent,
+        );
+        if ($outcome === ChallengeCheckinOutcome::NotEnrolled) {
             $this->addError('checkinContent', 'Bạn chưa được duyệt tham gia Challenge này.');
 
             return;
         }
-
-        $alreadyToday = ExpeditionCheckin::where('expedition_id', $this->expedition->id)
-            ->where('user_id', $user->id)
-            ->whereDate('created_at', today())
-            ->exists();
-
-        if ($alreadyToday) {
+        if ($outcome === ChallengeCheckinOutcome::AlreadyCheckedIn) {
             $this->addError('checkinContent', 'Bạn đã check-in hôm nay rồi.');
 
             return;
         }
-
-        ExpeditionCheckin::create([
-            'expedition_id' => $this->expedition->id,
-            'user_id' => $user->id,
-            'content' => $this->checkinContent,
-        ]);
-
-        $member->update(['last_checkin_at' => now(), 'consecutive_missed_days' => 0]);
-
-        app(XpService::class)->award(
-            $user, 'expedition_checkin', 1.0,
-            'Check-in Challenge: '.$this->expedition->title,
-            $this->expedition
-        );
 
         $this->reset('checkinContent');
         $this->expedition->refresh();
