@@ -34,3 +34,7 @@ authorized.
   transaction commit.
 - KP3's EAV, static hook manager and API-first Sanctum SPA are intentionally
   not adopted because they do not solve a current DSCons requirement.
+- Day-to-day enforcement lives in
+  [KP3 Backend Guardrails](KP3_BACKEND_GUARDRAILS.md) and its accompanying
+  feature checklist. Both are part of the repository contract for
+  backend-impacting work.

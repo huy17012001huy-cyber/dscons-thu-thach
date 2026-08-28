@@ -11,12 +11,19 @@ Before modifying code, configuration, database, tests, Docker files, deployment 
 3. Classify the task domain and load the relevant AG Kit specialist skill from `.agents/ag-kit/.agents/skills/`.
 4. Read the selected `SKILL.md` completely before taking task actions.
 5. Read directly linked references, templates, or scripts required by that skill.
-6. Announce the selected skill(s) and the task scope before making changes.
+6. For Laravel, Livewire actions, routes, services, APIs, database, authorization,
+   payments, recruitment, Revit licensing, webhooks or security changes, also read
+   `docs/architecture/KP3_BACKEND_GUARDRAILS.md` and use
+   `docs/architecture/KP3_BACKEND_FEATURE_CHECKLIST.md`.
+7. Announce the selected skill(s), backend guardrail scope when applicable, and
+   the task scope before making changes.
 
 ## Skill routing
 
 - UI/UX, Blade, CSS, responsive behavior, accessibility: `ui-ux-pro-max`, `frontend-design`, `web-design-guidelines`.
 - Laravel, PHP, Livewire, routes, services, APIs: `app-builder`, `backend`-related skills, `clean-code`, and `testing-patterns` as relevant.
+- Any backend-impacting feature: `KP3_BACKEND_GUARDRAILS.md` and
+  `KP3_BACKEND_FEATURE_CHECKLIST.md` in addition to the smallest relevant AG Kit skills.
 - Database, migrations, Eloquent queries, multi-community scoping: `database-design` and `testing-patterns`.
 - Docker, local environment, queues, cron, staging, deployment: `deployment-procedures`, `server-management`, and `lint-and-validate`.
 - Security, permissions, webhooks, secrets, uploads: `vulnerability-scanner`, `security`-related rules, and `testing-patterns`.
@@ -27,6 +34,9 @@ Use the smallest skill set that fully covers the task. Do not load unrelated ski
 ## Implementation contract
 
 - Preserve existing Laravel, Livewire, PostgreSQL, Docker, route, and permission conventions unless the task explicitly changes them.
+- Treat `docs/architecture/KP3_BACKEND_GUARDRAILS.md` as the DSCons backend
+  architecture contract. Do not bypass its module, multi-community, transaction,
+  API compatibility or quality-gate rules to make a feature work quickly.
 - Inspect the current code and worktree before editing; preserve unrelated user changes.
 - Use `apply_patch` for local edits.
 - Run validation proportionate to the change. At minimum use `git diff --check`; for code changes run the relevant tests and build/check commands.
